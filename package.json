@@ -11,7 +11,10 @@
     "test": "jest",
     "test:sweep": "jest settingsSweep",
     "test:update": "jest -u",
-    "harness": "npx esbuild harness/preview.ts --bundle --outfile=harness/preview.js && npx esbuild harness/hero.ts --bundle --outfile=harness/hero.js && npx esbuild harness/landing.ts --bundle --outfile=harness/landing.js"
+    "harness": "npx esbuild harness/preview.ts --bundle --outfile=harness/preview.js && npx esbuild harness/hero.ts --bundle --outfile=harness/hero.js && npx esbuild harness/landing.ts --bundle --outfile=harness/landing.js",
+    "autotest:build": "npx esbuild autotest/entry.ts --bundle --format=iife --loader:.less=empty --outfile=autotest/bundle.js",
+    "autotest": "npm run autotest:build && node autotest/run.mjs",
+    "autotest:settings": "npm run autotest:build && node autotest/settings.mjs"
   },
   "dependencies": {
     "@types/d3": "7.4.3",
@@ -28,6 +31,7 @@
     "eslint-plugin-powerbi-visuals": "^1.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.4.1",
+    "playwright": "^1.60.0",
     "powerbi-visuals-tools": "^7.1.0",
     "ts-jest": "^29.4.11",
     "typescript": "5.5.4"
