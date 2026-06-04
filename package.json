@@ -1,0 +1,35 @@
+{
+  "name": "zentrix-calendar-heatmap",
+  "description": "Power BI custom visual — full-year GitHub-style calendar heatmap.",
+  "version": "1.0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "pbiviz": "pbiviz",
+    "start": "pbiviz start",
+    "package": "pbiviz package",
+    "lint": "npx eslint .",
+    "test": "jest",
+    "test:sweep": "jest settingsSweep",
+    "test:update": "jest -u",
+    "harness": "npx esbuild harness/preview.ts --bundle --outfile=harness/preview.js && npx esbuild harness/hero.ts --bundle --outfile=harness/hero.js && npx esbuild harness/landing.ts --bundle --outfile=harness/landing.js"
+  },
+  "dependencies": {
+    "@types/d3": "7.4.3",
+    "d3": "7.9.0",
+    "powerbi-visuals-api": "5.11.0",
+    "powerbi-visuals-utils-formattingmodel": "6.0.4",
+    "powerbi-visuals-utils-tooltiputils": "^6.0.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "esbuild": "^0.28.0",
+    "eslint": "^9.11.1",
+    "eslint-plugin-powerbi-visuals": "^1.0.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.4.1",
+    "powerbi-visuals-tools": "^7.1.0",
+    "ts-jest": "^29.4.11",
+    "typescript": "5.5.4"
+  }
+}
