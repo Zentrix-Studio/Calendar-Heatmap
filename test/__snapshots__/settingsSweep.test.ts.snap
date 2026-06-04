@@ -1,0 +1,6073 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`settings sweep (single grid) accessibility.focusRing → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) accessibility.patternOnThreshold → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 2736,
+  "paths": 0,
+  "rects": 736,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) accessibility.patternThresholdValue → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 2320,
+  "paths": 0,
+  "rects": 684,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) accessibility.patternThresholdValue → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 2192,
+  "paths": 0,
+  "rects": 668,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) badges.peakEmoji → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 365,
+}
+`;
+
+exports[`settings sweep (single grid) badges.peakOn → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 23,
+}
+`;
+
+exports[`settings sweep (single grid) badges.thresholdEmoji → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 365,
+}
+`;
+
+exports[`settings sweep (single grid) badges.thresholdOn → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 364,
+}
+`;
+
+exports[`settings sweep (single grid) badges.thresholdValue → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 313,
+}
+`;
+
+exports[`settings sweep (single grid) badges.thresholdValue → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 297,
+}
+`;
+
+exports[`settings sweep (single grid) branding.showBranding → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) cells.cellGap → 4 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "77",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) cells.cellGap → 6 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "21.735849056603772",
+    "x": "32",
+    "y": "156.6320754716981",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) cells.cellSize → 23 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "23",
+    "x": "76.5",
+    "y": "156",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) cells.cellSize → 44 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "24.67924528301887",
+    "x": "32",
+    "y": "155.16037735849056",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) cells.cornerRadius → 3 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "3",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) cells.cornerRadius → 4 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "3.96",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.bucketCount → 3 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 392,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.bucketCount → 7 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(125, 94, 230)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.bucketCount → Continuous 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(138, 108, 237)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 390,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.endColor → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(177, 82, 166)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.noDataColor → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.paletteMode → Duotone 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(76, 54, 166)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.paletteMode → Mono 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(179, 160, 255)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.paletteMode → Report theme 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(122, 122, 127)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.paletteMode → Split 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(200, 186, 201)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.ramp → Colorblind-safe 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(248, 151, 43)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.ramp → Forest 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(105, 184, 109)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.ramp → Magma 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(214, 82, 109)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.ramp → Ocean 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(96, 172, 222)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.ramp → Viridis 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(48, 144, 133)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.scaleMode → Linear 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(237, 232, 255)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.scaleMode → Log 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(111, 81, 218)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.splitHigh → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(208, 194, 206)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.splitLow → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(233, 181, 185)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.splitMid → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(188, 69, 87)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) colors.startColor → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(240, 149, 152)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) dataDisplay.aggregation → Average 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) dataDisplay.aggregation → Count 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) dataDisplay.aggregation → Max 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) dataDisplay.aggregation → Min 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) dataDisplay.firstDayOfWeek → Monday 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) dataDisplay.layout → Month blocks 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "16.5",
+    "x": "372",
+    "y": "76.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 19,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.bold → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Arial 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Bahnschrift 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Calibri 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Cambria 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Candara 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Cascadia Code 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Consolas 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → DIN 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Georgia 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Helvetica Neue 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Inter 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Roboto 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Segoe UI Variable 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → System UI 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Tahoma 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Trebuchet 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontFamily → Verdana 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontSize → 12 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.fontSize → 22 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.italic → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) facetTitle.underline → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) header.align → Center 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) header.align → Right 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) header.ruleColor → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) header.ruleShow → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) header.ruleWidth → 3 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) header.ruleWidth → 4 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) header.titleText → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "ZTEST",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.bold → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Arial 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Bahnschrift 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Calibri 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Cambria 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Candara 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Cascadia Code 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Consolas 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → DIN 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Georgia 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Helvetica Neue 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Inter 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Roboto 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Segoe UI Variable 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → System UI 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Tahoma 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Trebuchet 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontFamily → Verdana 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontSize → 16 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.fontSize → 30 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.italic → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) headline.underline → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) insights.count → 4 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "147.5",
+  },
+  "cells": 365,
+  "circles": 4,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 23,
+}
+`;
+
+exports[`settings sweep (single grid) insights.count → 6 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "129.5",
+  },
+  "cells": 365,
+  "circles": 6,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) insights.polarity → Bad (less is better) 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) insights.polarity → Good (more is better) 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) insights.show → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "195.5",
+  },
+  "cells": 365,
+  "circles": 0,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 18,
+}
+`;
+
+exports[`settings sweep (single grid) labels.showHeader → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) labels.showMonthLabels → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "149.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Mon",
+    "Wed",
+    "Fri",
+    "Less",
+  ],
+  "texts": 10,
+}
+`;
+
+exports[`settings sweep (single grid) labels.showWeekdayLabels → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "88",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 19,
+}
+`;
+
+exports[`settings sweep (single grid) legend.align → Center 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.align → Right 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.gradientLength → 121 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(138, 108, 237)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 390,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.gradientLength → 240 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(138, 108, 237)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 390,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.lessLabel → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.moreLabel → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.noDataSide → Left 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.position → Top 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "179.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.show → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "168",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 388,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 19,
+}
+`;
+
+exports[`settings sweep (single grid) legend.showLabels → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 20,
+}
+`;
+
+exports[`settings sweep (single grid) legend.showNoData → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 393,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 21,
+}
+`;
+
+exports[`settings sweep (single grid) legend.swatchSize → 12 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.swatchSize → 22 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "151",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legend.title → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 23,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.bold → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Arial 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Bahnschrift 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Calibri 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Cambria 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Candara 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Cascadia Code 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Consolas 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → DIN 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Georgia 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Helvetica Neue 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Inter 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Roboto 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Segoe UI Variable 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → System UI 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Tahoma 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Trebuchet 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontFamily → Verdana 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontSize → 11 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.fontSize → 20 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "152",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.italic → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) legendText.underline → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.bold → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Arial 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Bahnschrift 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Calibri 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Cambria 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Candara 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Cascadia Code 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Consolas 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → DIN 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Georgia 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Helvetica Neue 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Inter 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Roboto 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Segoe UI Variable 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → System UI 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Tahoma 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Trebuchet 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontFamily → Verdana 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontSize → 11 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.fontSize → 20 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.italic → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) monthRail.underline → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) smallMultiples.columns → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) smallMultiples.columns → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) smallMultiples.sharedScale → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.bold → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Arial 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Bahnschrift 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Calibri 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Cambria 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Candara 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Cascadia Code 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Consolas 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → DIN 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Georgia 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Helvetica Neue 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Inter 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Roboto 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Segoe UI Variable 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → System UI 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Tahoma 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Trebuchet 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontFamily → Verdana 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontSize → 15 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.fontSize → 28 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.italic → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) statChips.underline → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "177.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 395,
+  "text0": [
+    "Tickets resolved",
+    "Peak day",
+    "396 | Jan 6, 2025",
+    "Total",
+  ],
+  "texts": 27,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → April 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → August 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → December 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → February 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → July 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → June 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → March 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → May 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → November 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → October 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) timeIntel.fiscalStart → September 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) toolbar.closeOnClickAway → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) toolbar.position → Bottom left 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) toolbar.position → Bottom right 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) toolbar.position → Top left 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) toolbar.position → Top right 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) toolbar.show → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.bold → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Arial 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Bahnschrift 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Calibri 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Cambria 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Candara 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Cascadia Code 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Consolas 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → DIN 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Georgia 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Helvetica Neue 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Inter 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Roboto 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Segoe UI Variable 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → System UI 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Tahoma 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Trebuchet 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontFamily → Verdana 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontSize → 11 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.fontSize → 20 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.italic → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) weekdayRail.underline → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.bold → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Arial 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Bahnschrift 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Calibri 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Cambria 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Candara 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Cascadia Code 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Consolas 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → DIN 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Georgia 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Helvetica Neue 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Inter 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Roboto 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Segoe UI Variable 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → System UI 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Tahoma 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Trebuchet 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontFamily → Verdana 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontSize → 12 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.fontSize → 22 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.italic → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) yearTags.underline → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 22,
+}
+`;
