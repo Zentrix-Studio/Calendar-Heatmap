@@ -27,7 +27,7 @@ import {
 import { renderGrid, CellSel, GridGeometry, predictGridSize } from "./render/grid";
 import { renderMonthBlocks, predictMonthBlocksSize } from "./render/monthBlocks";
 import { renderFacets, predictFacetSize } from "./render/facets";
-import { renderHeader } from "./render/header";
+import { renderHeader, headerBandHeight } from "./render/header";
 import { planChrome } from "./render/responsive";
 import { renderLegend, LegendAlign, NoDataSide } from "./render/legend";
 import { renderInsights } from "./render/insights";
@@ -224,6 +224,9 @@ export class Visual implements IVisual {
     private render(input: FacetedRender, width: number, height: number, firstDayOfWeek: number): void {
         const combined = input.combined;
         const faceted = input.facets.length > 1;
+        // Honor the report's culture for all date/number text (falls back to a
+        // deterministic en-US when the host doesn't supply one — e.g. tests/dev).
+        const locale = this.host.locale || "en-US";
         // The cells actually drawn — one model's days (single) or every panel's (faceted).
         const drawnDays: DayCell[] = faceted ? input.facets.flatMap(f => f.model.days) : combined.days;
         const s = this.formattingSettings;
@@ -323,7 +326,9 @@ export class Visual implements IVisual {
         // space. Rather than reserving them unconditionally (which forced cells to a
         // 3px floor on small canvases), predict the cell size for a given chrome
         // reservation and let the planner shed the lowest-priority band first.
-        const HEADER_H = 42; // renderHeader's fixed band height
+        // Header band height adapts to the configured headline/stat fonts (≥ 42)
+        // so large sizes don't clip — must match renderHeader's own computation.
+        const HEADER_H = headerBandHeight(s.headline.toStyle().size, s.statChips.toStyle().size);
         const headerRequested = s.labels.showHeader.value;
         const predict = (top: number, bottom: number): number => {
             if (faceted) {
@@ -370,6 +375,7 @@ export class Visual implements IVisual {
                 ruleWidth: s.header.ruleWidth.value,
                 textColor: strongColor, mutedColor: labelColor,
                 showChips: plan.showHeaderChips,
+                locale,
             });
         }
 
@@ -499,13 +505,13 @@ export class Visual implements IVisual {
         // Interaction model exposes every drawn cell (all panels in facet mode) while
         // keeping the combined chrome metadata (value/target names, hasToday).
         const interactModel: CalendarModel = faceted ? { ...combined, days: drawnDays } : combined;
-        this.tooltip.setContext(interactModel, colors, dark, anomalyMap, polarity);
+        this.tooltip.setContext(interactModel, colors, dark, anomalyMap, polarity, locale);
         this.tooltip.setBranding(s.branding.showBranding.value); // ZENTRIX-BRAND
-        this.wireInteractions(interactModel, cells, s.accessibility.focusRing.value);
+        this.wireInteractions(interactModel, cells, s.accessibility.focusRing.value, locale);
     }
 
     /** Attach tooltip, selection, hover, and keyboard behaviors to the cells. */
-    private wireInteractions(model: CalendarModel, cells: CellSel, focusRingEnabled: boolean): void {
+    private wireInteractions(model: CalendarModel, cells: CellSel, focusRingEnabled: boolean, locale: string): void {
         const box = (d: DayCell) => cellBox(d);
 
         // Today ring (only when today ∈ range). In facet mode today appears in every
@@ -543,7 +549,7 @@ export class Visual implements IVisual {
 
         // Keyboard navigation + ARIA.
         bindKeyboard({
-            cells, model, valueName: model.valueName,
+            cells, model, valueName: model.valueName, locale,
             onActivate: (d, multi) => {
                 if (!d.selectionId) return;
                 this.selectionManager.select(d.selectionId, multi).then(applyState);
