@@ -27,6 +27,9 @@ export class HeatmapTooltip {
     private dark = false;
     private anomalies?: Map<number, AnomalyHint>;
     private polarity: Polarity = "neutral";
+    // BCP-47 locale from the Power BI host. Drives date + number formatting so the
+    // tooltip follows the report's culture (not the machine's). Default deterministic.
+    private locale = "en-US";
     private brandingOn = true; // ZENTRIX-BRAND — default ON (free tier); premium can disable
 
     constructor(root: HTMLElement) {
@@ -39,7 +42,7 @@ export class HeatmapTooltip {
     }
 
     /** Refresh per-render context (value lookup for deltas, theme, color accessor, anomalies). */
-    setContext(model: CalendarModel, colors: ColorAccessor, dark: boolean, anomalies?: Map<number, AnomalyHint>, polarity: Polarity = "neutral"): void {
+    setContext(model: CalendarModel, colors: ColorAccessor, dark: boolean, anomalies?: Map<number, AnomalyHint>, polarity: Polarity = "neutral", locale = "en-US"): void {
         this.valueByDay.clear();
         for (const d of model.days) {
             if (!d.noData && d.value != null) this.valueByDay.set(`${d.facetKey ?? ""}|${d.date.getTime()}`, d.value);
@@ -50,6 +53,7 @@ export class HeatmapTooltip {
         this.dark = dark;
         this.anomalies = anomalies;
         this.polarity = polarity;
+        this.locale = locale || "en-US";
     }
 
     /** ZENTRIX-BRAND — host toggles the subtle tooltip attribution on/off. */
@@ -62,7 +66,7 @@ export class HeatmapTooltip {
         const strong = this.dark ? "#F4F4F6" : "#1A1A22";
         clear(this.el);
 
-        const dateLabel = `${WEEKDAY[d.date.getDay()]} · ${d.date.toLocaleDateString(undefined,
+        const dateLabel = `${WEEKDAY[d.date.getDay()]} · ${d.date.toLocaleDateString(this.locale,
             { month: "short", day: "numeric", year: "numeric" })}`.toUpperCase();
         this.el.appendChild(div(`font-size:10px;letter-spacing:.5px;color:${muted}`, dateLabel));
 
@@ -92,7 +96,7 @@ export class HeatmapTooltip {
 
             // Big value + delta badge vs the previous calendar day ("+26 vs Mon").
             const valueRow = div("margin-top:2px;font-size:24px;font-weight:700;line-height:1.1");
-            valueRow.appendChild(span("", formatNum(d.value)));
+            valueRow.appendChild(span("", formatNum(d.value, this.locale)));
             const prev = new Date(d.date.getFullYear(), d.date.getMonth(), d.date.getDate() - 1);
             const prevVal = this.valueByDay.get(`${d.facetKey ?? ""}|${prev.getTime()}`);
             if (prevVal != null && prevVal !== 0) {
@@ -103,7 +107,7 @@ export class HeatmapTooltip {
                     `${up ? "▲" : "▼"} ${Math.abs((diff / prevVal) * 100).toFixed(1)}%`));
                 this.el.appendChild(valueRow);
                 this.el.appendChild(div(`margin-top:4px;font-size:11px;color:${muted}`,
-                    `${up ? "+" : ""}${diff} vs ${WEEKDAY[prev.getDay()]}`));
+                    `${up ? "+" : ""}${formatNum(diff, this.locale)} vs ${WEEKDAY[prev.getDay()]}`));
             } else {
                 this.el.appendChild(valueRow);
             }
@@ -115,7 +119,7 @@ export class HeatmapTooltip {
                 const pct = d.target !== 0 ? `${Math.abs((diff / d.target) * 100).toFixed(1)}% ${over ? "over" : "under"}` : (over ? "over" : "under");
                 const row = div(`margin-top:6px;font-size:11px;color:${muted}`, `vs ${this.targetName}: `);
                 row.appendChild(span(`color:${over ? UP : DOWN};font-weight:600`,
-                    `${over ? "+" : ""}${formatNum(diff)} (${pct})`));
+                    `${over ? "+" : ""}${formatNum(diff, this.locale)} (${pct})`));
                 this.el.appendChild(row);
             }
 
@@ -167,8 +171,8 @@ export class HeatmapTooltip {
     hide(): void { this.el.style.display = "none"; }
 }
 
-function formatNum(n: number): string {
-    return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+function formatNum(n: number, locale = "en-US"): string {
+    return n.toLocaleString(locale, { maximumFractionDigits: 2 });
 }
 function clear(el: HTMLElement): void {
     while (el.firstChild) el.removeChild(el.firstChild);
