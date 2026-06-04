@@ -13,6 +13,10 @@ harness/hero.js
 harness/preview.js
 harness/landing.js
 
+# Automated visual-test harness — generated artifacts (regenerate with `npm run autotest`)
+autotest/bundle.js
+autotest/out/
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db
