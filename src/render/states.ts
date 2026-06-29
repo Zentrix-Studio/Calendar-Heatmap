@@ -27,6 +27,18 @@ export function applyCrossHighlight(cells: CellSel, isSelected: (d: DayCell) => 
     cells.attr("fill-opacity", d => (!anySelected ? 1 : isSelected(d) ? 1 : STATE.dimOpacity));
 }
 
+/**
+ * Host-driven highlight (capabilities supportsHighlight): when another visual
+ * cross-highlights this one, the host populates `values[].highlights[]` and each
+ * DayCell carries `isHighlighted`. Reuses the exact dimming treatment as the
+ * selection cross-highlight so the two read identically. Only called when a
+ * highlights array is actually present (model.hasHighlights) — the no-highlight
+ * render never touches fill-opacity, keeping existing behavior/snapshots intact.
+ */
+export function applyHighlight(cells: CellSel): void {
+    applyCrossHighlight(cells, d => d.isHighlighted === true, true);
+}
+
 function ring(overlay: GroupSel, box: CellBox, opts: {
     grow: number; stroke: string; width: number; radius: number; dash?: string;
 }): void {
@@ -44,24 +56,26 @@ function ring(overlay: GroupSel, box: CellBox, opts: {
         .attr("pointer-events", "none");
 }
 
-/** Hover: 1.5px inset accent ring (drawn just inside the cell edge). */
-export function drawHoverRing(overlay: GroupSel, box: CellBox): void {
-    ring(overlay, box, { grow: -0.75, stroke: STATE.accent, width: 1.5, radius: 2 });
+/** Hover: 1.5px inset accent ring (drawn just inside the cell edge). The optional
+ * `accent` lets the visual pass the high-contrast foreground so rings stay visible
+ * in HC mode; it defaults to the brand accent (normal mode appearance unchanged). */
+export function drawHoverRing(overlay: GroupSel, box: CellBox, accent: string = STATE.accent): void {
+    ring(overlay, box, { grow: -0.75, stroke: accent, width: 1.5, radius: 2 });
 }
 
 /** Selected: 2px accent stroke drawn OUTSIDE the cell so the fill area is unchanged. */
-export function drawSelectedRing(overlay: GroupSel, box: CellBox): void {
-    ring(overlay, box, { grow: 1.5, stroke: STATE.accent, width: 2, radius: 3 });
+export function drawSelectedRing(overlay: GroupSel, box: CellBox, accent: string = STATE.accent): void {
+    ring(overlay, box, { grow: 1.5, stroke: accent, width: 2, radius: 3 });
 }
 
 /** Keyboard focus: accent ring offset 1.5px + 1px gap, independent of value fill. */
-export function drawFocusRing(overlay: GroupSel, box: CellBox): void {
-    ring(overlay, box, { grow: 2.5, stroke: STATE.accent, width: 1.5, radius: 3, dash: "2 1.5" });
+export function drawFocusRing(overlay: GroupSel, box: CellBox, accent: string = STATE.accent): void {
+    ring(overlay, box, { grow: 2.5, stroke: accent, width: 1.5, radius: 3, dash: "2 1.5" });
 }
 
 /** Today: subtle accent ring, independent of fill (only when today ∈ range). */
-export function drawTodayRing(overlay: GroupSel, box: CellBox): void {
-    ring(overlay, box, { grow: 1, stroke: STATE.accent, width: 1.5, radius: 3 });
+export function drawTodayRing(overlay: GroupSel, box: CellBox, accent: string = STATE.accent): void {
+    ring(overlay, box, { grow: 1, stroke: accent, width: 1.5, radius: 3 });
 }
 
 /** No-data hairline: a 1px inset border so empty days never read as a low value. */

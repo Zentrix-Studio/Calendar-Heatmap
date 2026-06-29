@@ -174,7 +174,7 @@
     "supportsHighlight": true,
     "supportsKeyboardFocus": true,
     "tooltips": {
-        "supportedTypes": { "default": true, "canvas": true },
+        "supportedTypes": { "default": false, "canvas": false },
         "roles": ["tooltips"]
     },
     "privileges": []
