@@ -13,4 +13,14 @@ export default [
             // visual rules; the harness *source* (autotest/*.ts, *.mjs) is still linted.
             "autotest/bundle.js", "autotest/out/**"],
     },
+    {
+        // Power BI certification: no function may exceed 100 lines. Enforced as a
+        // standing rule on shipped source only (src/**) so test/autotest helpers
+        // aren't forced to split. skipBlankLines + skipComments + IIFEs mirror the
+        // cert check.
+        files: ["src/**/*.ts"],
+        rules: {
+            "max-lines-per-function": ["error", { max: 100, skipBlankLines: true, skipComments: true, IIFEs: true }],
+        },
+    },
 ];

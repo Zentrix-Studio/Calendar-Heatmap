@@ -146,6 +146,7 @@ const KEYS: Record<string, Entry> = {
     "badge.thresholdValue": num("badges", "thresholdValue", m => m.badges.thresholdValue),
     "badge.thresholdEmoji": text("badges", "thresholdEmoji", m => m.badges.thresholdEmoji),
     // Text groups
+    ...typeEntries("facetTitle", m => m.facetTitle),
     ...typeEntries("headline", m => m.headline),
     ...typeEntries("statChips", m => m.statChips),
     ...typeEntries("monthRail", m => m.monthRail),
@@ -252,6 +253,7 @@ export const SB_CATS: SBCategory[] = [
         ] },
     ] },
     { id: "text", name: "Text", subs: [
+        { id: "facettitle", name: "Facet titles", info: "Font, size, style, and color of the small-multiples facet titles.", kind: "fields", width: 282, fields: typeFields("facetTitle") },
         { id: "headline", name: "Headline", info: "Font, size, style, and color of the headline text.", kind: "fields", width: 282, fields: typeFields("headline") },
         { id: "stats", name: "Stats", info: "Font, size, style, and color of the stat chips.", kind: "fields", width: 282, fields: typeFields("statChips") },
         { id: "months", name: "Months", info: "Font, size, style, and color of the month labels.", kind: "fields", width: 282, fields: typeFields("monthRail") },

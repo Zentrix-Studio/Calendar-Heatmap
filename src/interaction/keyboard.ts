@@ -20,6 +20,9 @@ export interface KeyboardParams {
     onClear: () => void;
     /** Draw the focus ring for a day, or clear it when null. */
     drawFocus: (d: DayCell | null) => void;
+    /** Open the host context menu for the focused day, anchored at its DOM node
+     * (ContextMenu key / Shift+F10). Mirrors the right-click path. */
+    onContextMenu?: (d: DayCell, node: SVGElement) => void;
     /** BCP-47 locale for ARIA date text (from the Power BI host). */
     locale?: string;
 }
@@ -73,6 +76,12 @@ export function bindKeyboard(p: KeyboardParams): void {
             case "Escape":
                 p.onClear();
                 p.drawFocus(null);
+                return;
+            case "ContextMenu":
+            case "F10": // Shift+F10 is the canonical "open context menu" shortcut.
+                if (event.key === "F10" && !event.shiftKey) return;
+                event.preventDefault();
+                if (p.onContextMenu) p.onContextMenu(d, event.currentTarget as SVGElement);
                 return;
             default:
                 return;

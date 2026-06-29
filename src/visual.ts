@@ -24,9 +24,9 @@ import { buildFacetedModel, AggregationMode } from "./model/dataTransform";
 import {
     buildColorAccessor, ColorAccessor, ScaleMode, PaletteMode, RampPreset, resolvePalette, NO_DATA_DARK, NO_DATA_LIGHT,
 } from "./render/colors";
-import { renderGrid, CellSel, GridGeometry, predictGridSize } from "./render/grid";
+import { renderGrid, CellSel, GridGeometry, GridOptions, predictGridSize } from "./render/grid";
 import { renderMonthBlocks, predictMonthBlocksSize } from "./render/monthBlocks";
-import { renderFacets, predictFacetSize } from "./render/facets";
+import { renderFacets, predictFacetSize, FacetLayoutOptions } from "./render/facets";
 import { renderHeader, headerBandHeight } from "./render/header";
 import { planChrome } from "./render/responsive";
 import { renderLegend, LegendAlign, NoDataSide } from "./render/legend";
@@ -34,7 +34,7 @@ import { renderInsights } from "./render/insights";
 import { computeInsights, computeAnomalies, DEFAULT_INSIGHT_CONFIG, Polarity } from "./insights";
 import {
     cellBox, drawTodayRing, drawHoverRing, drawSelectedRing, drawFocusRing, drawBadge, drawNoDataHairline,
-    drawAnnotationDot, drawThresholdPattern,
+    drawAnnotationDot, drawThresholdPattern, applyHighlight, STATE,
 } from "./render/states";
 import { bindSelection, syncSelectionState, bindBackgroundContextMenu } from "./interaction/selection";
 import { HeatmapTooltip } from "./interaction/tooltip";
@@ -64,6 +64,53 @@ function isDarkColor(hex?: string): boolean {
 
 type Group = Selection<SVGGElement, unknown, null, undefined>;
 
+/** Insight card line height / fixed overhead (px) — shared by the planner that
+ * reserves the band and the renderer that draws into it. */
+const INSIGHT_LINE_H = 18, INSIGHT_OVERHEAD = 24;
+
+/** Per-update render scratch — derived once, threaded through the render helpers
+ * so each cohesive block (style, layout, grid, overlays, interaction) stays a
+ * small private method without recomputing shared inputs. */
+interface RenderContext {
+    input: FacetedRender;
+    combined: CalendarModel;
+    faceted: boolean;
+    width: number;
+    height: number;
+    firstDayOfWeek: number;
+    locale: string;
+    drawnDays: DayCell[];
+    s: VisualFormattingSettingsModel;
+    dark: boolean;
+    hc: boolean;
+    labelColor: string;
+    strongColor: string;
+    colorOpts: { mode: ScaleMode; buckets: number; ramp: string[]; noData: string };
+    sharedScale: boolean;
+    colors: ColorAccessor;
+    facetColors: ColorAccessor[];
+    colorsFor: (i: number) => ColorAccessor;
+    // Chrome bands (legend / insights) and grid scaffolding.
+    legendBandH: number;
+    monthLayout: boolean;
+    insightsOn: boolean;
+    polarity: Polarity;
+    insightItemsAll: ReturnType<typeof computeInsights>;
+    gridBase: Omit<GridOptions, "width" | "height" | "originX" | "originY" | "colors" | "topOffset">;
+    facetLayout: (region: { x: number; y: number; w: number; h: number }) => FacetLayoutOptions;
+    // Resolved by the responsive planner.
+    headerH: number;
+    legendShown: boolean;
+    legendLabels: boolean;
+    legendTopH: number;
+    legendBottomH: number;
+    insightItems: ReturnType<typeof computeInsights>;
+    insightsH: number;
+    // Filled in once the grid/facets are drawn.
+    geo: GridGeometry;
+    cells: CellSel;
+}
+
 export class Visual implements IVisual {
     private host: IVisualHost;
     private element: HTMLElement;
@@ -87,6 +134,20 @@ export class Visual implements IVisual {
 
     /** Last successful render inputs, replayed on in-visual settings changes. */
     private lastRender?: { render: FacetedRender; width: number; height: number; firstDayOfWeek: number };
+
+    /** Header-band survival flags carried from planChromeBands() to drawHeader(). */
+    private headerPlan?: { showHeader: boolean; showHeaderRule: boolean; showHeaderChips: boolean };
+
+    /** Whether to wire cross-filter selection / keyboard / context-menu. False when
+     * the host disables interactions (hostCapabilities.allowInteractions === false)
+     * or the report is in advanced edit mode. Recomputed each update(); replayed by
+     * rerenderFromSettings(). Defaults true so reading view stays fully interactive. */
+    private interactive = true;
+
+    /** Stroke color for hover/selected/focus/today rings. The brand accent in normal
+     * mode; the OS high-contrast foreground when the host reports HC, so rings stay
+     * visible against the HC theme. Set per render in wireTooltipAndInteraction(). */
+    private ringAccent: string = STATE.accent;
 
     constructor(options: VisualConstructorOptions) {
         this.host = options.host;
@@ -112,7 +173,11 @@ export class Visual implements IVisual {
             .attr("height", "100%");
 
         // Layer order (bottom → top): cells/labels, badges, selected rings, today, hover, focus.
-        this.contentGroup = this.svg.append("g").classed("content", true);
+        // The content group wraps the gridcell cells, so it carries role="grid" for
+        // assistive tech (cells set role="gridcell" + aria-selected in the sync path).
+        this.contentGroup = this.svg.append("g").classed("content", true)
+            .attr("role", "grid")
+            .attr("aria-label", "Calendar heatmap");
         this.badgeGroup = this.svg.append("g").classed("badges", true);
         this.selectedGroup = this.svg.append("g").classed("selected-rings", true);
         this.todayGroup = this.svg.append("g").classed("today-ring", true);
@@ -150,6 +215,16 @@ export class Visual implements IVisual {
                     VisualFormattingSettingsModel, dataView);
             const palette = this.host.colorPalette;
             const dark = !palette.isHighContrast && isDarkColor(palette.background && palette.background.value);
+            // Honor the host: skip all cross-filter wiring when interactions are
+            // disabled (allowInteractions === false) or the report is in advanced
+            // edit mode. allowInteractions is exposed on hostCapabilities in API
+            // 5.11.0; default true so normal reading view is unchanged.
+            const allowInteractions = this.host.hostCapabilities?.allowInteractions !== false;
+            // EditMode.Advanced === 1. Compare the numeric value rather than the
+            // ambient const-enum member so the check survives bundlers (e.g. esbuild)
+            // that don't inline const enums declared in the API's .d.ts.
+            const advancedEdit = options.editMode === 1; /* EditMode.Advanced */
+            this.interactive = allowInteractions && !advancedEdit;
             this.toolbar.update(this.formattingSettings, dark);
             this.premium.refresh();
 
@@ -222,6 +297,23 @@ export class Visual implements IVisual {
     }
 
     private render(input: FacetedRender, width: number, height: number, firstDayOfWeek: number): void {
+        // Pure extraction: each helper owns one cohesive block and runs in the
+        // original order, threading a single RenderContext so values aren't recomputed.
+        const ctx = this.resolveStyle(input, width, height, firstDayOfWeek);
+        this.planChromeBands(ctx);
+        this.drawHeader(ctx);
+        this.drawCalendar(ctx);
+        this.drawLegend(ctx);
+        this.drawCellOverlays(ctx);
+        this.drawNotes(ctx);
+        this.drawInsightsCard(ctx);
+        this.placeToolbar(ctx);
+        this.wireTooltipAndInteraction(ctx);
+    }
+
+    /** Theme / palette / color-scale resolution + the grid scaffolding (gridBase,
+     * facetLayout) and premium-insight computation. Produces the RenderContext. */
+    private resolveStyle(input: FacetedRender, width: number, height: number, firstDayOfWeek: number): RenderContext {
         const combined = input.combined;
         const faceted = input.facets.length > 1;
         // Honor the report's culture for all date/number text (falls back to a
@@ -272,13 +364,10 @@ export class Visual implements IVisual {
             : [];
         const colorsFor = (i: number): ColorAccessor => (sharedScale ? colors : facetColors[i]);
 
-        // Legend band reservation (top or bottom). Left/Right (vertical) is a
+        // Legend band reservation height (top or bottom). Left/Right (vertical) is a
         // follow-up — it needs the grid to reserve side-width.
         const lg = s.legend;
-        const legendOn = lg.show.value;
-        const legendPos = lg.position.value.value as "bottom" | "top";
-        const legendSwatch = lg.swatchSize.value;
-        const legendBandH = legendOn ? Math.max(legendSwatch, s.legendText.toStyle().size) + 12 : 0;
+        const legendBandH = lg.show.value ? Math.max(lg.swatchSize.value, s.legendText.toStyle().size) + 12 : 0;
         const monthLayout = (s.dataDisplay.layout.value.value as string) === "month";
 
         // Premium insight engine — deterministic, in-sandbox. Gated by the
@@ -294,7 +383,6 @@ export class Visual implements IVisual {
         const insightItemsAll = insightsOn
             ? computeInsights(combined.series!, { ...DEFAULT_INSIGHT_CONFIG, polarity, fiscalStartMonth }, Math.max(1, Math.round(s.insights.count.value)))
             : [];
-        const INSIGHT_LINE_H = 18, INSIGHT_OVERHEAD = 24;
 
         // Base grid options shared by the predictor and the real render. Heights /
         // top-offset are filled in once the responsive planner has decided which
@@ -312,7 +400,7 @@ export class Visual implements IVisual {
             weekdayStyle: s.weekdayRail.toStyle(),
             yearStyle: s.yearTags.toStyle(),
         };
-        const facetLayout = (region: { x: number; y: number; w: number; h: number }) => ({
+        const facetLayout = (region: { x: number; y: number; w: number; h: number }): FacetLayoutOptions => ({
             region,
             columns: Math.max(0, Math.round(s.smallMultiples.columns.value)),
             monthLayout,
@@ -322,6 +410,24 @@ export class Visual implements IVisual {
             colorsFor,
         });
 
+        return {
+            input, combined, faceted, width, height, firstDayOfWeek, locale, drawnDays, s,
+            dark, hc, labelColor, strongColor, colorOpts, sharedScale, colors, facetColors, colorsFor,
+            legendBandH, monthLayout, insightsOn, polarity, insightItemsAll, gridBase, facetLayout,
+            // Filled in by planChromeBands / drawCalendar below.
+            headerH: 0, legendShown: false, legendLabels: false, legendTopH: 0, legendBottomH: 0,
+            insightItems: [], insightsH: 0, geo: undefined!, cells: undefined!,
+        };
+    }
+
+    /** Run the responsive planner that sheds the lowest-priority chrome band when
+     * cells would otherwise shrink below the floor, then resolve surviving bands. */
+    private planChromeBands(ctx: RenderContext): void {
+        const { s, combined, input, faceted, width, height, colors, monthLayout,
+            gridBase, facetLayout, legendBandH, insightItemsAll } = ctx;
+        const lg = s.legend;
+        const legendPos = lg.position.value.value as "bottom" | "top";
+
         // The KPI header, legend, and insights bands all compete with the grid for
         // space. Rather than reserving them unconditionally (which forced cells to a
         // 3px floor on small canvases), predict the cell size for a given chrome
@@ -329,7 +435,6 @@ export class Visual implements IVisual {
         // Header band height adapts to the configured headline/stat fonts (≥ 42)
         // so large sizes don't clip — must match renderHeader's own computation.
         const HEADER_H = headerBandHeight(s.headline.toStyle().size, s.statChips.toStyle().size);
-        const headerRequested = s.labels.showHeader.value;
         const predict = (top: number, bottom: number): number => {
             if (faceted) {
                 return predictFacetSize(input.facets,
@@ -342,8 +447,8 @@ export class Visual implements IVisual {
         };
 
         const plan = planChrome({
-            headerH: headerRequested ? HEADER_H : 0,
-            legendH: legendOn ? legendBandH : 0,
+            headerH: s.labels.showHeader.value ? HEADER_H : 0,
+            legendH: lg.show.value ? legendBandH : 0,
             legendTop: legendPos === "top",
             insightsCount: insightItemsAll.length,
             insightsLineH: INSIGHT_LINE_H,
@@ -353,32 +458,45 @@ export class Visual implements IVisual {
         });
 
         // Resolve the surviving bands from the plan.
-        const headerH = plan.showHeader ? HEADER_H : 0;
-        const legendShown = plan.showLegend;
-        const legendTopH = legendShown && legendPos === "top" ? legendBandH : 0;
-        const legendBottomH = legendShown && legendPos === "bottom" ? legendBandH : 0;
-        const insightItems = insightItemsAll.slice(0, plan.insightsCount);
-        const insightsH = insightItems.length ? (INSIGHT_OVERHEAD + insightItems.length * INSIGHT_LINE_H) : 0;
+        ctx.headerH = plan.showHeader ? HEADER_H : 0;
+        ctx.legendShown = plan.showLegend;
+        ctx.legendLabels = plan.legendLabels;
+        ctx.legendTopH = ctx.legendShown && legendPos === "top" ? legendBandH : 0;
+        ctx.legendBottomH = ctx.legendShown && legendPos === "bottom" ? legendBandH : 0;
+        ctx.insightItems = insightItemsAll.slice(0, plan.insightsCount);
+        ctx.insightsH = ctx.insightItems.length ? (INSIGHT_OVERHEAD + ctx.insightItems.length * INSIGHT_LINE_H) : 0;
 
-        // Draw the KPI header now that the planner has decided its fate (and which
-        // of its parts — chips, rule — fit). In facet mode it summarizes the rollup.
-        if (plan.showHeader) {
-            const titleText = s.header.titleText.value && s.header.titleText.value.trim();
-            renderHeader(this.contentGroup, combined, {
-                width,
-                title: titleText || combined.valueName,
-                align: s.header.align.value.value as "left" | "center" | "right",
-                headline: s.headline.toStyle(),
-                stat: s.statChips.toStyle(),
-                ruleShow: s.header.ruleShow.value && plan.showHeaderRule,
-                ruleColor: s.header.ruleColor.value.value,
-                ruleWidth: s.header.ruleWidth.value,
-                textColor: strongColor, mutedColor: labelColor,
-                showChips: plan.showHeaderChips,
-                locale,
-            });
-        }
+        // Stash the plan parts the header render still needs (chips / rule survival).
+        this.headerPlan = { showHeader: plan.showHeader, showHeaderRule: plan.showHeaderRule, showHeaderChips: plan.showHeaderChips };
+    }
 
+    /** Draw the KPI header now that the planner has decided its fate (and which of
+     * its parts — chips, rule — fit). In facet mode it summarizes the rollup. */
+    private drawHeader(ctx: RenderContext): void {
+        const plan = this.headerPlan;
+        if (!plan || !plan.showHeader) return;
+        const { s, combined, width, strongColor, labelColor, locale } = ctx;
+        const titleText = s.header.titleText.value && s.header.titleText.value.trim();
+        renderHeader(this.contentGroup, combined, {
+            width,
+            title: titleText || combined.valueName,
+            align: s.header.align.value.value as "left" | "center" | "right",
+            headline: s.headline.toStyle(),
+            stat: s.statChips.toStyle(),
+            ruleShow: s.header.ruleShow.value && plan.showHeaderRule,
+            ruleColor: s.header.ruleColor.value.value,
+            ruleWidth: s.header.ruleWidth.value,
+            textColor: strongColor, mutedColor: labelColor,
+            showChips: plan.showHeaderChips,
+            locale,
+        });
+    }
+
+    /** Render the calendar grid (single) or small-multiple facets, recording the
+     * resulting geometry + cell selection on the context. */
+    private drawCalendar(ctx: RenderContext): void {
+        const { faceted, input, combined, width, height, gridBase, colors, monthLayout,
+            facetLayout, headerH, legendTopH, legendBottomH, insightsH } = ctx;
         const gridOpts = {
             ...gridBase,
             colors,
@@ -399,31 +517,42 @@ export class Visual implements IVisual {
                 : renderGrid(this.contentGroup, combined, gridOpts);
             geo = res.geo; cells = res.cells;
         }
+        ctx.geo = geo; ctx.cells = cells;
+    }
 
-        if (legendShown) {
-            // Hug the grid content edge (not the canvas edge) so the legend stays
-            // attached to the chart even when the grid is shorter than the viewport.
-            const legendY = legendPos === "bottom"
-                ? geo.marginTop + geo.gridHeight + 8
-                : Math.max(headerH + 2, geo.marginTop - legendBandH - 2);
-            renderLegend(this.contentGroup, {
-                x: geo.marginLeft,
-                y: legendY,
-                availableWidth: geo.gridWidth,
-                align: lg.align.value.value as LegendAlign,
-                swatchSize: legendSwatch,
-                gradientLength: lg.gradientLength.value,
-                colors, labelColor,
-                showLabels: lg.showLabels.value && plan.legendLabels,
-                lessLabel: lg.lessLabel.value || "Less",
-                moreLabel: lg.moreLabel.value || "More",
-                showNoData: lg.showNoData.value && drawnDays.some(d => d.noData),
-                noDataSide: lg.noDataSide.value.value as NoDataSide,
-                title: lg.title.value,
-                textStyle: s.legendText.toStyle(),
-            });
-        }
+    /** Legend band, hugging the grid content edge. */
+    private drawLegend(ctx: RenderContext): void {
+        if (!ctx.legendShown) return;
+        const { s, geo, drawnDays, colors, labelColor, legendBandH, legendLabels, headerH } = ctx;
+        const lg = s.legend;
+        const legendPos = lg.position.value.value as "bottom" | "top";
+        // Hug the grid content edge (not the canvas edge) so the legend stays
+        // attached to the chart even when the grid is shorter than the viewport.
+        const legendY = legendPos === "bottom"
+            ? geo.marginTop + geo.gridHeight + 8
+            : Math.max(headerH + 2, geo.marginTop - legendBandH - 2);
+        renderLegend(this.contentGroup, {
+            x: geo.marginLeft,
+            y: legendY,
+            availableWidth: geo.gridWidth,
+            align: lg.align.value.value as LegendAlign,
+            swatchSize: lg.swatchSize.value,
+            gradientLength: lg.gradientLength.value,
+            colors, labelColor,
+            showLabels: lg.showLabels.value && legendLabels,
+            lessLabel: lg.lessLabel.value || "Less",
+            moreLabel: lg.moreLabel.value || "More",
+            showNoData: lg.showNoData.value && drawnDays.some(d => d.noData),
+            noDataSide: lg.noDataSide.value.value as NoDataSide,
+            title: lg.title.value,
+            textStyle: s.legendText.toStyle(),
+        });
+    }
 
+    /** No-data hairlines, annotation dots, CVD hatch patterns, and emoji badges —
+     * all the per-cell overlays drawn into the badge layer across every panel. */
+    private drawCellOverlays(ctx: RenderContext): void {
+        const { s, drawnDays, dark } = ctx;
         // No-data cells get a subtle inset outline so empty days read as "empty",
         // never as a value — independent of the chosen palette (DECISION 3).
         // Annotated days get a corner dot so notable days are visible at a glance
@@ -453,8 +582,11 @@ export class Visual implements IVisual {
             }
             if (bs.peakOn.value && peak) drawBadge(this.badgeGroup, cellBox(peak), bs.peakEmoji.value || "🔥");
         }
+    }
 
-        // Honest notes (spec §8 — never silently truncate): render-day cap, then facet cap.
+    /** Honest "showing N of M" notes (spec §8 — never silently truncate). */
+    private drawNotes(ctx: RenderContext): void {
+        const { combined, input, faceted, width, geo, labelColor } = ctx;
         const notes: string[] = [];
         if (combined.totalDays > combined.days.length) {
             notes.push(`Showing last ${combined.days.length} of ${combined.totalDays} days`);
@@ -472,18 +604,24 @@ export class Visual implements IVisual {
                 .attr("font-size", "10px")
                 .text(text);
         });
+    }
 
-        // Premium insights card — docked along the reserved bottom band.
-        if (insightItems.length) {
-            renderInsights(this.contentGroup, insightItems, {
-                x: 2, y: height - insightsH + 2, width: width - 4,
-                font: "Segoe UI, -apple-system, sans-serif",
-                labelColor, textColor: strongColor,
-                toneColors: { positive: "#2EA043", negative: "#E5484D", neutral: s.header.ruleColor.value.value || "#7C5CFF" },
-            });
-        }
+    /** Premium insights card — docked along the reserved bottom band. */
+    private drawInsightsCard(ctx: RenderContext): void {
+        const { s, width, height, insightItems, insightsH, labelColor, strongColor } = ctx;
+        if (!insightItems.length) return;
+        renderInsights(this.contentGroup, insightItems, {
+            x: 2, y: height - insightsH + 2, width: width - 4,
+            font: "Segoe UI, -apple-system, sans-serif",
+            labelColor, textColor: strongColor,
+            toneColors: { positive: "#2EA043", negative: "#E5484D", neutral: s.header.ruleColor.value.value || "#7C5CFF" },
+        });
+    }
 
-        // Auto-place the gear in a corner clear of content (header / grid / legend / insights).
+    /** Auto-place the gear in a corner clear of content (header / grid / legend / insights). */
+    private placeToolbar(ctx: RenderContext): void {
+        const { s, width, height, geo, headerH, legendShown, legendBandH, insightsH } = ctx;
+        const legendPos = s.legend.position.value.value as "bottom" | "top";
         const contentRects: number[][] = [];
         if (headerH > 0) contentRects.push([0, 0, width, headerH]);
         contentRects.push([geo.marginLeft, geo.marginTop, geo.gridWidth, geo.gridHeight]);
@@ -493,7 +631,12 @@ export class Visual implements IVisual {
         }
         if (insightsH > 0) contentRects.push([0, height - insightsH, width, insightsH]);
         this.toolbar.setCorner(pickCorner(width, height, contentRects));
+    }
 
+    /** Build the anomaly lookup, set the tooltip context/branding, and wire the
+     * cell interaction model (selection / hover / keyboard). */
+    private wireTooltipAndInteraction(ctx: RenderContext): void {
+        const { s, combined, faceted, drawnDays, cells, colors, dark, insightsOn, polarity, locale } = ctx;
         // Anomaly lookup for the tooltip (top-1 line on flagged days) — overall series.
         let anomalyMap: Map<number, { score: number; direction: "high" | "low"; severity: "moderate" | "strong" }> | undefined;
         if (insightsOn && combined.series) {
@@ -507,6 +650,8 @@ export class Visual implements IVisual {
         const interactModel: CalendarModel = faceted ? { ...combined, days: drawnDays } : combined;
         this.tooltip.setContext(interactModel, colors, dark, anomalyMap, polarity, locale);
         this.tooltip.setBranding(s.branding.showBranding.value); // ZENTRIX-BRAND
+        // HC: draw rings in the OS foreground color so they stay visible; brand accent otherwise.
+        this.ringAccent = ctx.hc ? ctx.strongColor : STATE.accent;
         this.wireInteractions(interactModel, cells, s.accessibility.focusRing.value, locale);
     }
 
@@ -520,25 +665,32 @@ export class Visual implements IVisual {
             const now = new Date();
             const todayKey = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
             for (const d of model.days) {
-                if (d.date.getTime() === todayKey) drawTodayRing(this.todayGroup, box(d));
+                if (d.date.getTime() === todayKey) drawTodayRing(this.todayGroup, box(d), this.ringAccent);
             }
         }
 
-        // Selection state: dim cross-highlight + selected rings.
+        // Selection state: dim cross-highlight + selected rings. When the host has
+        // supplied a highlights[] array (another visual is cross-highlighting us) and
+        // the user has made no manual selection, honor that highlight dim instead —
+        // reusing the same opacity treatment (DECISION: host highlight ⊃ idle state).
         const applyState = () => {
             const isSelected = syncSelectionState(cells, this.selectionManager);
+            if (model.hasHighlights && !this.selectionManager.hasSelection()) applyHighlight(cells);
             this.selectedGroup.selectAll("*").remove();
-            cells.each((d) => { if (isSelected(d)) drawSelectedRing(this.selectedGroup, box(d)); });
+            cells.each((d) => { if (isSelected(d)) drawSelectedRing(this.selectedGroup, box(d), this.ringAccent); });
+            this.syncAriaSelected(cells, isSelected);
         };
+        // Always reflect persisted selection + host highlight (display-only, safe in
+        // read-only / edit mode). The cross-filter *inputs* are gated below.
+        applyState();
 
-        bindSelection(cells, this.selectionManager, applyState);
-        applyState(); // restore persisted selection on re-render
-
-        // Hover ring (transient overlay — no reflow) + custom Zentrix tooltip.
+        // Hover ring (transient overlay — no reflow) + custom Zentrix tooltip. Hover
+        // is display-only (no report state change) so it stays on even when the host
+        // disables interactions.
         cells
             .on("mouseenter", (e: MouseEvent, d: DayCell) => {
                 this.hoverGroup.selectAll("*").remove();
-                drawHoverRing(this.hoverGroup, box(d));
+                drawHoverRing(this.hoverGroup, box(d), this.ringAccent);
                 this.tooltip.show(d, e.clientX, e.clientY);
             })
             .on("mousemove", (e: MouseEvent) => this.tooltip.move(e.clientX, e.clientY))
@@ -547,7 +699,19 @@ export class Visual implements IVisual {
                 this.tooltip.hide();
             });
 
-        // Keyboard navigation + ARIA.
+        // Cross-filter inputs (click-select, keyboard nav/select, context menu) only
+        // when the host permits interactions — skipped in read-only / advanced edit.
+        if (this.interactive) this.bindCrossFilter(model, cells, applyState, focusRingEnabled, locale);
+    }
+
+    /** Wire the cross-filter *inputs* — click-select, keyboard navigation/select,
+     * and the keyboard/right-click context menu. Gated by this.interactive so the
+     * host's allowInteractions / advanced-edit signal is honored. */
+    private bindCrossFilter(
+        model: CalendarModel, cells: CellSel, applyState: () => void,
+        focusRingEnabled: boolean, locale: string,
+    ): void {
+        bindSelection(cells, this.selectionManager, applyState);
         bindKeyboard({
             cells, model, valueName: model.valueName, locale,
             onActivate: (d, multi) => {
@@ -555,11 +719,25 @@ export class Visual implements IVisual {
                 this.selectionManager.select(d.selectionId, multi).then(applyState);
             },
             onClear: () => this.selectionManager.clear().then(applyState),
+            onContextMenu: (d, node) => {
+                // Same host menu as right-click, anchored at the focused cell so the
+                // menu opens where the keyboard user is (rect.left / rect.bottom).
+                const rect = node.getBoundingClientRect();
+                this.selectionManager.showContextMenu(
+                    d.selectionId ?? ({} as powerbi.visuals.ISelectionId),
+                    { x: rect.left, y: rect.bottom });
+            },
             drawFocus: (d) => {
                 this.focusGroup.selectAll("*").remove();
-                if (d && focusRingEnabled) drawFocusRing(this.focusGroup, box(d));
+                if (d && focusRingEnabled) drawFocusRing(this.focusGroup, cellBox(d), this.ringAccent);
             },
         });
+    }
+
+    /** ARIA: reflect each cell's selection state for assistive tech (role="grid"
+     * wrapper is set in the constructor on the content group). */
+    private syncAriaSelected(cells: CellSel, isSelected: (d: DayCell) => boolean): void {
+        cells.attr("aria-selected", d => (isSelected(d) ? "true" : "false"));
     }
 
     /** Determine whether the required roles are present; null = ready to render. */
