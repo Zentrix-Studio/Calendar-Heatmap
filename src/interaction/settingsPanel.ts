@@ -16,6 +16,17 @@ function clone<T>(v: T): T {
     return v;
 }
 
+/** Serialize a slice's value into the shape persistProperties expects, by the
+ *  same kind-inference the settings sweep uses. Returns undefined for kinds we
+ *  can't persist (composite/unknown) so they are skipped, not corrupted. */
+function persistValue(slice: { value: unknown; items?: unknown[] }): powerbi.DataViewPropertyValue | undefined {
+    const v = slice.value as { value?: unknown } | boolean | number | string | null;
+    if (Array.isArray(slice.items)) return String((v as { value: unknown }).value);   // dropdown → item value
+    if (typeof v === "boolean" || typeof v === "number" || typeof v === "string") return v;
+    if (v && typeof v.value === "string") return { solid: { color: v.value } } as unknown as powerbi.DataViewPropertyValue; // color
+    return undefined;
+}
+
 /**
  * In-visual settings overlay. Thin host wrapper around the reusable Zentrix
  * Settings Bar: wires the live formatting model + persistProperties to the bar
@@ -101,8 +112,26 @@ export class SettingsOverlay {
         }));
         this.host.persistProperties({ removeObject } as unknown as powerbi.VisualObjectInstancesToPersist);
 
-        // Optimistic local revert: copy each slice's default value from a fresh model.
+        // UAT-1 (2026-07-15): Power BI Desktop silently ignores the removeObject op,
+        // so the revert above never reached the report — the next host render brought
+        // every pre-reset setting back. The merge path is the one persistence route
+        // proven to work in every host (all normal edits use it), so ALSO persist each
+        // slice's default value explicitly. Where removeObject IS honored this merge
+        // lands after it and the net state is identical (defaults). Iterates cards
+        // only — the notesStore blob is not a card, so annotations survive Reset.
         const defaults = new VisualFormattingSettingsModel();
+        const merge: { objectName: string; selector: null; properties: Record<string, powerbi.DataViewPropertyValue> }[] = [];
+        for (const card of defaults.cards as { name: string; slices?: { name: string; value: unknown; items?: unknown[] }[] }[]) {
+            const properties: Record<string, powerbi.DataViewPropertyValue> = {};
+            for (const slice of card.slices ?? []) {
+                const v = persistValue(slice);
+                if (v !== undefined) properties[slice.name] = v;
+            }
+            if (Object.keys(properties).length) merge.push({ objectName: card.name, selector: null, properties });
+        }
+        this.host.persistProperties({ merge } as unknown as powerbi.VisualObjectInstancesToPersist);
+
+        // Optimistic local revert: copy each slice's default value from a fresh model.
         const liveCards = this.settings.cards as { slices?: { value: unknown; name: string }[] }[];
         const defCards = defaults.cards as { slices?: { value: unknown; name: string }[] }[];
         liveCards.forEach((card, ci) => {

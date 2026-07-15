@@ -110,13 +110,24 @@ interface GridFit {
     footerH: number;
 }
 
+/** Left margin for the band year tags. Fiscal tags ("FY 2024") are ~2× wider than
+ * a bare year, and the tag shares its baseline row with the month rail — without
+ * extra margin it paints over the band's first month label (UAT-4). Estimated
+ * arithmetically (no getBBox: the render path must stay measurement-free). */
+function yearTagMargin(base: number, multiYear: boolean, fiscalStart: number, yearSize: number): number {
+    if (!multiYear || fiscalStart <= 1) return base;
+    return Math.max(base, Math.ceil("FY 0000".length * yearSize * 0.62) + 10);
+}
+
 /** Pure cell-size fit for the stacked-year grid. Mirrors renderGrid's geometry
  * exactly so the responsive planner can predict the size without drawing.
  * Width is paced by the column gap (gapX), height by the row gap (gapY). */
 function gridFit(bandsLen: number, maxWeeks: number, opts: GridOptions, width: number, height: number): GridFit {
     const { gapX, gapY } = opts;
     const multiYear = bandsLen > 1;
-    const marginLeft = opts.showWeekdayLabels ? 32 : (multiYear ? 30 : 2);
+    const marginLeft = yearTagMargin(
+        opts.showWeekdayLabels ? 32 : (multiYear ? 30 : 2),
+        multiYear, opts.fiscalStartMonth ?? 1, (opts.yearStyle ?? { size: 11 }).size);
     const headerH = (opts.showMonthLabels || multiYear) ? 16 : 2;
     // Week-number rail: a per-band footer strip (MVP-A). Folded into the fit so
     // the predictor reserves it BEFORE drawing — the same no-trial-render contract

@@ -821,7 +821,11 @@ export class Visual implements IVisual {
                 x: 2, y: height - insightsH + 2, width: width - 4,
                 font: "Segoe UI, -apple-system, sans-serif",
                 labelColor, textColor: strongColor,
-                toneColors: { positive: "#2EA043", negative: "#E5484D", neutral: s.header.ruleColor.value.value || "#7C5CFF" },
+                // UAT-5: in high contrast every mark maps to the host palette — the
+                // tone dots included, or they keep brand color on an HC background.
+                toneColors: hc
+                    ? { positive: palette.foreground.value, negative: palette.foreground.value, neutral: palette.foreground.value }
+                    : { positive: "#2EA043", negative: "#E5484D", neutral: s.header.ruleColor.value.value || "#7C5CFF" },
             });
         }
 
