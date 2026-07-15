@@ -473,6 +473,17 @@ export class ZentrixSettingsBar {
     private measure(): void {
         if (!this.vp || !this.row) return;
         this.clampBar();
+        // UAT-6c — shed bar chrome before paging eats the categories: on a tight
+        // tile the brand wordmark goes first, then the Reset LABEL (the icon and
+        // its title stay, so the affordance survives). Trial-fit: start full,
+        // escalate only while the category row still overflows, so the chrome
+        // returns by itself when the tile grows back.
+        if (this.bar) {
+            const over = () => this.row!.scrollWidth - this.vp!.clientWidth > 1;
+            this.bar.removeAttribute("data-compact");
+            if (over()) this.bar.setAttribute("data-compact", "brand");
+            if (over()) this.bar.setAttribute("data-compact", "reset");
+        }
         this.maxOffset = Math.max(0, this.row.scrollWidth - this.vp.clientWidth);
         this.offset = Math.min(this.offset, this.maxOffset);
         this.applyOffset();
@@ -1109,6 +1120,12 @@ const CSS = `
 /* min-width:0 lets the viewport shrink below its content inside the clamped bar
    (flex min-width:auto would otherwise refuse, and the bar would still overflow). */
 .zsb-viewport{ max-width:600px; min-width:0; overflow:hidden; }
+/* UAT-6c — compact chrome on tight tiles (set by measure()): the brand wordmark
+   sheds first, then the Reset label collapses to its icon. Dividers flanking the
+   brand go with it so the bar doesn't end in a stray rule. */
+.zsb-bar[data-compact] .zsb-brand, .zsb-bar[data-compact] .zsb-div:has(+ .zsb-brand){ display:none; }
+.zsb-bar[data-compact="reset"] .zsb-reset-label{ display:none; }
+.zsb-bar[data-compact="reset"] .zsb-reset{ padding:0 8px; }
 .zsb-page{ flex:none; width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:8px; cursor:pointer;
   padding:0; background:transparent; color:var(--tb-text); transition:background .14s,color .14s; }
 .zsb-page:hover{ background:var(--tb-pill-hover); color:var(--tb-text-strong); }
