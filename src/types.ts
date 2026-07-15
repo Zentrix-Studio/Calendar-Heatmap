@@ -26,6 +26,13 @@ export interface DayCell {
     selectionId: ISelectionId | null;
     /** Index into the source category (for highlights); -1 for no-data. */
     sourceIndex: number;
+    /** Aggregated highlight value when the host supplies a `values[].highlights[]`
+     * array (cross-highlight from another visual). null when this day is not part
+     * of the active highlight; undefined when no highlight is in effect. */
+    highlightValue?: number | null;
+    /** True when a highlight array is present AND this day is highlighted (non-null,
+     * non-zero). Drives the cross-highlight dim; undefined in the normal path. */
+    isHighlighted?: boolean;
     /** Pixel box assigned by the active renderer (continuous or month-block). */
     px?: number;
     py?: number;
@@ -76,6 +83,10 @@ export interface CalendarModel {
     targetName?: string;
     /** Total days in the data extent before any render cap was applied. */
     totalDays: number;
+    /** True when the host supplied a `values[].highlights[]` array (external
+     * cross-highlight active). Drives whether the render path dims un-highlighted
+     * cells; false/undefined = normal render, identical to the no-highlight path. */
+    hasHighlights?: boolean;
     /** Full (pre-cap) daily series for the insight engine; gaps as null. */
     series?: DailySeries;
 }

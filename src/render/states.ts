@@ -31,6 +31,18 @@ export function applyCrossHighlight(cells: CellSel, isSelected: (d: DayCell) => 
     cells.attr("fill-opacity", d => (!anySelected ? 1 : isSelected(d) ? 1 : STATE.dimOpacity));
 }
 
+/**
+ * Host-driven highlight (capabilities `supportsHighlight`): when another visual
+ * cross-highlights this one, the host populates `values[].highlights[]` and each
+ * DayCell carries `isHighlighted`. Reuses the exact dimming treatment as the
+ * selection cross-highlight so the two read identically. Only called when a
+ * highlights array is present (model.hasHighlights) — the no-highlight render
+ * never touches fill-opacity, keeping existing behavior/snapshots intact.
+ */
+export function applyHighlight(cells: CellSel): void {
+    applyCrossHighlight(cells, d => d.isHighlighted === true, true);
+}
+
 function ring(overlay: GroupSel, box: CellBox, opts: {
     grow: number; stroke: string; width: number; radius: number; dash?: string;
 }): void {

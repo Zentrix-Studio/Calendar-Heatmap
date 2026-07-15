@@ -34,7 +34,7 @@ import { renderInsights } from "./render/insights";
 import { computeInsights, computeAnomalies, DEFAULT_INSIGHT_CONFIG, Polarity } from "./insights";
 import {
     cellBox, drawTodayRing, drawHoverRing, drawSelectedRing, drawFocusRing, drawBadge, drawNoDataHairline,
-    drawRuleOutline,
+    drawRuleOutline, applyHighlight,
 } from "./render/states";
 import { renderAnnotations, NoteAnchor } from "./render/annotations";
 import { renderSummaryTable } from "./render/summaryTable";
@@ -919,9 +919,13 @@ export class Visual implements IVisual {
             }
         }
 
-        // Selection state: dim cross-highlight + selected rings.
+        // Selection state: dim cross-highlight + selected rings. When the host is
+        // cross-highlighting this visual (values[].highlights[]) and the user has made
+        // no manual selection, honor that highlight dim instead — same opacity
+        // treatment, so host highlight ⊃ idle state (capabilities supportsHighlight).
         const applyState = () => {
             const isSelected = syncSelectionState(cells, this.selectionManager);
+            if (model.hasHighlights && !this.selectionManager.hasSelection()) applyHighlight(cells);
             this.selectedGroup.selectAll("*").remove();
             cells.each((d) => { if (isSelected(d)) drawSelectedRing(this.selectedGroup, box(d)); });
         };
@@ -978,6 +982,14 @@ export class Visual implements IVisual {
                 if (panelEnabled && !multi) this.toggleDetailPanel(d, origin, true);
             },
             onClear: () => this.selectionManager.clear().then(applyState),
+            onContextMenu: (d, node) => {
+                // Same host menu as right-click, anchored at the focused cell so the
+                // menu opens where the keyboard user is (rect.left / rect.bottom).
+                const rect = node.getBoundingClientRect();
+                this.selectionManager.showContextMenu(
+                    d.selectionId ?? ({} as powerbi.visuals.ISelectionId),
+                    { x: rect.left, y: rect.bottom });
+            },
             drawFocus: (d) => {
                 this.focusGroup.selectAll("*").remove();
                 if (d && focusRingEnabled) drawFocusRing(this.focusGroup, box(d));

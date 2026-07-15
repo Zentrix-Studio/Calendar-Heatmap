@@ -18,7 +18,7 @@ function makeCells(): { cells: any; model: CalendarModel; nodes: SVGRectElement[
     const cells = g.selectAll("rect").data(days).enter().append("rect").classed("cell", true) as any;
     const model: CalendarModel = {
         days, monthLabels: [], range: [D(0, 1), D(0, 2)], valueDomain: [1, 2],
-        weeks: 1, hasToday: false, valueName: "Sales", totalDays: 2,
+        weeks: 1, hasToday: false, valueName: "Sales", aggMode: "sum", totalDays: 2,
     };
     return { cells, model, nodes: cells.nodes() };
 }
