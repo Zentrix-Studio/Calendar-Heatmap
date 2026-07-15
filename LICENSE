@@ -1,0 +1,25 @@
+Zentrix Calendar Heatmap — Proprietary License
+
+Copyright (c) 2026 Anuj Kumar (Zentrix Studio). All rights reserved.
+
+This repository's source code is made publicly viewable solely to support
+Microsoft AppSource / Power BI certification review and user transparency.
+Public visibility does NOT grant any license to the code.
+
+PERMITTED
+- Viewing the source code, and forking on GitHub to the extent GitHub's
+  Terms of Service require, for inspection purposes only.
+- Installing and using the compiled visual as distributed through Microsoft
+  AppSource, under the terms presented there.
+
+NOT PERMITTED without prior written permission from the copyright holder
+- Copying, reusing, or incorporating any part of this code into other software.
+- Modifying, creating derivative works, redistributing, republishing, or
+  selling this code or any visual built from it, in whole or in part.
+- Publishing this visual (or a derivative) to any marketplace.
+
+This software is provided "as is", without warranty of any kind, express or
+implied. In no event shall the copyright holder be liable for any claim,
+damages, or other liability arising from the software or its use.
+
+Contact: support@zentrixstudio.in · https://zentrixstudio.in
