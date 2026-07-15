@@ -388,7 +388,9 @@ export class ZentrixSettingsBar {
 
         this.offset = 0; this.measure();
         this.ro = new ResizeObserver(() => this.measure());
-        this.ro.observe(this.vp); this.ro.observe(this.row);
+        // Observing the host re-clamps the bar when the TILE resizes (UAT-6b),
+        // not just when the bar's own content changes.
+        this.ro.observe(this.vp); this.ro.observe(this.row); this.ro.observe(this.host);
         this.onDoc = (e) => {
             if (!this.bar || this.bar.contains(e.target as Node)) return;
             if (this.opts.closeOnAway) this.collapse(); else this.closePop();
@@ -458,8 +460,19 @@ export class ZentrixSettingsBar {
     }
 
     /* ---- paging ---- */
+    /** UAT-6b — clamp the bar to the MEASURED root width. The CSS 100vw clamp is
+     *  only a first-paint fallback: hosts exist where the sandbox viewport is not
+     *  the tile (Desktop scaling/zoom), and the anchor already sits 18px in from
+     *  the side. Inline max-width wins over the CSS rule; the shrunken viewport
+     *  is what engages the paging chevrons instead of the bar clipping. */
+    private clampBar(): void {
+        if (!this.bar) return;
+        const w = this.host.clientWidth;
+        if (w > 0) this.bar.style.maxWidth = `${Math.max(120, w - 26)}px`;
+    }
     private measure(): void {
         if (!this.vp || !this.row) return;
+        this.clampBar();
         this.maxOffset = Math.max(0, this.row.scrollWidth - this.vp.clientWidth);
         this.offset = Math.min(this.offset, this.maxOffset);
         this.applyOffset();
