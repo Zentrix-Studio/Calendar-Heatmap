@@ -4,8 +4,8 @@ import { CellSel } from "../render/grid";
 import { CalendarModel, DayCell } from "../types";
 
 /** ARIA label for one cell — date + value (or "no data"). */
-export function ariaLabel(d: DayCell, valueName: string, locale = "en-US"): string {
-    const date = d.date.toLocaleDateString(locale, {
+export function ariaLabel(d: DayCell, valueName: string): string {
+    const date = d.date.toLocaleDateString(undefined, {
         weekday: "long", year: "numeric", month: "long", day: "numeric",
     });
     return d.noData || d.value == null ? `${date}: no data` : `${date}: ${valueName} ${d.value}`;
@@ -20,11 +20,6 @@ export interface KeyboardParams {
     onClear: () => void;
     /** Draw the focus ring for a day, or clear it when null. */
     drawFocus: (d: DayCell | null) => void;
-    /** Open the host context menu for the focused day, anchored at its DOM node
-     * (ContextMenu key / Shift+F10). Mirrors the right-click path. */
-    onContextMenu?: (d: DayCell, node: SVGElement) => void;
-    /** BCP-47 locale for ARIA date text (from the Power BI host). */
-    locale?: string;
 }
 
 /**
@@ -44,7 +39,7 @@ export function bindKeyboard(p: KeyboardParams): void {
     p.cells
         .attr("role", "gridcell")
         .attr("tabindex", (_d, i) => (i === 0 ? 0 : -1))
-        .attr("aria-label", d => ariaLabel(d, p.valueName, p.locale));
+        .attr("aria-label", d => ariaLabel(d, p.valueName));
 
     const focusIndex = (i: number): void => {
         if (i < 0 || i >= nodes.length) return;
@@ -76,12 +71,6 @@ export function bindKeyboard(p: KeyboardParams): void {
             case "Escape":
                 p.onClear();
                 p.drawFocus(null);
-                return;
-            case "ContextMenu":
-            case "F10": // Shift+F10 is the canonical "open context menu" shortcut.
-                if (event.key === "F10" && !event.shiftKey) return;
-                event.preventDefault();
-                if (p.onContextMenu) p.onContextMenu(d, event.currentTarget as SVGElement);
                 return;
             default:
                 return;

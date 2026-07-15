@@ -128,7 +128,7 @@ export function renderFacets(group: GroupSel, facets: Facet[], o: FacetLayoutOpt
     // Union of every panel's cells (datum already bound at creation).
     const cells = group.selectAll<SVGRectElement, DayCell>("rect.cell");
     const geo: GridGeometry = {
-        size: 0, step: 0,
+        size: 0, stepX: 0, stepY: 0,
         marginLeft: region.x, marginTop: region.y,
         gridWidth: region.w, gridHeight: region.h,
     };

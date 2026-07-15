@@ -67,3 +67,50 @@ describe("KPI header — peak-day chip", () => {
         expect(peak).toMatch(/\b20\d{2}\b/); // year present (locale-robust)
     });
 });
+
+/** Render the header with align=right and return all text nodes as {x, y, text, anchor}. */
+function renderHeaderRightAlign(): { x: number; text: string; anchor: string | null }[] {
+    const svg = select(document.body).append("svg");
+    const g = svg.append("g");
+    const WIDTH = 600;
+    renderHeader(g as any, mockModel(), {
+        width: WIDTH, title: "Sum of SLA Breaches", align: "right",
+        headline: defaultText(13), stat: defaultText(12),
+        ruleShow: false, ruleColor: "#7C5CFF", ruleWidth: 2,
+        textColor: "#1A1A22", mutedColor: "#70707F", showChips: true,
+    });
+    const out = g.selectAll<SVGTextElement, unknown>("text").nodes()
+        .map(n => ({
+            x: +(n.getAttribute("x") ?? "0"),
+            text: n.textContent ?? "",
+            anchor: n.getAttribute("text-anchor"),
+        }));
+    svg.remove();
+    return out;
+}
+
+describe("KPI header — right-align no overlap (B3.1)", () => {
+    test("title has text-anchor=end at the right edge (width-2)", () => {
+        const WIDTH = 600;
+        const nodes = renderHeaderRightAlign();
+        const title = nodes.find(n => n.text === "Sum of SLA Breaches");
+        expect(title).toBeDefined();
+        expect(title!.anchor).toBe("end");
+        expect(title!.x).toBe(WIDTH - 2);
+    });
+
+    test("chip block starts from the left (x ≈ 2, no chip x > width/2)", () => {
+        const WIDTH = 600;
+        const nodes = renderHeaderRightAlign();
+        // Chips are the non-title text nodes (labels + values).
+        const chips = nodes.filter(n => n.text !== "Sum of SLA Breaches");
+        expect(chips.length).toBeGreaterThan(0);
+        // All chips must start well to the left so they don't reach the right-anchored title.
+        // At align=right: chips start at cx=2 and grow rightward.
+        const minX = Math.min(...chips.map(c => c.x));
+        expect(minX).toBeGreaterThanOrEqual(2);
+        // No chip should overlap the right half where the title lives.
+        const maxX = Math.max(...chips.map(c => c.x));
+        expect(maxX).toBeLessThan(WIDTH / 2);
+    });
+});

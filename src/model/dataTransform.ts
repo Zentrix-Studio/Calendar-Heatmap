@@ -6,11 +6,11 @@ import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
 import DataViewValueColumn = powerbi.DataViewValueColumn;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 
-import { CalendarModel, DayCell, MonthLabel, Facet, FacetedRender } from "../types";
+import { CalendarModel, DayCell, MonthLabel, Facet, FacetedRender, AggregationMode } from "../types";
 import { enumerateDays, layout, monthLabels } from "./dateGrid";
 import { extractSeries } from "../insights/series";
 
-export type AggregationMode = "sum" | "avg" | "min" | "max" | "count";
+export type { AggregationMode };
 
 /** Render cap: beyond ~6 years, render the most recent window and surface a
  * "showing N of M" note (spec §8 — no silent truncation). */
@@ -55,7 +55,9 @@ export function aggregateByDay(
 
     for (let i = 0; i < dates.length; i++) {
         const v = values[i];
-        if (v == null || isNaN(v)) continue;
+        // Non-finite (NaN/±Infinity) is unusable for aggregation AND poisons the
+        // vMin/vMax color domain downstream (QA-01) — treat it exactly like null.
+        if (v == null || !Number.isFinite(v)) continue;
         const k = dayKey(dates[i]);
         if (!firsts.has(k)) firsts.set(k, i);
         sums.set(k, (sums.get(k) ?? 0) + v);
@@ -85,10 +87,6 @@ interface ParsedRow {
     date: Date;
     value: number;        // NaN when null/blank
     target: number;       // NaN when no Target field or blank
-    /** Highlight value for this row from `values[].highlights[]`; NaN when the host
-     * supplied no highlight array (the normal, non-cross-highlighted render). */
-    highlight: number;
-    annotation?: string;  // Annotation note, if any
     category?: string;    // Split-by value, if the role is bound
     /** Index into the original DataView columns — for selection IDs & tooltip reads. */
     origIndex: number;
@@ -102,10 +100,6 @@ interface ParsedDataView {
     targetColumn: DataViewValueColumn | null;
     tooltipColumns: DataViewValueColumn[];
     categoryColumn: DataViewCategoryColumn | null;
-    /** True when the host supplied a `values[].highlights[]` array on the Value
-     * column (cross-highlight is active). When false, the render path is identical
-     * to today — no dimming, no highlight model fields. */
-    hasHighlights: boolean;
 }
 
 function findCategory(dataView: DataView, role: string): DataViewCategoryColumn | null {
@@ -120,14 +114,7 @@ function parseDataView(dataView: DataView): ParsedDataView | null {
 
     const targetColumn = dataView.categorical?.values?.find(v => v.source.roles?.["target"]) ?? null;
     const tooltipColumns = (dataView.categorical?.values ?? []).filter(v => v.source.roles?.["tooltips"]);
-    const annotationColumn = findCategory(dataView, "annotation");
     const categoryColumn = findCategory(dataView, "category");
-
-    // capabilities.json declares supportsHighlight:true, so the host supplies a
-    // parallel highlights[] on the Value column when another visual cross-highlights
-    // this one. Absent that interaction the array is undefined → normal render.
-    const highlights = valueColumn.highlights;
-    const hasHighlights = !!highlights;
 
     const rows: ParsedRow[] = [];
     const rawDates = dateCategory.values;
@@ -136,20 +123,16 @@ function parseDataView(dataView: DataView): ParsedDataView | null {
         if (date == null) continue;
         const v = valueColumn.values[i];
         const t = targetColumn ? targetColumn.values[i] : null;
-        const h = highlights ? highlights[i] : null;
-        const ann = annotationColumn ? annotationColumn.values[i] : null;
         const cat = categoryColumn ? categoryColumn.values[i] : null;
         rows.push({
             date,
             value: v == null ? NaN : Number(v),
             target: t == null ? NaN : Number(t),
-            highlight: h == null ? NaN : Number(h),
-            annotation: ann == null || ann === "" ? undefined : String(ann),
             category: categoryColumn ? (cat == null ? "" : String(cat)) : undefined,
             origIndex: i,
         });
     }
-    return { rows, dateCategory, valueColumn, targetColumn, tooltipColumns, categoryColumn, hasHighlights };
+    return { rows, dateCategory, valueColumn, targetColumn, tooltipColumns, categoryColumn };
 }
 
 /** Inclusive [min,max] day extent over a set of rows (assumes non-empty). */
@@ -198,9 +181,6 @@ function assembleModel(a: AssembleParams): CalendarModel {
     const dates = rows.map(r => r.date);
     const byDay = aggregateByDay(dates, rows.map(r => r.value), aggMode);
     const targetByDay = p.targetColumn ? aggregateByDay(dates, rows.map(r => r.target), aggMode) : null;
-    // Highlights ride the same aggregation as the value so a day's highlight reads
-    // in the same units as its color. Only built when the host supplied the array.
-    const highlightByDay = p.hasHighlights ? aggregateByDay(dates, rows.map(r => r.highlight), aggMode) : null;
 
     const { rows: gridRows, cols, weeks } = layout(gridDays, firstDayOfWeek);
     const labels: MonthLabel[] = monthLabels(gridDays, cols);
@@ -222,19 +202,12 @@ function assembleModel(a: AssembleParams): CalendarModel {
         }));
         const tAgg = targetByDay?.get(date.getTime());
         const target = noData || !tAgg ? null : tAgg.value;
-        const annotation = noData ? undefined : rows[agg!.firstIndex].annotation;
-        // Highlight: when the host supplied a highlights[] array, a day is
-        // highlighted iff its aggregated highlight is present and non-zero.
-        const hAgg = highlightByDay?.get(date.getTime());
-        const highlightValue = !highlightByDay ? undefined : (noData || !hAgg ? null : hAgg.value);
-        const isHighlighted = !highlightByDay ? undefined : (highlightValue != null && highlightValue !== 0);
         return {
             date, value, noData,
             col: cols[i], row: gridRows[i],
             selectionId,
             sourceIndex: origIndex,
-            highlightValue, isHighlighted,
-            tooltips, target, annotation,
+            tooltips, target,
             facetKey: a.facetKey,
             facetIndex: a.facetIndex ?? 0,
         };
@@ -264,10 +237,10 @@ function assembleModel(a: AssembleParams): CalendarModel {
         valueDomain: [vMin === Infinity ? 0 : vMin, vMax === -Infinity ? 0 : vMax],
         weeks, hasToday,
         valueName: p.valueColumn.source.displayName,
+        aggMode,
         targetName: p.targetColumn?.source.displayName,
         totalDays,
         series,
-        hasHighlights: p.hasHighlights,
     };
 }
 

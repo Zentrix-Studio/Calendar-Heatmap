@@ -7,14 +7,16 @@
     "pbiviz": "pbiviz",
     "start": "pbiviz start",
     "package": "pbiviz package",
+    "tokens:check": "node scripts/check-tokens.mjs",
+    "sync-tokens:check": "node scripts/check-tokens.mjs",
+    "sync-tokens": "node scripts/sync-tokens.mjs",
     "lint": "npx eslint .",
+    "eslint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "jest",
     "test:sweep": "jest settingsSweep",
     "test:update": "jest -u",
     "harness": "npx esbuild harness/preview.ts --bundle --outfile=harness/preview.js && npx esbuild harness/hero.ts --bundle --outfile=harness/hero.js && npx esbuild harness/landing.ts --bundle --outfile=harness/landing.js",
-    "autotest:build": "npx esbuild autotest/entry.ts --bundle --format=iife --loader:.less=empty --outfile=autotest/bundle.js",
-    "autotest": "npm run autotest:build && node autotest/run.mjs",
-    "autotest:settings": "npm run autotest:build && node autotest/settings.mjs"
+    "bundle:vizhub": "npx esbuild harness/playgroundAdapter.ts --bundle --format=iife --outfile=../../../../vizHUB/public/visuals/calendar-heatmap.bundle.js --loader:.less=text"
   },
   "dependencies": {
     "@types/d3": "7.4.3",
@@ -35,5 +37,10 @@
     "powerbi-visuals-tools": "^7.1.0",
     "ts-jest": "^29.4.11",
     "typescript": "5.5.4"
+  },
+  "overrides": {
+    "sockjs": {
+      "uuid": "^11.1.1"
+    }
   }
 }

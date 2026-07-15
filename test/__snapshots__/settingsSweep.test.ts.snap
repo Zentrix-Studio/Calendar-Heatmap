@@ -10,17 +10,17 @@ exports[`settings sweep (single grid) accessibility.focusRing → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -34,17 +34,113 @@ exports[`settings sweep (single grid) accessibility.patternOnThreshold → true 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 2736,
+  "circles": 5,
+  "lines": 5,
   "paths": 0,
-  "rects": 736,
+  "rects": 738,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) accessibility.patternStyle → Crosshatch 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) accessibility.patternStyle → Dots 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) accessibility.patternStyle → Grid 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) accessibility.patternStyle → Stars 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
 }
 `;
 
@@ -58,17 +154,17 @@ exports[`settings sweep (single grid) accessibility.patternThresholdValue → 1 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 2320,
+  "circles": 5,
+  "lines": 5,
   "paths": 0,
-  "rects": 684,
+  "rects": 686,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -82,10 +178,202 @@ exports[`settings sweep (single grid) accessibility.patternThresholdValue → 2 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 2192,
+  "circles": 5,
+  "lines": 5,
   "paths": 0,
-  "rects": 668,
+  "rects": 670,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) annotations.defaultMode → Marker + text + arrow 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) annotations.defaultMode → Text + arrow 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) annotations.defaultMode → Text 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) annotations.markerColor → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) annotations.markerIcon → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) annotations.markerStyle → Dot 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 24,
+}
+`;
+
+exports[`settings sweep (single grid) annotations.markerStyle → Icon 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) annotations.show → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 3,
+  "lines": 0,
+  "paths": 0,
+  "rects": 394,
   "text0": [
     "Jan",
     "Feb",
@@ -106,17 +394,17 @@ exports[`settings sweep (single grid) badges.peakEmoji → "ZTEST" 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 365,
+  "texts": 367,
 }
 `;
 
@@ -130,17 +418,1385 @@ exports[`settings sweep (single grid) badges.peakOn → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 23,
+  "texts": 26,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Badge → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1CompareTo → Value − Target 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Name → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1On → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Operator → < 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Operator → = 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Operator → > 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Operator → between 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Operator → ≤ 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Pattern → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 5,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1PatternStyle → Crosshatch 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 8,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1PatternStyle → Dots 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 6,
+  "lines": 2,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1PatternStyle → Grid 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 4,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1PatternStyle → Stars 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 6,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Value → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Value → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Value2 → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule1Value2 → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Badge → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2CompareTo → Value − Target 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Name → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2On → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Operator → < 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Operator → = 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Operator → > 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Operator → between 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Operator → ≤ 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Pattern → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 5,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2PatternStyle → Crosshatch 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 8,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2PatternStyle → Dots 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 6,
+  "lines": 2,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2PatternStyle → Grid 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 4,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2PatternStyle → Stars 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 6,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Value → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Value → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Value2 → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule2Value2 → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Badge → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Color → #E5484D 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3CompareTo → Value − Target 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Name → "ZTEST" 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3On → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 738,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Operator → < 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Operator → = 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Operator → > 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Operator → between 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Operator → ≤ 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Pattern → true 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 5,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3PatternStyle → Crosshatch 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 8,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3PatternStyle → Dots 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 6,
+  "lines": 2,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3PatternStyle → Grid 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 4,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3PatternStyle → Stars 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 6,
+  "paths": 0,
+  "rects": 1080,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Value → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Value → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Value2 → 1 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
+}
+`;
+
+exports[`settings sweep (single grid) badges.rule3Value2 → 2 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 367,
 }
 `;
 
@@ -154,17 +1810,17 @@ exports[`settings sweep (single grid) badges.thresholdEmoji → "ZTEST" 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 365,
+  "texts": 367,
 }
 `;
 
@@ -178,17 +1834,17 @@ exports[`settings sweep (single grid) badges.thresholdOn → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 364,
+  "texts": 367,
 }
 `;
 
@@ -202,17 +1858,17 @@ exports[`settings sweep (single grid) badges.thresholdValue → 1 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 313,
+  "texts": 315,
 }
 `;
 
@@ -226,17 +1882,17 @@ exports[`settings sweep (single grid) badges.thresholdValue → 2 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 297,
+  "texts": 299,
 }
 `;
 
@@ -250,21 +1906,21 @@ exports[`settings sweep (single grid) branding.showBranding → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
-exports[`settings sweep (single grid) cells.cellGap → 4 1`] = `
+exports[`settings sweep (single grid) cells.cellGapX → 4 1`] = `
 {
   "cell0": {
     "fill": "rgb(154, 126, 244)",
@@ -274,21 +1930,21 @@ exports[`settings sweep (single grid) cells.cellGap → 4 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
-exports[`settings sweep (single grid) cells.cellGap → 6 1`] = `
+exports[`settings sweep (single grid) cells.cellGapX → 6 1`] = `
 {
   "cell0": {
     "fill": "rgb(154, 126, 244)",
@@ -298,17 +1954,65 @@ exports[`settings sweep (single grid) cells.cellGap → 6 1`] = `
     "y": "156.6320754716981",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) cells.cellGapY → 4 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) cells.cellGapY → 6 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
 }
 `;
 
@@ -322,17 +2026,17 @@ exports[`settings sweep (single grid) cells.cellSize → 23 1`] = `
     "y": "156",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -346,17 +2050,17 @@ exports[`settings sweep (single grid) cells.cellSize → 44 1`] = `
     "y": "155.16037735849056",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -370,17 +2074,17 @@ exports[`settings sweep (single grid) cells.cornerRadius → 3 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -388,23 +2092,23 @@ exports[`settings sweep (single grid) cells.cornerRadius → 4 1`] = `
 {
   "cell0": {
     "fill": "rgb(154, 126, 244)",
-    "rx": "3.96",
+    "rx": "4",
     "w": "22",
     "x": "103",
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -418,17 +2122,17 @@ exports[`settings sweep (single grid) colors.bucketCount → 3 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 392,
+  "rects": 394,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -442,17 +2146,17 @@ exports[`settings sweep (single grid) colors.bucketCount → 7 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 396,
+  "rects": 398,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -466,17 +2170,17 @@ exports[`settings sweep (single grid) colors.bucketCount → Continuous 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 390,
+  "rects": 392,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -490,17 +2194,17 @@ exports[`settings sweep (single grid) colors.endColor → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -514,17 +2218,17 @@ exports[`settings sweep (single grid) colors.noDataColor → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -538,17 +2242,17 @@ exports[`settings sweep (single grid) colors.paletteMode → Duotone 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -562,17 +2266,17 @@ exports[`settings sweep (single grid) colors.paletteMode → Mono 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -586,17 +2290,17 @@ exports[`settings sweep (single grid) colors.paletteMode → Report theme 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -610,17 +2314,17 @@ exports[`settings sweep (single grid) colors.paletteMode → Split 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -634,17 +2338,17 @@ exports[`settings sweep (single grid) colors.ramp → Colorblind-safe 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -658,17 +2362,17 @@ exports[`settings sweep (single grid) colors.ramp → Forest 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -682,17 +2386,17 @@ exports[`settings sweep (single grid) colors.ramp → Magma 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -706,17 +2410,17 @@ exports[`settings sweep (single grid) colors.ramp → Ocean 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -730,17 +2434,17 @@ exports[`settings sweep (single grid) colors.ramp → Viridis 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -754,17 +2458,17 @@ exports[`settings sweep (single grid) colors.scaleMode → Linear 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -778,17 +2482,17 @@ exports[`settings sweep (single grid) colors.scaleMode → Log 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -802,17 +2506,17 @@ exports[`settings sweep (single grid) colors.splitHigh → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -826,17 +2530,17 @@ exports[`settings sweep (single grid) colors.splitLow → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -850,17 +2554,17 @@ exports[`settings sweep (single grid) colors.splitMid → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -874,17 +2578,17 @@ exports[`settings sweep (single grid) colors.startColor → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -898,17 +2602,17 @@ exports[`settings sweep (single grid) dataDisplay.aggregation → Average 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -922,17 +2626,17 @@ exports[`settings sweep (single grid) dataDisplay.aggregation → Count 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -946,17 +2650,17 @@ exports[`settings sweep (single grid) dataDisplay.aggregation → Max 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -970,17 +2674,17 @@ exports[`settings sweep (single grid) dataDisplay.aggregation → Min 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -994,17 +2698,17 @@ exports[`settings sweep (single grid) dataDisplay.firstDayOfWeek → Monday 1`] 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1018,17 +2722,113 @@ exports[`settings sweep (single grid) dataDisplay.layout → Month blocks 1`] = 
     "y": "76.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 19,
+  "texts": 22,
+}
+`;
+
+exports[`settings sweep (single grid) dayDetail.enabled → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) dayDetail.position → Bottom 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) dayDetail.position → Right 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
+}
+`;
+
+exports[`settings sweep (single grid) dayDetail.showTopContributor → false 1`] = `
+{
+  "cell0": {
+    "fill": "rgb(154, 126, 244)",
+    "rx": "2",
+    "w": "22",
+    "x": "103",
+    "y": "156.5",
+  },
+  "cells": 365,
+  "circles": 5,
+  "lines": 2,
+  "paths": 0,
+  "rects": 396,
+  "text0": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+  ],
+  "texts": 25,
 }
 `;
 
@@ -1042,17 +2842,17 @@ exports[`settings sweep (single grid) facetTitle.bold → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1066,17 +2866,17 @@ exports[`settings sweep (single grid) facetTitle.color → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1090,17 +2890,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Arial 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1114,17 +2914,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Bahnschrift 1`] 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1138,17 +2938,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Calibri 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1162,17 +2962,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Cambria 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1186,17 +2986,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Candara 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1210,17 +3010,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Cascadia Code 1`
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1234,17 +3034,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Consolas 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1258,17 +3058,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → DIN 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1282,17 +3082,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Georgia 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1306,17 +3106,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Helvetica Neue 1
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1330,17 +3130,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Inter 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1354,17 +3154,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Roboto 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1378,17 +3178,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Segoe UI Variabl
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1402,17 +3202,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → System UI 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1426,17 +3226,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Tahoma 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1450,17 +3250,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Trebuchet 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1474,17 +3274,17 @@ exports[`settings sweep (single grid) facetTitle.fontFamily → Verdana 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1498,17 +3298,17 @@ exports[`settings sweep (single grid) facetTitle.fontSize → 12 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1522,17 +3322,17 @@ exports[`settings sweep (single grid) facetTitle.fontSize → 22 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1546,17 +3346,17 @@ exports[`settings sweep (single grid) facetTitle.italic → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1570,17 +3370,17 @@ exports[`settings sweep (single grid) facetTitle.underline → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -1594,17 +3394,17 @@ exports[`settings sweep (single grid) header.align → Center 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1618,17 +3418,17 @@ exports[`settings sweep (single grid) header.align → Right 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
-    "Peak day",
-    "396 | Jan 6, 2025",
     "Total",
+    "28.5K",
+    "Peak day",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1642,17 +3442,17 @@ exports[`settings sweep (single grid) header.ruleColor → #E5484D 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1666,17 +3466,17 @@ exports[`settings sweep (single grid) header.ruleShow → false 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1690,17 +3490,17 @@ exports[`settings sweep (single grid) header.ruleWidth → 3 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1714,17 +3514,17 @@ exports[`settings sweep (single grid) header.ruleWidth → 4 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1738,17 +3538,17 @@ exports[`settings sweep (single grid) header.titleText → "ZTEST" 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "ZTEST",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1762,17 +3562,17 @@ exports[`settings sweep (single grid) headline.bold → false 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1786,17 +3586,17 @@ exports[`settings sweep (single grid) headline.color → #E5484D 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1810,17 +3610,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Arial 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1834,17 +3634,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Bahnschrift 1`] = 
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1858,17 +3658,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Calibri 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1882,17 +3682,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Cambria 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1906,17 +3706,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Candara 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1930,17 +3730,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Cascadia Code 1`] 
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1954,17 +3754,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Consolas 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -1978,17 +3778,17 @@ exports[`settings sweep (single grid) headline.fontFamily → DIN 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2002,17 +3802,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Georgia 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2026,17 +3826,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Helvetica Neue 1`]
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2050,17 +3850,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Inter 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2074,17 +3874,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Roboto 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2098,17 +3898,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Segoe UI Variable 
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2122,17 +3922,17 @@ exports[`settings sweep (single grid) headline.fontFamily → System UI 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2146,17 +3946,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Tahoma 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2170,17 +3970,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Trebuchet 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2194,17 +3994,17 @@ exports[`settings sweep (single grid) headline.fontFamily → Verdana 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2218,17 +4018,17 @@ exports[`settings sweep (single grid) headline.fontSize → 16 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2242,17 +4042,17 @@ exports[`settings sweep (single grid) headline.fontSize → 30 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2266,17 +4066,17 @@ exports[`settings sweep (single grid) headline.italic → true 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2290,17 +4090,17 @@ exports[`settings sweep (single grid) headline.underline → true 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2314,17 +4114,17 @@ exports[`settings sweep (single grid) insights.count → 4 1`] = `
     "y": "147.5",
   },
   "cells": 365,
-  "circles": 4,
-  "lines": 0,
+  "circles": 6,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 23,
+  "texts": 26,
 }
 `;
 
@@ -2338,17 +4138,17 @@ exports[`settings sweep (single grid) insights.count → 6 1`] = `
     "y": "129.5",
   },
   "cells": 365,
-  "circles": 6,
-  "lines": 0,
+  "circles": 8,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 25,
+  "texts": 28,
 }
 `;
 
@@ -2362,17 +4162,17 @@ exports[`settings sweep (single grid) insights.polarity → Bad (less is better)
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2386,17 +4186,17 @@ exports[`settings sweep (single grid) insights.polarity → Good (more is better
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2410,17 +4210,17 @@ exports[`settings sweep (single grid) insights.show → false 1`] = `
     "y": "195.5",
   },
   "cells": 365,
-  "circles": 0,
-  "lines": 0,
+  "circles": 2,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 18,
+  "texts": 21,
 }
 `;
 
@@ -2434,17 +4234,17 @@ exports[`settings sweep (single grid) labels.showHeader → true 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -2458,17 +4258,17 @@ exports[`settings sweep (single grid) labels.showMonthLabels → false 1`] = `
     "y": "149.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Mon",
     "Wed",
     "Fri",
     "Less",
   ],
-  "texts": 10,
+  "texts": 13,
 }
 `;
 
@@ -2482,17 +4282,17 @@ exports[`settings sweep (single grid) labels.showWeekdayLabels → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 19,
+  "texts": 22,
 }
 `;
 
@@ -2506,17 +4306,17 @@ exports[`settings sweep (single grid) legend.align → Center 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2530,17 +4330,17 @@ exports[`settings sweep (single grid) legend.align → Right 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2554,17 +4354,17 @@ exports[`settings sweep (single grid) legend.gradientLength → 121 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 390,
+  "rects": 392,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2578,17 +4378,17 @@ exports[`settings sweep (single grid) legend.gradientLength → 240 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 390,
+  "rects": 392,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2602,17 +4402,17 @@ exports[`settings sweep (single grid) legend.lessLabel → "ZTEST" 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2626,17 +4426,17 @@ exports[`settings sweep (single grid) legend.moreLabel → "ZTEST" 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2650,17 +4450,17 @@ exports[`settings sweep (single grid) legend.noDataSide → Left 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2674,17 +4474,17 @@ exports[`settings sweep (single grid) legend.position → Top 1`] = `
     "y": "179.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2698,17 +4498,17 @@ exports[`settings sweep (single grid) legend.show → false 1`] = `
     "y": "168",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 388,
+  "rects": 390,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 19,
+  "texts": 22,
 }
 `;
 
@@ -2722,17 +4522,17 @@ exports[`settings sweep (single grid) legend.showLabels → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 20,
+  "texts": 23,
 }
 `;
 
@@ -2746,17 +4546,17 @@ exports[`settings sweep (single grid) legend.showNoData → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 393,
+  "rects": 395,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 21,
+  "texts": 24,
 }
 `;
 
@@ -2770,17 +4570,17 @@ exports[`settings sweep (single grid) legend.swatchSize → 12 1`] = `
     "y": "156",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2794,17 +4594,17 @@ exports[`settings sweep (single grid) legend.swatchSize → 22 1`] = `
     "y": "151",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2818,17 +4618,17 @@ exports[`settings sweep (single grid) legend.title → "ZTEST" 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 23,
+  "texts": 26,
 }
 `;
 
@@ -2842,17 +4642,17 @@ exports[`settings sweep (single grid) legendText.bold → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2866,17 +4666,17 @@ exports[`settings sweep (single grid) legendText.color → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2890,17 +4690,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Arial 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2914,17 +4714,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Bahnschrift 1`] 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2938,17 +4738,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Calibri 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2962,17 +4762,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Cambria 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -2986,17 +4786,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Candara 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3010,17 +4810,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Cascadia Code 1`
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3034,17 +4834,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Consolas 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3058,17 +4858,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → DIN 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3082,17 +4882,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Georgia 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3106,17 +4906,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Helvetica Neue 1
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3130,17 +4930,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Inter 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3154,17 +4954,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Roboto 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3178,17 +4978,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Segoe UI Variabl
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3202,17 +5002,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → System UI 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3226,17 +5026,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Tahoma 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3250,17 +5050,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Trebuchet 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3274,17 +5074,17 @@ exports[`settings sweep (single grid) legendText.fontFamily → Verdana 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3298,17 +5098,17 @@ exports[`settings sweep (single grid) legendText.fontSize → 11 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3322,17 +5122,17 @@ exports[`settings sweep (single grid) legendText.fontSize → 20 1`] = `
     "y": "152",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3346,17 +5146,17 @@ exports[`settings sweep (single grid) legendText.italic → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3370,17 +5170,17 @@ exports[`settings sweep (single grid) legendText.underline → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3394,17 +5194,17 @@ exports[`settings sweep (single grid) monthRail.bold → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3418,17 +5218,17 @@ exports[`settings sweep (single grid) monthRail.color → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3442,17 +5242,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Arial 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3466,17 +5266,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Bahnschrift 1`] =
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3490,17 +5290,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Calibri 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3514,17 +5314,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Cambria 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3538,17 +5338,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Candara 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3562,17 +5362,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Cascadia Code 1`]
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3586,17 +5386,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Consolas 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3610,17 +5410,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → DIN 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3634,17 +5434,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Georgia 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3658,17 +5458,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Helvetica Neue 1`
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3682,17 +5482,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Inter 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3706,17 +5506,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Roboto 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3730,17 +5530,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Segoe UI Variable
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3754,17 +5554,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → System UI 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3778,17 +5578,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Tahoma 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3802,17 +5602,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Trebuchet 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3826,17 +5626,17 @@ exports[`settings sweep (single grid) monthRail.fontFamily → Verdana 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3850,17 +5650,17 @@ exports[`settings sweep (single grid) monthRail.fontSize → 11 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3874,17 +5674,17 @@ exports[`settings sweep (single grid) monthRail.fontSize → 20 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3898,17 +5698,17 @@ exports[`settings sweep (single grid) monthRail.italic → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3922,17 +5722,17 @@ exports[`settings sweep (single grid) monthRail.underline → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3946,17 +5746,17 @@ exports[`settings sweep (single grid) smallMultiples.columns → 1 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3970,17 +5770,17 @@ exports[`settings sweep (single grid) smallMultiples.columns → 2 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -3994,17 +5794,17 @@ exports[`settings sweep (single grid) smallMultiples.sharedScale → false 1`] =
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4018,17 +5818,17 @@ exports[`settings sweep (single grid) statChips.bold → false 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4042,17 +5842,17 @@ exports[`settings sweep (single grid) statChips.color → #E5484D 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4066,17 +5866,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Arial 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4090,17 +5890,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Bahnschrift 1`] =
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4114,17 +5914,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Calibri 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4138,17 +5938,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Cambria 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4162,17 +5962,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Candara 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4186,17 +5986,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Cascadia Code 1`]
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4210,17 +6010,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Consolas 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4234,17 +6034,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → DIN 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4258,17 +6058,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Georgia 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4282,17 +6082,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Helvetica Neue 1`
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4306,17 +6106,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Inter 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4330,17 +6130,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Roboto 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4354,17 +6154,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Segoe UI Variable
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4378,17 +6178,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → System UI 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4402,17 +6202,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Tahoma 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4426,17 +6226,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Trebuchet 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4450,17 +6250,17 @@ exports[`settings sweep (single grid) statChips.fontFamily → Verdana 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4474,17 +6274,17 @@ exports[`settings sweep (single grid) statChips.fontSize → 15 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4495,20 +6295,20 @@ exports[`settings sweep (single grid) statChips.fontSize → 28 1`] = `
     "rx": "2",
     "w": "22",
     "x": "103",
-    "y": "180.5",
+    "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4522,17 +6322,17 @@ exports[`settings sweep (single grid) statChips.italic → true 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
 }
 `;
 
@@ -4546,17 +6346,35 @@ exports[`settings sweep (single grid) statChips.underline → true 1`] = `
     "y": "177.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 395,
+  "rects": 397,
   "text0": [
     "Tickets resolved",
     "Peak day",
     "396 | Jan 6, 2025",
     "Total",
   ],
-  "texts": 27,
+  "texts": 30,
+}
+`;
+
+exports[`settings sweep (single grid) summaryTable.show → true 1`] = `
+{
+  "cell0": null,
+  "cells": 0,
+  "circles": 0,
+  "lines": 0,
+  "paths": 0,
+  "rects": 8,
+  "text0": [
+    "Tickets resolved — Summary",
+    "Month",
+    "Total",
+    "Avg/day",
+  ],
+  "texts": 85,
 }
 `;
 
@@ -4570,17 +6388,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → April 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4594,17 +6412,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → August 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4618,17 +6436,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → December 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4642,17 +6460,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → February 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4666,17 +6484,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → July 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4690,17 +6508,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → June 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4714,17 +6532,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → March 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4738,17 +6556,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → May 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4762,17 +6580,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → November 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4786,17 +6604,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → October 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4810,17 +6628,17 @@ exports[`settings sweep (single grid) timeIntel.fiscalStart → September 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4834,17 +6652,17 @@ exports[`settings sweep (single grid) toolbar.closeOnClickAway → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4858,17 +6676,17 @@ exports[`settings sweep (single grid) toolbar.position → Bottom left 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4882,17 +6700,17 @@ exports[`settings sweep (single grid) toolbar.position → Bottom right 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4906,17 +6724,17 @@ exports[`settings sweep (single grid) toolbar.position → Top left 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4930,17 +6748,17 @@ exports[`settings sweep (single grid) toolbar.position → Top right 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4954,17 +6772,17 @@ exports[`settings sweep (single grid) toolbar.show → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -4978,17 +6796,17 @@ exports[`settings sweep (single grid) weekdayRail.bold → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5002,17 +6820,17 @@ exports[`settings sweep (single grid) weekdayRail.color → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5026,17 +6844,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Arial 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5050,17 +6868,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Bahnschrift 1`]
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5074,17 +6892,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Calibri 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5098,17 +6916,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Cambria 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5122,17 +6940,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Candara 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5146,17 +6964,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Cascadia Code 1
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5170,17 +6988,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Consolas 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5194,17 +7012,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → DIN 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5218,17 +7036,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Georgia 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5242,17 +7060,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Helvetica Neue 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5266,17 +7084,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Inter 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5290,17 +7108,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Roboto 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5314,17 +7132,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Segoe UI Variab
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5338,17 +7156,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → System UI 1`] =
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5362,17 +7180,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Tahoma 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5386,17 +7204,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Trebuchet 1`] =
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5410,17 +7228,17 @@ exports[`settings sweep (single grid) weekdayRail.fontFamily → Verdana 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5434,17 +7252,17 @@ exports[`settings sweep (single grid) weekdayRail.fontSize → 11 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5458,17 +7276,17 @@ exports[`settings sweep (single grid) weekdayRail.fontSize → 20 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5482,17 +7300,17 @@ exports[`settings sweep (single grid) weekdayRail.italic → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5506,17 +7324,17 @@ exports[`settings sweep (single grid) weekdayRail.underline → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5530,17 +7348,17 @@ exports[`settings sweep (single grid) yearTags.bold → false 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5554,17 +7372,17 @@ exports[`settings sweep (single grid) yearTags.color → #E5484D 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5578,17 +7396,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Arial 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5602,17 +7420,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Bahnschrift 1`] = 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5626,17 +7444,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Calibri 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5650,17 +7468,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Cambria 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5674,17 +7492,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Candara 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5698,17 +7516,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Cascadia Code 1`] 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5722,17 +7540,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Consolas 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5746,17 +7564,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → DIN 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5770,17 +7588,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Georgia 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5794,17 +7612,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Helvetica Neue 1`]
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5818,17 +7636,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Inter 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5842,17 +7660,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Roboto 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5866,17 +7684,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Segoe UI Variable 
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5890,17 +7708,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → System UI 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5914,17 +7732,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Tahoma 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5938,17 +7756,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Trebuchet 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5962,17 +7780,17 @@ exports[`settings sweep (single grid) yearTags.fontFamily → Verdana 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -5986,17 +7804,17 @@ exports[`settings sweep (single grid) yearTags.fontSize → 12 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -6010,17 +7828,17 @@ exports[`settings sweep (single grid) yearTags.fontSize → 22 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -6034,17 +7852,17 @@ exports[`settings sweep (single grid) yearTags.italic → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;
 
@@ -6058,16 +7876,16 @@ exports[`settings sweep (single grid) yearTags.underline → true 1`] = `
     "y": "156.5",
   },
   "cells": 365,
-  "circles": 3,
-  "lines": 0,
+  "circles": 5,
+  "lines": 2,
   "paths": 0,
-  "rects": 394,
+  "rects": 396,
   "text0": [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
   ],
-  "texts": 22,
+  "texts": 25,
 }
 `;

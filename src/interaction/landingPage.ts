@@ -250,13 +250,13 @@ const PAGES: PageDef[] = [
     { eyebrow: "Step 2 · Optional fields", title: "Add depth when you need it", scene: sceneSmallMultiples, lines: [
         "• Split by — one small-multiple calendar per category (Region, Team…).",
         "• Target — show each day's value vs a goal in the tooltip.",
-        "• Annotations — flag notable days (holidays, releases, incidents).",
         "• Tooltips — extra measures to surface on hover.",
     ] },
     { eyebrow: "How to read it", title: "Darker means more", scene: sceneRead, lines: [
         "• Deeper color = a higher value that day.",
         "• A blank / outlined cell means no data — never a low value.",
         "• Click a day to cross-filter your report; Ctrl-click to multi-select.",
+        "• Click a day and hit Add note to annotate it — no field needed.",
     ] },
     { eyebrow: "Color & scaling", title: "Legible even on spiky data", scene: sceneScaling, lines: [
         "• Quantile scaling (default) keeps a skewed year readable — not 90% pale.",
