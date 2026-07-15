@@ -9,6 +9,13 @@ import { SB_CATS, SB_FONTS, SB_PALETTES, SB_PRESETS, SB_EMOJI, makeCfg, applyLoc
 
 type Model = VisualFormattingSettingsModel;
 
+/** Shallow-clone a slice value so the live model can't share a default object
+ *  reference with the throwaway defaults model (which would alias future edits). */
+function clone<T>(v: T): T {
+    if (v && typeof v === "object") return { ...(v as object) } as T;
+    return v;
+}
+
 /**
  * In-visual settings overlay. Thin host wrapper around the reusable Zentrix
  * Settings Bar: wires the live formatting model + persistProperties to the bar
@@ -32,7 +39,7 @@ export class SettingsOverlay {
         const cfg = makeCfg(() => this.settings, persist, (key, value) => {
             this.pending.set(key, value);
             this.onChange?.();
-        });
+        }, () => this.reset());
         this.bar = new ZentrixSettingsBar(root, {
             cfg, cats: SB_CATS, fonts: SB_FONTS, palettes: SB_PALETTES, presets: SB_PRESETS, emoji: SB_EMOJI,
             corner: "bl", dark: false, closeOnAway: true,
@@ -48,7 +55,7 @@ export class SettingsOverlay {
             else applyLocal(s, key, val);                                            // not yet → keep showing it
         }
         this.settings = s;
-        this.bar.setTheme(dark);
+        this.applyTheme(dark);
         this.bar.setVisible(s.toolbar.show.value && !forceHidden);
         this.bar.setCloseOnAway(s.toolbar.closeOnClickAway.value);
         this.pref = (s.toolbar.position.value.value as string) || "auto";
@@ -56,6 +63,57 @@ export class SettingsOverlay {
         // Controls update their own DOM optimistically; we deliberately do not
         // rebuild the open popover here (persistProperties fires update() on
         // every change, and a mid-interaction rebuild would flicker / drop focus).
+    }
+
+    /** Theme the bar from the host: Power BI high contrast wins over light/dark.
+     *  In HC we hand the bar the host's HC roles so its chrome matches the rest of
+     *  the visual; otherwise we fall back to the auto-detected light/dark theme. */
+    private applyTheme(dark: boolean): void {
+        const palette = this.host.colorPalette;
+        if (palette.isHighContrast) {
+            const v = (c?: { value?: string }) => c && c.value;
+            this.bar.setHighContrast(true, {
+                foreground: v(palette.foreground),
+                background: v(palette.background),
+                foregroundSelected: v(palette.foregroundSelected),
+                hyperlink: v(palette.hyperlink),
+            });
+        } else {
+            this.bar.setHighContrast(false);
+            this.bar.setTheme(dark);
+        }
+    }
+
+    /**
+     * Reset every visual property to its model default (Z-137 §4). Power BI owns
+     * the persisted formatting, so we remove each object's properties — the model
+     * then falls back to the declared defaults on the next populate. We ALSO copy
+     * the defaults onto the live model and clear pending optimistic edits, so the
+     * canvas reverts immediately without waiting for the host round-trip.
+     */
+    private reset(): void {
+        if (!this.settings) return;
+        // `removeObject` wipes each object's persisted properties entirely, so the
+        // model falls back to its declared defaults on the next populate. (A plain
+        // `remove` with empty properties{} would be a no-op.)
+        const removeObject = (this.settings.cards as { name: string }[]).map(c => ({
+            objectName: c.name, selector: null, properties: {},
+        }));
+        this.host.persistProperties({ removeObject } as unknown as powerbi.VisualObjectInstancesToPersist);
+
+        // Optimistic local revert: copy each slice's default value from a fresh model.
+        const defaults = new VisualFormattingSettingsModel();
+        const liveCards = this.settings.cards as { slices?: { value: unknown; name: string }[] }[];
+        const defCards = defaults.cards as { slices?: { value: unknown; name: string }[] }[];
+        liveCards.forEach((card, ci) => {
+            const defSlices = defCards[ci]?.slices ?? [];
+            (card.slices ?? []).forEach((slice, si) => {
+                const d = defSlices[si];
+                if (d && d.name === slice.name) slice.value = clone(d.value);
+            });
+        });
+        this.pending.clear();
+        this.onChange?.();
     }
 
     /** Called by the visual after layout when position = Auto. No-op otherwise. */
@@ -66,5 +124,10 @@ export class SettingsOverlay {
     /** Harness helper — open the bar and (optionally) the sub-group `active`. */
     forceOpen(active?: string): void {
         this.bar.forceOpen(active);
+    }
+
+    /** True while the in-visual settings bar is open (issue #7 — suppress hover cards). */
+    isOpen(): boolean {
+        return this.bar.isOpen();
     }
 }

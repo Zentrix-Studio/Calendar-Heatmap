@@ -6,6 +6,7 @@
 "use strict";
 
 import powerbi from "powerbi-visuals-api";
+import type { Note } from "../../src/notes/core";
 type DataView = powerbi.DataView;
 
 /** Deterministic LCG — matches the harness/preview generator so values are stable. */
@@ -27,7 +28,39 @@ export interface DataViewOptions {
     withTooltip?: boolean;
     /** Fraction of days left blank (no-data cells). Default 0.06. */
     gapRate?: number;
+    /**
+     * Z-152 — seed the persisted annotation store. Annotations are NOT data-bound:
+     * they arrive on `metadata.objects.notesStore.data` as a JSON blob, exactly as
+     * the host would hand them back after a persistProperties round-trip.
+     *
+     * The settings sweep passes notes here so the Annotations card's display prefs
+     * are genuinely exercised. Without a seeded note every one of those settings is
+     * provably effect-less and would have to be marked smoke-only — coverage that
+     * looks green while proving nothing.
+     */
+    notes?: Note[];
+    /**
+     * Extra persisted formatting objects, exactly as the host would echo them
+     * back on `metadata.objects` after a persistProperties round-trip — e.g.
+     * `{ summaryTable: { show: true } }`. Merged with the notes blob.
+     */
+    objects?: Record<string, Record<string, unknown>>;
 }
+
+/**
+ * Two notes over 2025, covering both a marker-bearing mode and a callout-only one.
+ * `anchor` is the calendar's natural key — `"<ISO date>|<facet>"` (see notes/store.ts).
+ */
+export const SAMPLE_NOTES: Note[] = [
+    {
+        id: "n1", anchor: "2025-03-14|", text: "Release 4.2 shipped",
+        mode: "all", style: {}, dx: 1.6, dy: -2.4,
+    },
+    {
+        id: "n2", anchor: "2025-06-20|", text: "Incident: queue backlog cleared after the hotfix",
+        mode: "arrow", style: { bold: true }, dx: 2, dy: 2,
+    },
+];
 
 function col(displayName: string, role: string): any {
     return { displayName, roles: { [role]: true }, type: {}, queryName: `q.${displayName}` };
@@ -90,8 +123,15 @@ export function buildDataView(opts: DataViewOptions = {}): DataView {
         metaColumns.push(ttCol);
     }
 
+    const notesObjects = opts.notes
+        ? { notesStore: { data: JSON.stringify({ v: 1, items: opts.notes }) } }
+        : undefined;
+    const objects = notesObjects || opts.objects
+        ? { ...notesObjects, ...opts.objects }
+        : undefined;
+
     return {
-        metadata: { columns: metaColumns, objects: undefined },
+        metadata: { columns: metaColumns, objects },
         categorical: { categories, values: valuesCols },
     } as unknown as DataView;
 }

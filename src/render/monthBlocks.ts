@@ -44,8 +44,8 @@ function fitFor(monthsLen: number, opts: GridOptions, width: number, height: num
     const rowsOfPanels = Math.ceil(monthsLen / cols);
     const panelInnerW = (availW - panelGap * (cols - 1)) / cols;
     const panelInnerH = (availH - panelGap * (rowsOfPanels - 1)) / rowsOfPanels - labelH;
-    const fitW = (panelInnerW + opts.gap) / MAX_WEEKS - opts.gap;
-    const fitH = (panelInnerH + opts.gap) / WEEKDAYS - opts.gap;
+    const fitW = (panelInnerW + opts.gapX) / MAX_WEEKS - opts.gapX;
+    const fitH = (panelInnerH + opts.gapY) / WEEKDAYS - opts.gapY;
     const size = Math.max(3, Math.min(opts.cellSize, fitW, fitH));
     return { size, cols };
 }
@@ -119,10 +119,11 @@ export function renderMonthBlocks(group: GroupSel, model: CalendarModel, opts: G
     }
     const { size, cols } = fit;
     const rowsOfPanels = Math.ceil(months.length / cols);
-    const step = size + opts.gap;
-    const radius = Math.min(opts.radius, size * 0.18);
-    const panelW = MAX_WEEKS * step - opts.gap;
-    const panelH = WEEKDAYS * step - opts.gap;
+    const stepX = size + opts.gapX;
+    const stepY = size + opts.gapY;
+    const radius = Math.min(opts.radius, size * 0.5);
+    const panelW = MAX_WEEKS * stepX - opts.gapX;
+    const panelH = WEEKDAYS * stepY - opts.gapY;
     const cellPx = (panelW + panelGap), cellPy = (panelH + labelH + panelGap);
 
     // Center the panel block in the available area so leftover space (e.g. when
@@ -141,8 +142,8 @@ export function renderMonthBlocks(group: GroupSel, model: CalendarModel, opts: G
         m.days.forEach((d, di) => {
             const row = weekdayRow(d.date, opts.firstDayOfWeek);
             if (di > 0 && row === 0) col++;
-            d.px = panelX + col * step;
-            d.py = panelY + row * step;
+            d.px = panelX + col * stepX;
+            d.py = panelY + row * stepY;
             d.ps = size;
         });
     });
@@ -175,7 +176,7 @@ export function renderMonthBlocks(group: GroupSel, model: CalendarModel, opts: G
     }
 
     const geo: GridGeometry = {
-        size, step, marginLeft: originX, marginTop: originY,
+        size, stepX, stepY, marginLeft: originX, marginTop: originY,
         gridWidth: gridW,
         gridHeight: gridH,
     };

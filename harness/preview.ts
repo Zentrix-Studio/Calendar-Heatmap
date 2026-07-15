@@ -110,7 +110,7 @@ function panel(parent: HTMLElement, p: PanelOpts): void {
         noData: p.dark ? NO_DATA_DARK : NO_DATA_LIGHT,
     });
     const geo = renderGrid(g as any, model, {
-        width: W, height: GRID_H, cellSize: 14, gap: 3, radius: 2,
+        width: W, height: GRID_H, cellSize: 14, gapX: 3, gapY: 3, radius: 2,
         firstDayOfWeek: 0, colors,
         showMonthLabels: true, showWeekdayLabels: true, labelColor,
     });
@@ -192,7 +192,7 @@ function headerPanel(parent: HTMLElement, dark: boolean): void {
         accent: "#7C5CFF", textColor: dark ? "#F4F4F6" : "#1A1A22", mutedColor: labelColor,
     });
     renderGrid(g as any, model, {
-        width: W, height: H - 24, cellSize: 14, gap: 3, radius: 2,
+        width: W, height: H - 24, cellSize: 14, gapX: 3, gapY: 3, radius: 2,
         firstDayOfWeek: 0, colors, showMonthLabels: true, showWeekdayLabels: true,
         labelColor, topOffset: headerH,
     });
@@ -220,7 +220,7 @@ function monthBlockPanel(parent: HTMLElement, dark: boolean, multiYear = false):
         noData: dark ? NO_DATA_DARK : NO_DATA_LIGHT,
     });
     renderMonthBlocks(g as any, model, {
-        width: W, height: H, cellSize: 16, gap: 3, radius: 2,
+        width: W, height: H, cellSize: 16, gapX: 3, gapY: 3, radius: 2,
         firstDayOfWeek: 0, colors, showMonthLabels: true, showWeekdayLabels: false, labelColor,
     });
 }
@@ -302,14 +302,121 @@ function paletteShowcase(parent: HTMLElement): void {
         const svg = select(card).append("svg").attr("width", 940).attr("height", 86);
         const colors = buildColorAccessor(model, { mode: "quantile", buckets: 0, ramp: resolvePalette(spec), noData: NO_DATA_LIGHT });
         renderGrid(svg.append("g") as any, model, {
-            width: 940, height: 86, cellSize: 9, gap: 1, radius: 1,
+            width: 940, height: 86, cellSize: 9, gapX: 1, gapY: 1, radius: 1,
             firstDayOfWeek: 0, colors, showMonthLabels: false, showWeekdayLabels: false, labelColor: "#70707F",
         });
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Z-127 — LinkedIn Image 3: Palette Flexibility (three mini-grids)
+// Canvas: 1200 x 627, 48 px safe margin.  Hash: #palette3
+// ─────────────────────────────────────────────────────────────────────────────
+function palette3(root: HTMLElement): void {
+    const TEXT_COL = "#1A1A22";
+    const MUTED = "#70707F";
+    const NO_DATA = NO_DATA_LIGHT;
+
+    // Reset body so no host padding/grey shows through
+    document.body.style.cssText = "margin:0;padding:0;background:#FFFFFF;";
+
+    const shell = document.createElement("div");
+    shell.style.cssText = [
+        "width:1200px", "height:627px", "box-sizing:border-box",
+        "padding:48px", "background:#FFFFFF",
+        "font-family:Segoe UI,-apple-system,sans-serif",
+        "display:flex", "flex-direction:column",
+        "position:relative", "overflow:hidden",
+    ].join(";");
+    root.appendChild(shell);
+
+    // Eyebrow
+    const eyebrow = document.createElement("div");
+    eyebrow.textContent = "ZENTRIX CALENDAR HEATMAP";
+    eyebrow.style.cssText = `font-size:11px;letter-spacing:0.12em;color:${MUTED};margin-bottom:6px;font-weight:400;`;
+    shell.appendChild(eyebrow);
+
+    // Title
+    const title = document.createElement("div");
+    title.textContent = "Your data. Your palette.";
+    title.style.cssText = `font-size:22px;font-weight:700;color:${TEXT_COL};margin-bottom:4px;line-height:1.2;`;
+    shell.appendChild(title);
+
+    // Subtitle
+    const subtitle = document.createElement("div");
+    subtitle.textContent = "Six presets including a CVD-verified colorblind-safe ramp.";
+    subtitle.style.cssText = `font-size:14px;color:${MUTED};margin-bottom:16px;`;
+    shell.appendChild(subtitle);
+
+    // Three mini-grid rows
+    const rows: { label: string; ramp: string[]; badge?: string; idSuffix: string }[] = [
+        { label: "MAGMA  ·  editorial",    ramp: ["#3B0F70","#8C2981","#DE4968","#FE9F6D","#FCFDBF"], idSuffix: "p3-magma" },
+        { label: "COLORBLIND-SAFE  ·  CVD-verified (protan / deutan / tritan)", ramp: ["#FFF7BC","#FEC44F","#FE9929","#D95F0E","#993404"], badge: "accessible", idSuffix: "p3-cb" },
+        { label: "FOREST  ·  growth & activity", ramp: ["#E8F5E9","#A5D6A7","#66BB6A","#388E3C","#1B5E20"], idSuffix: "p3-forest" },
+    ];
+
+    const model = mockModel(2025, 0);
+    const W = 1104;
+    const MINI_H = 96;
+
+    rows.forEach((row, idx) => {
+        // Row label container (with optional badge)
+        const labelRow = document.createElement("div");
+        labelRow.style.cssText = [
+            "display:flex", "align-items:center", "gap:8px",
+            idx > 0 ? "margin-top:8px" : "",
+        ].filter(Boolean).join(";");
+
+        const labelEl = document.createElement("span");
+        labelEl.textContent = row.label;
+        labelEl.style.cssText = `font-size:10px;color:${MUTED};letter-spacing:0.1em;font-weight:400;`;
+        labelRow.appendChild(labelEl);
+
+        if (row.badge) {
+            const badge = document.createElement("span");
+            badge.textContent = row.badge;
+            badge.style.cssText = [
+                "background:#FFF7BC", "border:1px solid #FEC44F",
+                "border-radius:9999px", "padding:2px 8px",
+                "font-size:10px", "font-weight:600", "color:#993404",
+            ].join(";");
+            labelRow.appendChild(badge);
+        }
+        shell.appendChild(labelRow);
+
+        // Legend swatch (inline gradient, right-aligned) + grid SVG
+        const gridWrap = document.createElement("div");
+        gridWrap.style.cssText = "position:relative;margin-top:4px;";
+        shell.appendChild(gridWrap);
+
+        const colors = buildColorAccessor(model, {
+            mode: "quantile", buckets: 5, ramp: row.ramp, noData: NO_DATA,
+        });
+        const svg = select(gridWrap).append("svg").attr("width", W).attr("height", MINI_H);
+        renderGrid(svg.append("g") as any, model, {
+            width: W, height: MINI_H, cellSize: 9, gapX: 1, gapY: 1, radius: 1,
+            firstDayOfWeek: 0, colors, showMonthLabels: false, showWeekdayLabels: false,
+            labelColor: MUTED,
+        });
+    });
+
+    // Optional tagline at bottom
+    const tagline = document.createElement("div");
+    tagline.textContent = "Free. Maintained. Certification pending.";
+    tagline.style.cssText = `font-size:13px;color:${MUTED};margin-top:auto;padding-top:20px;`;
+    shell.appendChild(tagline);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dispatch — hash-based: #palette3 → Z-127 image 3; no hash → full contact sheet
+// ─────────────────────────────────────────────────────────────────────────────
 const root = document.getElementById("root")!;
+const which = (location.hash || "").slice(1);
 try {
+if (which === "palette3") {
+    palette3(root);
+} else {
+// Full QA contact sheet (default, no hash)
 paletteShowcase(root);
 tooltipShowcase();
 settingsShowcase();
@@ -333,7 +440,7 @@ function bandedPanel(parent: HTMLElement, startY: number, endY: number, W: numbe
         ramp: dark ? VIOLET_RAMP_DARK : VIOLET_RAMP_LIGHT, noData: dark ? NO_DATA_DARK : NO_DATA_LIGHT,
     });
     renderGrid(svg.append("g") as any, model, {
-        width: W, height: H, cellSize: 22, gap: 3, radius: 2,
+        width: W, height: H, cellSize: 22, gapX: 3, gapY: 3, radius: 2,
         firstDayOfWeek: 0, colors, showMonthLabels: true, showWeekdayLabels: true,
         labelColor: dark ? "#8A8A99" : "#70707F", strongColor: dark ? "#F4F4F6" : "#1A1A22",
         // demo per-group text styles (verifies font/italic/color flow)
@@ -350,6 +457,7 @@ monthBlockPanel(root, true);
 monthBlockPanel(root, false, true);  // multi-year: confirms the year is stamped at each January
 statesPanel(root, false);
 statesPanel(root, true);
+}
 } catch (e) {
     const el = document.getElementById("err");
     if (el) el.textContent = "CAUGHT: " + (e instanceof Error ? e.message + "\n" + e.stack : String(e));

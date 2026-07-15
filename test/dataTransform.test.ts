@@ -52,4 +52,16 @@ describe("aggregateByDay", () => {
         const out = aggregateByDay(dates, [NaN as number], "sum");
         expect(out.has(day(0, 1).getTime())).toBe(false);
     });
+
+    // QA-01: ±Infinity must be skipped like null — a single Infinity row otherwise
+    // poisons vMin/vMax and collapses the linear/log color ramp for every other day.
+    test("skips ±Infinity values so they cannot poison aggregates (QA-01)", () => {
+        const dates = [day(0, 1), day(0, 1), day(0, 2)];
+        const out = aggregateByDay(dates, [Infinity, 5, -Infinity], "sum");
+        expect(out.get(day(0, 1).getTime())!.value).toBe(5);
+        expect(out.get(day(0, 1).getTime())!.firstIndex).toBe(1);
+        expect(out.has(day(0, 2).getTime())).toBe(false); // Infinity-only day = no-data
+        // max mode must not report Infinity either
+        expect(aggregateByDay(dates, [Infinity, 5, -Infinity], "max").get(day(0, 1).getTime())!.value).toBe(5);
+    });
 });

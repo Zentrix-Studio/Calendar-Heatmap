@@ -20,29 +20,52 @@ export interface MockHostOptions {
     highContrast?: boolean;
     /** When set, PremiumGate sees a "supported env, no active plan" → insights lock. */
     lockPremium?: boolean;
+    /**
+     * Playground cross-filter hook. The visual builds selection ids via
+     * createSelectionIdBuilder().withCategory(col, index); on click it calls
+     * selectionManager.select(id). We capture each id's source row index and report
+     * the current selection (or null on clear) so the canvas can cross-filter peers.
+     */
+    onSelect?: (indices: number[] | null) => void;
 }
 
 export function createMockHost(opts: MockHostOptions = {}): MockHost {
     const dark = !!opts.dark;
 
     let idSeq = 0;
+    let lastIndex = -1;
     const builder: any = {
-        withCategory: () => builder,
+        withCategory: (_col: any, index: number) => { lastIndex = index; return builder; },
         withMeasure: () => builder,
         withSeries: () => builder,
-        withTable: () => builder,
+        withTable: (_t: any, index: number) => { lastIndex = index; return builder; },
         withMatrixNode: () => builder,
         createSelectionId: () => {
             const key = `sel-${idSeq++}`;
-            return { equals: (o: any) => o && o.__key === key, getKey: () => key, __key: key };
+            const index = lastIndex;
+            return { equals: (o: any) => o && o.__key === key, getKey: () => key, __key: key, __index: index };
         },
     };
 
+    let selected: any[] = [];
+    const report = () => {
+        if (!opts.onSelect) return;
+        opts.onSelect(selected.length ? selected.map((s) => s.__index).filter((i: number) => i >= 0) : null);
+    };
     const selectionManager: any = {
-        select: () => Promise.resolve([]),
-        clear: () => Promise.resolve(),
-        getSelectionIds: () => [],
-        hasSelection: () => false,
+        select: (idOrIds: any, multi?: boolean) => {
+            const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
+            selected = multi ? [...selected, ...ids] : ids;
+            report();
+            return Promise.resolve(selected);
+        },
+        clear: () => {
+            selected = [];
+            report();
+            return Promise.resolve();
+        },
+        getSelectionIds: () => selected,
+        hasSelection: () => selected.length > 0,
         registerOnSelectCallback: () => undefined,
         showContextMenu: () => Promise.resolve(),
         applySelectionFilter: () => undefined,

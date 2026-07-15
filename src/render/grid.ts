@@ -19,7 +19,10 @@ export interface GridOptions {
     height: number;
     /** Preferred cell edge in px; auto-fit shrinks (never grows) to fit. */
     cellSize: number;
-    gap: number;
+    /** Horizontal gap between week columns. */
+    gapX: number;
+    /** Vertical gap between weekday rows. */
+    gapY: number;
     radius: number;
     firstDayOfWeek: number;
     colors: ColorAccessor;
@@ -46,7 +49,9 @@ export interface GridOptions {
 
 export interface GridGeometry {
     size: number;
-    step: number;
+    /** Column pitch (size + gapX) and row pitch (size + gapY). */
+    stepX: number;
+    stepY: number;
     marginLeft: number;
     marginTop: number;
     /** Total drawn width/height of the cell area. */
@@ -89,15 +94,17 @@ function buildBands(model: CalendarModel, firstDayOfWeek: number): Band[] {
 
 interface GridFit {
     size: number;
-    step: number;
+    stepX: number;
+    stepY: number;
     marginLeft: number;
     headerH: number;
 }
 
 /** Pure cell-size fit for the stacked-year grid. Mirrors renderGrid's geometry
- * exactly so the responsive planner can predict the size without drawing. */
+ * exactly so the responsive planner can predict the size without drawing.
+ * Width is paced by the column gap (gapX), height by the row gap (gapY). */
 function gridFit(bandsLen: number, maxWeeks: number, opts: GridOptions, width: number, height: number): GridFit {
-    const gap = opts.gap;
+    const { gapX, gapY } = opts;
     const multiYear = bandsLen > 1;
     const marginLeft = opts.showWeekdayLabels ? 32 : (multiYear ? 30 : 2);
     const headerH = (opts.showMonthLabels || multiYear) ? 16 : 2;
@@ -105,13 +112,13 @@ function gridFit(bandsLen: number, maxWeeks: number, opts: GridOptions, width: n
     const top = opts.topOffset ?? 0;
     const availW = width - marginLeft - 4;
     const availH = height - top - 4;
-    // Cell size: bounded by width (widest year) and by total stacked height.
+    // Cell size: bounded by width (widest year, gapX) and total stacked height (gapY).
     const totalRows = bandsLen * 7;
     const headerTotal = bandsLen * headerH + (bandsLen - 1) * bandGap;
-    const fitW = (availW + gap) / maxWeeks - gap;
-    const fitH = (availH - headerTotal + gap) / totalRows - gap;
+    const fitW = (availW + gapX) / maxWeeks - gapX;
+    const fitH = (availH - headerTotal + gapY) / totalRows - gapY;
     const size = Math.max(3, Math.min(opts.cellSize, fitW, fitH));
-    return { size, step: size + gap, marginLeft, headerH };
+    return { size, stepX: size + gapX, stepY: size + gapY, marginLeft, headerH };
 }
 
 /** Predict the cell size renderGrid would choose for this box — including the
@@ -133,7 +140,7 @@ export function predictGridSize(model: CalendarModel, opts: GridOptions, width: 
  * vertically. Pure: no Power BI host; rings are drawn as overlays elsewhere.
  */
 export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOptions): RenderResult {
-    const gap = opts.gap;
+    const { gapX, gapY } = opts;
     const bands = buildBands(model, opts.firstDayOfWeek);
     const multiYear = bands.length > 1;
     const maxWeeks = Math.max(1, ...bands.map(b => b.weeks));
@@ -147,22 +154,22 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
         showWeekday = false;
         f = gridFit(bands.length, maxWeeks, { ...opts, showWeekdayLabels: false }, opts.width, opts.height);
     }
-    const { size, step, marginLeft, headerH } = f;
+    const { size, stepX, stepY, marginLeft, headerH } = f;
 
     const oX = opts.originX ?? 0, oY = opts.originY ?? 0;
     const top = opts.topOffset ?? 0;
     const availW = opts.width - marginLeft - 4;
     const availH = opts.height - top - 4;
-    const radius = Math.min(opts.radius, size * 0.18);
+    const radius = Math.min(opts.radius, size * 0.5);
 
-    const bandHeight = headerH + 7 * step - gap;
+    const bandHeight = headerH + 7 * stepY - gapY;
     const totalHeight = bands.length * bandHeight + (bands.length - 1) * bandGap;
     const offsetY = oY + top + Math.max(0, (availH - totalHeight) / 2) + 2; // vertical centering
     const strong = opts.strongColor ?? opts.labelColor;
 
     // Horizontal centering: balance leftover width on both sides instead of a
     // lopsided right gap (visible in fullscreen). contentLeft is the grid's left edge.
-    const gridContentW = maxWeeks * step - gap;
+    const gridContentW = maxWeeks * stepX - gapX;
     const ox = Math.max(0, (availW - gridContentW) / 2);
     const contentLeft = oX + marginLeft + ox;
 
@@ -170,8 +177,8 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
     bands.forEach((b, bi) => {
         const cellsTop = offsetY + bi * (bandHeight + bandGap) + headerH;
         b.days.forEach((d, i) => {
-            d.px = contentLeft + b.cols[i] * step;
-            d.py = cellsTop + b.rows[i] * step;
+            d.px = contentLeft + b.cols[i] * stepX;
+            d.py = cellsTop + b.rows[i] * stepY;
             d.ps = size;
         });
     });
@@ -206,9 +213,9 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
         if (opts.showMonthLabels) {
             // Thin labels greedily so names never overlap as cells shrink: keep
             // Jan, drop the months that would collide, keep the next that clears.
-            for (const l of thinMonthLabels(b.labels, step, monthStyle.size)) {
+            for (const l of thinMonthLabels(b.labels, stepX, monthStyle.size)) {
                 applyText(group.append("text").classed("month", true)
-                    .attr("x", contentLeft + l.col * step).attr("y", bandTop + headerH - 4)
+                    .attr("x", contentLeft + l.col * stepX).attr("y", bandTop + headerH - 4)
                     .text(l.label), monthStyle, opts.labelColor);
             }
         }
@@ -216,7 +223,7 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
         if (showWeekday) {
             for (const row of SHOWN_WEEKDAY_OFFSETS) {
                 applyText(group.append("text").classed("weekday", true)
-                    .attr("x", contentLeft - 6).attr("y", cellsTop + row * step + size / 2)
+                    .attr("x", contentLeft - 6).attr("y", cellsTop + row * stepY + size / 2)
                     .attr("text-anchor", "end").attr("dominant-baseline", "middle")
                     .text(WEEKDAY_NAMES[(row + opts.firstDayOfWeek) % 7]), weekdayStyle, opts.labelColor);
             }
@@ -224,7 +231,7 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
     });
 
     const geo: GridGeometry = {
-        size, step, marginLeft: contentLeft, marginTop: offsetY,
+        size, stepX, stepY, marginLeft: contentLeft, marginTop: offsetY,
         gridWidth: gridContentW,
         gridHeight: totalHeight,
     };

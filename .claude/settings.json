@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Edit(pbiviz.json)",
+      "Write(pbiviz.json)",
+      "Edit(**/pbiviz.json)",
+      "Write(**/pbiviz.json)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/verify-tests.sh\"",
+            "timeout": 300,
+            "statusMessage": "Verifying the test suite is green..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -14,7 +14,7 @@ import "./harness/svgPolyfill";
 
 import { Visual } from "../src/visual";
 import { createMockHost, MockHost } from "./harness/mockHost";
-import { buildDataView } from "./harness/mockDataView";
+import { buildDataView, SAMPLE_NOTES } from "./harness/mockDataView";
 import { enumerateCandidates } from "./harness/sweep";
 import { buildFacetedModel } from "../src/model/dataTransform";
 
@@ -84,7 +84,10 @@ describe("baseline", () => {
 });
 
 describe("settings sweep (single grid)", () => {
-    const dv = buildDataView({ year: 2025, withTarget: true, withTooltip: true });
+    // Seed the persisted annotation store (Z-152) so the annotation layer actually
+    // draws — otherwise every Annotations display pref is trivially effect-less and
+    // the sweep would have to wave it through as smoke-only.
+    const dv = buildDataView({ year: 2025, withTarget: true, withTooltip: true, notes: SAMPLE_NOTES });
     const candidates = enumerateCandidates();
 
     test("enumerated a candidate for most slices", () => {
@@ -110,7 +113,9 @@ describe("settings sweep (single grid)", () => {
 
         expect(threw).toBeUndefined();
         expect(m.host.__lastFailure).toBeUndefined();
-        expect(cellCount(m.el)).toBeGreaterThan(0);
+        // Alternate-view settings (summary table) legitimately render zero day
+        // cells; everything else must never blank the grid.
+        if (!c.allowNoCells) expect(cellCount(m.el)).toBeGreaterThan(0);
 
         const after = svgHtml(m.el);
         if (c.expectChange) {

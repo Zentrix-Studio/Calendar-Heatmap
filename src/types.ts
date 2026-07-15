@@ -26,13 +26,6 @@ export interface DayCell {
     selectionId: ISelectionId | null;
     /** Index into the source category (for highlights); -1 for no-data. */
     sourceIndex: number;
-    /** Aggregated highlight value when the host supplies a `values[].highlights[]`
-     * array (lasso / cross-highlight from another visual). null when this day is
-     * not part of the active highlight, undefined when no highlight is in effect. */
-    highlightValue?: number | null;
-    /** True when a highlight array is present AND this day is highlighted (non-null,
-     * non-zero). Drives the cross-highlight dim — undefined in the normal path. */
-    isHighlighted?: boolean;
     /** Pixel box assigned by the active renderer (continuous or month-block). */
     px?: number;
     py?: number;
@@ -41,13 +34,18 @@ export interface DayCell {
     tooltips?: { name: string; value: string }[];
     /** Aggregated Target-role goal for this day, or null when none is bound/present. */
     target?: number | null;
-    /** Annotation-role note for this day (holiday, release, incident…); undefined when none. */
-    annotation?: string;
+    // NB (Z-152): there is deliberately no `annotation` field. Annotations used to
+    // come from a bound column; they are now AUTHOR-WRITTEN and live in the
+    // persisted note store (notes/store.ts), keyed by ISO date rather than carried
+    // on the cell. Look them up with `NoteStore.get(cell)`.
     /** Category value of the facet this cell belongs to (small multiples); undefined in single-grid mode. */
     facetKey?: string;
     /** Zero-based facet index, in render order. 0 for the single-grid case. */
     facetIndex?: number;
 }
+
+/** How multiple rows on the same day are combined into one cell value. */
+export type AggregationMode = "sum" | "avg" | "min" | "max" | "count";
 
 /** A month label anchored to the first week column containing that month. */
 export interface MonthLabel {
@@ -71,15 +69,15 @@ export interface CalendarModel {
     hasToday: boolean;
     /** Display name of the value field, for tooltip/legend/header. */
     valueName: string;
+    /** How day values were aggregated — lets the tooltip/panel use count-appropriate
+     *  wording and suppress target comparisons that don't apply to a row count. */
+    aggMode: AggregationMode;
     /** Display name of the Target field, for the tooltip; undefined when none is bound. */
     targetName?: string;
     /** Total days in the data extent before any render cap was applied. */
     totalDays: number;
     /** Full (pre-cap) daily series for the insight engine; gaps as null. */
     series?: DailySeries;
-    /** True when the host supplied a highlights[] array (cross-highlight active).
-     * Drives whether the render path dims un-highlighted cells. False = normal. */
-    hasHighlights?: boolean;
 }
 
 /** One small-multiple panel: a category value and its own calendar model. */

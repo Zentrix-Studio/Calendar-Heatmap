@@ -1,12 +1,15 @@
 "use strict";
 
-import { CalendarModel, DayCell } from "../types";
+import { CalendarModel, DayCell, AggregationMode } from "../types";
 import { ColorAccessor } from "../render/colors";
 import { appendTooltipBrand } from "../branding/zentrixBrand"; // ZENTRIX-BRAND
+import { fontFamily, posSafe, negSafe, accent, resolveSurface } from "../theme/zentrixTokens";
+import { buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, metricLabel, formatNum, clear, div, span } from "./dayData";
 
-const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const FONT = "Segoe UI, -apple-system, sans-serif";
-const UP = "#2EA043", DOWN = "#E5484D";
+const FONT = fontFamily;
+// Up/over/gain vs down/under/loss — CVD-safe Okabe-Ito pair (Z-148, replaces the
+// legacy raw green/red #2EA043/#E5484D). Sourced from the token mirror, not inline.
+const UP = posSafe, DOWN = negSafe;
 
 /**
  * Custom Zentrix tooltip — a styled DOM overlay matching the design ref
@@ -22,14 +25,17 @@ export class HeatmapTooltip {
     // Keyed by `${facetKey}|${dayEpoch}` so panels sharing a date don't collide.
     private valueByDay = new Map<string, number>();
     private valueName = "";
+    private aggMode: AggregationMode = "sum";
     private targetName = "Target";
     private colors: ColorAccessor | null = null;
     private dark = false;
     private anomalies?: Map<number, AnomalyHint>;
     private polarity: Polarity = "neutral";
-    // BCP-47 locale from the Power BI host. Drives date + number formatting so the
-    // tooltip follows the report's culture (not the machine's). Default deterministic.
-    private locale = "en-US";
+    // Z-146 — matched rule name per `${facetKey}|${epoch}`, so a badge isn't a mystery emoji.
+    private ruleNameByDay = new Map<string, string>();
+    // Z-152 — author-written annotation text per `${facetKey}|${epoch}`. Sourced
+    // from the persisted note store, not from a bound column.
+    private noteByDay = new Map<string, string>();
     private brandingOn = true; // ZENTRIX-BRAND — default ON (free tier); premium can disable
 
     constructor(root: HTMLElement) {
@@ -42,84 +48,94 @@ export class HeatmapTooltip {
     }
 
     /** Refresh per-render context (value lookup for deltas, theme, color accessor, anomalies). */
-    setContext(model: CalendarModel, colors: ColorAccessor, dark: boolean, anomalies?: Map<number, AnomalyHint>, polarity: Polarity = "neutral", locale = "en-US"): void {
-        this.valueByDay.clear();
-        for (const d of model.days) {
-            if (!d.noData && d.value != null) this.valueByDay.set(`${d.facetKey ?? ""}|${d.date.getTime()}`, d.value);
-        }
+    setContext(model: CalendarModel, colors: ColorAccessor, dark: boolean, anomalies?: Map<number, AnomalyHint>, polarity: Polarity = "neutral"): void {
+        this.valueByDay = buildValueByDay(model);
         this.valueName = model.valueName;
+        this.aggMode = model.aggMode;
         this.targetName = model.targetName || "Target";
         this.colors = colors;
         this.dark = dark;
         this.anomalies = anomalies;
         this.polarity = polarity;
-        this.locale = locale || "en-US";
     }
+
+    /** Z-146 — matched rule names keyed by `${facetKey}|${epoch}`. */
+    setRuleNames(map: Map<string, string>): void { this.ruleNameByDay = map; }
+
+    /** Z-152 — author-written annotation text keyed by `${facetKey}|${epoch}`. */
+    setNotes(map: Map<string, string>): void { this.noteByDay = map; }
 
     /** ZENTRIX-BRAND — host toggles the subtle tooltip attribution on/off. */
     setBranding(on: boolean): void { this.brandingOn = on; }
 
     show(d: DayCell, clientX: number, clientY: number): void {
-        this.el.style.background = this.dark ? "#15151E" : "#FFFFFF";
-        this.el.style.color = this.dark ? "#F4F4F6" : "#1A1A22";
-        const muted = this.dark ? "#8A8A99" : "#70707F";
-        const strong = this.dark ? "#F4F4F6" : "#1A1A22";
+        // Surface colors resolve from the token mirror (Z-148) — no raw hex.
+        const theme = resolveSurface(this.dark);
+        this.el.style.background = theme.bg;
+        this.el.style.color = theme.fg;
+        const muted = theme.muted;
+        const strong = theme.strong;
         clear(this.el);
 
-        const dateLabel = `${WEEKDAY[d.date.getDay()]} · ${d.date.toLocaleDateString(this.locale,
-            { month: "short", day: "numeric", year: "numeric" })}`.toUpperCase();
-        this.el.appendChild(div(`font-size:10px;letter-spacing:.5px;color:${muted}`, dateLabel));
+        this.el.appendChild(div(`font-size:10px;letter-spacing:.5px;color:${muted}`, dateLabel(d.date)));
 
         // Facet (Split-by) value — which small-multiple panel this cell belongs to.
         if (d.facetKey) {
             this.el.appendChild(div(`margin-top:2px;font-size:11px;font-weight:600;color:${strong}`, d.facetKey));
         }
 
-        // Annotation note (holiday / release / incident…) — shown for any flagged day.
-        if (d.annotation) {
+        // Author-written annotation (Z-152) — this is how a Marker-only note reads
+        // its text: the callout isn't drawn, so hover is the reveal.
+        const noteText = this.noteByDay.get(dayKey(d));
+        if (noteText) {
             const note = div(`margin-top:5px;font-size:12px;font-weight:600;color:${strong};display:flex;align-items:flex-start`);
             note.appendChild(span("margin-right:5px", "📌"));
-            note.appendChild(span("", d.annotation));
+            note.appendChild(span("", noteText));
             this.el.appendChild(note);
+        }
+
+        // Matched rule name (Z-146) — so the badge emoji isn't a mystery.
+        const ruleName = this.ruleNameByDay.get(dayKey(d));
+        if (ruleName) {
+            this.el.appendChild(div(`margin-top:5px;font-size:11px;font-weight:600;color:${strong}`, ruleName));
         }
 
         if (d.noData || d.value == null) {
             this.el.appendChild(div(`margin-top:6px;font-size:13px;color:${muted}`, "No data"));
         } else {
             // Metric name with a color dot matching the hovered cell.
-            const dot = this.colors ? this.colors.of(d) : "#7C5CFF";
+            const dot = this.colors ? this.colors.of(d) : accent;
             const metric = div("margin-top:6px;font-size:12px;display:flex;align-items:center");
             metric.appendChild(span(`width:9px;height:9px;border-radius:2px;background:${dot};` +
                 "display:inline-block;margin-right:6px;border:1px solid rgba(0,0,0,.12)", ""));
-            metric.appendChild(span("", this.valueName));
+            // Count is a row count, not the field's magnitude — relabel it so the big
+            // number doesn't read as a sum of the metric (issue #4).
+            metric.appendChild(span("", metricLabel(this.valueName, this.aggMode)));
             this.el.appendChild(metric);
 
             // Big value + delta badge vs the previous calendar day ("+26 vs Mon").
             const valueRow = div("margin-top:2px;font-size:24px;font-weight:700;line-height:1.1");
-            valueRow.appendChild(span("", formatNum(d.value, this.locale)));
-            const prev = new Date(d.date.getFullYear(), d.date.getMonth(), d.date.getDate() - 1);
-            const prevVal = this.valueByDay.get(`${d.facetKey ?? ""}|${prev.getTime()}`);
-            if (prevVal != null && prevVal !== 0) {
-                const diff = d.value - prevVal;
-                const up = diff >= 0;
+            valueRow.appendChild(span("", formatNum(d.value)));
+            const dod = dayOverDay(d, this.valueByDay);
+            if (dod) {
                 valueRow.appendChild(span(
-                    `margin-left:8px;font-size:12px;font-weight:600;color:${up ? UP : DOWN}`,
-                    `${up ? "▲" : "▼"} ${Math.abs((diff / prevVal) * 100).toFixed(1)}%`));
+                    `margin-left:8px;font-size:12px;font-weight:600;color:${dod.up ? UP : DOWN}`,
+                    `${dod.up ? "▲" : "▼"} ${dod.pct}%`));
                 this.el.appendChild(valueRow);
                 this.el.appendChild(div(`margin-top:4px;font-size:11px;color:${muted}`,
-                    `${up ? "+" : ""}${formatNum(diff, this.locale)} vs ${WEEKDAY[prev.getDay()]}`));
+                    `${dod.up ? "+" : ""}${dod.diff} vs ${dod.prevWeekday}`));
             } else {
                 this.el.appendChild(valueRow);
             }
 
             // Target variance — "vs <Target>: +12 (8.0% over)" when a goal is bound.
-            if (d.target != null && isFinite(d.target)) {
-                const diff = d.value - d.target;
-                const over = diff >= 0;
-                const pct = d.target !== 0 ? `${Math.abs((diff / d.target) * 100).toFixed(1)}% ${over ? "over" : "under"}` : (over ? "over" : "under");
+            // Suppressed under Count: comparing a per-day row count to a summed target
+            // is meaningless and misled SLA-style reports (issue #4).
+            const variance = this.aggMode === "count" ? null : targetVariance(d);
+            if (variance) {
                 const row = div(`margin-top:6px;font-size:11px;color:${muted}`, `vs ${this.targetName}: `);
-                row.appendChild(span(`color:${over ? UP : DOWN};font-weight:600`,
-                    `${over ? "+" : ""}${formatNum(diff, this.locale)} (${pct})`));
+                row.appendChild(span(`color:${variance.over ? UP : DOWN};font-weight:600`,
+                    `${variance.over ? "+" : ""}${formatNum(variance.diff)} (${variance.label})`));
                 this.el.appendChild(row);
             }
 
@@ -171,21 +187,3 @@ export class HeatmapTooltip {
     hide(): void { this.el.style.display = "none"; }
 }
 
-function formatNum(n: number, locale = "en-US"): string {
-    return n.toLocaleString(locale, { maximumFractionDigits: 2 });
-}
-function clear(el: HTMLElement): void {
-    while (el.firstChild) el.removeChild(el.firstChild);
-}
-function div(style: string, text?: string): HTMLDivElement {
-    const d = document.createElement("div");
-    d.style.cssText = style;
-    if (text != null) d.textContent = text;
-    return d;
-}
-function span(style: string, text: string): HTMLSpanElement {
-    const s = document.createElement("span");
-    s.style.cssText = style;
-    s.textContent = text;
-    return s;
-}
