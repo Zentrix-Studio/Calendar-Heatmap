@@ -3,7 +3,7 @@
 import { Selection } from "d3";
 import { CalendarModel, DayCell } from "../types";
 import { ColorAccessor } from "./colors";
-import { layout, monthLabels, MonthLabel } from "../model/dateGrid";
+import { layout, monthLabels, MonthLabel, isoWeek, fiscalYearOf } from "../model/dateGrid";
 import { TextStyle, applyText, defaultText } from "./text";
 import { MIN_WEEKDAY_CELL, thinMonthLabels } from "./density";
 
@@ -28,6 +28,12 @@ export interface GridOptions {
     colors: ColorAccessor;
     showMonthLabels: boolean;
     showWeekdayLabels: boolean;
+    /** ISO-8601 week numbers along each band's bottom edge (MVP-A). Auto-dropped
+     * with the weekday rail when cells shrink past legibility. Default off. */
+    showWeekNumbers?: boolean;
+    /** Fiscal year start month 1..12 (MVP-B). >1 groups the year bands by fiscal
+     * year (bands split at this month, labeled "FY yyyy"). 1/undefined = calendar. */
+    fiscalStartMonth?: number;
     /** Label text color (theme-aware). */
     labelColor: string;
     /** Strong text color for year labels / emphasis. */
@@ -76,11 +82,13 @@ interface Band {
     labels: MonthLabel[];
 }
 
-/** Split the model's days into one band per calendar year, each with its own week layout. */
-function buildBands(model: CalendarModel, firstDayOfWeek: number): Band[] {
+/** Split the model's days into one band per year — calendar years by default, or
+ * fiscal years when fiscalStartMonth > 1 (bands split at the fiscal start month,
+ * MVP-B). Each band lays out its own weeks. */
+function buildBands(model: CalendarModel, firstDayOfWeek: number, fiscalStartMonth = 1): Band[] {
     const byYear = new Map<number, DayCell[]>();
     for (const d of model.days) {
-        const y = d.date.getFullYear();
+        const y = fiscalYearOf(d.date, fiscalStartMonth);
         if (!byYear.has(y)) byYear.set(y, []);
         byYear.get(y)!.push(d);
     }
@@ -98,6 +106,8 @@ interface GridFit {
     stepY: number;
     marginLeft: number;
     headerH: number;
+    /** Height reserved under each band for the ISO week-number rail (0 when off). */
+    footerH: number;
 }
 
 /** Pure cell-size fit for the stacked-year grid. Mirrors renderGrid's geometry
@@ -108,28 +118,41 @@ function gridFit(bandsLen: number, maxWeeks: number, opts: GridOptions, width: n
     const multiYear = bandsLen > 1;
     const marginLeft = opts.showWeekdayLabels ? 32 : (multiYear ? 30 : 2);
     const headerH = (opts.showMonthLabels || multiYear) ? 16 : 2;
+    // Week-number rail: a per-band footer strip (MVP-A). Folded into the fit so
+    // the predictor reserves it BEFORE drawing — the same no-trial-render contract
+    // as every other chrome band.
+    const footerH = opts.showWeekNumbers ? 13 : 0;
     const bandGap = 12;
     const top = opts.topOffset ?? 0;
     const availW = width - marginLeft - 4;
     const availH = height - top - 4;
     // Cell size: bounded by width (widest year, gapX) and total stacked height (gapY).
     const totalRows = bandsLen * 7;
-    const headerTotal = bandsLen * headerH + (bandsLen - 1) * bandGap;
+    const headerTotal = bandsLen * (headerH + footerH) + (bandsLen - 1) * bandGap;
     const fitW = (availW + gapX) / maxWeeks - gapX;
     const fitH = (availH - headerTotal + gapY) / totalRows - gapY;
     const size = Math.max(3, Math.min(opts.cellSize, fitW, fitH));
-    return { size, stepX: size + gapX, stepY: size + gapY, marginLeft, headerH };
+    return { size, stepX: size + gapX, stepY: size + gapY, marginLeft, headerH, footerH };
+}
+
+/** One retry pass shared by predict + render: when cells shrink past legibility,
+ * drop the weekday rail AND the week-number rail together and reclaim their space. */
+function fitWithAutoDrop(bandsLen: number, maxWeeks: number, opts: GridOptions, width: number, height: number): { f: GridFit; opts: GridOptions } {
+    let effective = opts;
+    let f = gridFit(bandsLen, maxWeeks, effective, width, height);
+    if ((effective.showWeekdayLabels || effective.showWeekNumbers) && f.size < MIN_WEEKDAY_CELL) {
+        effective = { ...effective, showWeekdayLabels: false, showWeekNumbers: false };
+        f = gridFit(bandsLen, maxWeeks, effective, width, height);
+    }
+    return { f, opts: effective };
 }
 
 /** Predict the cell size renderGrid would choose for this box — including the
- * weekday-rail auto-drop — so chrome can be reserved without a trial render. */
+ * weekday/week-number rail auto-drop — so chrome can be reserved without a trial render. */
 export function predictGridSize(model: CalendarModel, opts: GridOptions, width: number, height: number): number {
-    const bands = buildBands(model, opts.firstDayOfWeek);
+    const bands = buildBands(model, opts.firstDayOfWeek, opts.fiscalStartMonth ?? 1);
     const maxWeeks = Math.max(1, ...bands.map(b => b.weeks));
-    let f = gridFit(bands.length, maxWeeks, opts, width, height);
-    if (opts.showWeekdayLabels && f.size < MIN_WEEKDAY_CELL)
-        f = gridFit(bands.length, maxWeeks, { ...opts, showWeekdayLabels: false }, width, height);
-    return f.size;
+    return fitWithAutoDrop(bands.length, maxWeeks, opts, width, height).f.size;
 }
 
 /**
@@ -141,20 +164,18 @@ export function predictGridSize(model: CalendarModel, opts: GridOptions, width: 
  */
 export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOptions): RenderResult {
     const { gapX, gapY } = opts;
-    const bands = buildBands(model, opts.firstDayOfWeek);
+    const fiscalStart = opts.fiscalStartMonth ?? 1;
+    const bands = buildBands(model, opts.firstDayOfWeek, fiscalStart);
     const multiYear = bands.length > 1;
     const maxWeeks = Math.max(1, ...bands.map(b => b.weeks));
     const bandGap = 12;
 
-    // Auto-drop the Mon/Wed/Fri rail when cells shrink past legibility (the rows
-    // would touch) and reclaim its left gutter so the cells grow back.
-    let showWeekday = opts.showWeekdayLabels;
-    let f = gridFit(bands.length, maxWeeks, opts, opts.width, opts.height);
-    if (showWeekday && f.size < MIN_WEEKDAY_CELL) {
-        showWeekday = false;
-        f = gridFit(bands.length, maxWeeks, { ...opts, showWeekdayLabels: false }, opts.width, opts.height);
-    }
-    const { size, stepX, stepY, marginLeft, headerH } = f;
+    // Auto-drop the Mon/Wed/Fri rail + week-number rail when cells shrink past
+    // legibility (the rows would touch) and reclaim their space so cells grow back.
+    const fit = fitWithAutoDrop(bands.length, maxWeeks, opts, opts.width, opts.height);
+    const showWeekday = fit.opts.showWeekdayLabels;
+    const showWeekNums = !!fit.opts.showWeekNumbers;
+    const { size, stepX, stepY, marginLeft, headerH, footerH } = fit.f;
 
     const oX = opts.originX ?? 0, oY = opts.originY ?? 0;
     const top = opts.topOffset ?? 0;
@@ -162,7 +183,7 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
     const availH = opts.height - top - 4;
     const radius = Math.min(opts.radius, size * 0.5);
 
-    const bandHeight = headerH + 7 * stepY - gapY;
+    const bandHeight = headerH + 7 * stepY - gapY + footerH;
     const totalHeight = bands.length * bandHeight + (bands.length - 1) * bandGap;
     const offsetY = oY + top + Math.max(0, (availH - totalHeight) / 2) + 2; // vertical centering
     const strong = opts.strongColor ?? opts.labelColor;
@@ -196,18 +217,21 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
         .attr("stroke-width", opts.cellStroke ? 1 : null);
 
     // Labels per band.
-    group.selectAll("text.month, text.weekday, text.year").remove();
+    group.selectAll("text.month, text.weekday, text.year, text.weeknum").remove();
     const monthStyle = opts.monthStyle ?? defaultText(10);
     const weekdayStyle = opts.weekdayStyle ?? defaultText(10);
     const yearStyle = opts.yearStyle ?? { ...defaultText(11), bold: true };
+    const weekNumStyle = opts.weekdayStyle ?? defaultText(9);
     bands.forEach((b, bi) => {
         const bandTop = offsetY + bi * (bandHeight + bandGap);
         const cellsTop = bandTop + headerH;
 
         if (multiYear) {
+            // Fiscal bands are labeled FY (numbered by the year the fiscal year
+            // ends in) so an Apr–Mar band can't be misread as a calendar year.
             applyText(group.append("text").classed("year", true)
                 .attr("x", oX + ox + 2).attr("y", bandTop + headerH - 4)
-                .text(String(b.year)), yearStyle, strong);
+                .text(fiscalStart > 1 ? `FY ${b.year}` : String(b.year)), yearStyle, strong);
         }
 
         if (opts.showMonthLabels) {
@@ -226,6 +250,26 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
                     .attr("x", contentLeft - 6).attr("y", cellsTop + row * stepY + size / 2)
                     .attr("text-anchor", "end").attr("dominant-baseline", "middle")
                     .text(WEEKDAY_NAMES[(row + opts.firstDayOfWeek) % 7]), weekdayStyle, opts.labelColor);
+            }
+        }
+
+        if (showWeekNums) {
+            // ISO week number under each week column, keyed to the column's first
+            // day. Thinned by a fixed pitch so two-digit labels never collide as
+            // cells shrink (mirrors the month-label thinning philosophy).
+            const labelEvery = Math.max(1, Math.ceil((weekNumStyle.size * 1.9) / stepX));
+            const firstDayIdxByCol = new Map<number, number>();
+            b.days.forEach((_, i) => {
+                const c = b.cols[i];
+                if (!firstDayIdxByCol.has(c)) firstDayIdxByCol.set(c, i);
+            });
+            const footerY = cellsTop + 7 * stepY - gapY + footerH - 3;
+            for (const [c, i] of firstDayIdxByCol) {
+                if (c % labelEvery !== 0) continue;
+                applyText(group.append("text").classed("weeknum", true)
+                    .attr("x", contentLeft + c * stepX + size / 2).attr("y", footerY)
+                    .attr("text-anchor", "middle")
+                    .text(String(isoWeek(b.days[i].date))), weekNumStyle, opts.labelColor);
             }
         }
     });

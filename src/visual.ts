@@ -555,6 +555,11 @@ export class Visual implements IVisual {
             firstDayOfWeek,
             showMonthLabels: s.labels.showMonthLabels.value,
             showWeekdayLabels: s.labels.showWeekdayLabels.value,
+            showWeekNumbers: s.labels.showWeekNumbers.value,
+            // MVP-B: fiscalStart re-anchors the year bands only when the author has
+            // opted into the fiscal layout — by itself it still touches insights only
+            // (QA-02's original contract for the bare fiscalStart is preserved).
+            fiscalStartMonth: s.timeIntel.fiscalDisplay.value ? fiscalStartMonth : 1,
             labelColor, strongColor,
             cellStroke: hc ? palette.foreground.value : undefined,
             monthStyle: s.monthRail.toStyle(),

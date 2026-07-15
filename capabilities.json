@@ -205,6 +205,11 @@
                             }
                         ]
                     }
+                },
+                "fiscalDisplay": {
+                    "type": {
+                        "bool": true
+                    }
                 }
             }
         },
@@ -259,6 +264,11 @@
                     }
                 },
                 "showHeader": {
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "showWeekNumbers": {
                     "type": {
                         "bool": true
                     }

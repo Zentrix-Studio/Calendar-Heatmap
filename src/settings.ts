@@ -114,15 +114,25 @@ const MONTH_ITEMS = [
 class TimeIntelligenceCard extends Card {
     fiscalStart = new ItemDropdown({
         name: "fiscalStart", displayName: "Fiscal year starts",
-        // Scope note (Z review): this only shifts the year/quarter boundaries used by
-        // the year-over-year insight. With a single year of data there is no prior year
-        // to compare, so changing it has no visible effect until ≥2 fiscal years are bound.
-        description: "Shifts the year and quarter boundaries used by the year-over-year insight. Has no visible effect unless the data spans two or more (fiscal) years.",
+        // Scope note (Z review, superseded for layout by the MVP-B product decision):
+        // by itself this only shifts the year/quarter boundaries used by the
+        // year-over-year insight. Turning on fiscalDisplay below additionally
+        // re-anchors the calendar layout's year bands to this month.
+        description: "Shifts the year and quarter boundaries used by the year-over-year insight. Turn on 'Fiscal year layout' to also start the calendar's year bands on this month.",
         items: MONTH_ITEMS, value: item("1", "January"),
+    });
+    fiscalDisplay = new ToggleSwitch({
+        name: "fiscalDisplay", displayName: "Fiscal year layout",
+        // MVP-B (research-backed): lay the continuous grid out by fiscal year —
+        // year bands split at the fiscal start month and are labeled "FY yyyy"
+        // (numbered by the calendar year the fiscal year ends in). Off = the
+        // pre-existing calendar-year layout, so default rendering is unchanged.
+        description: "Lay the calendar out by fiscal year: year bands start on the fiscal start month and are labeled FY. Applies to the continuous layout.",
+        value: false,
     });
     name = "timeIntel";
     displayName = "Time intelligence";
-    slices = [this.fiscalStart];
+    slices = [this.fiscalStart, this.fiscalDisplay];
 }
 
 // --- Small multiples (Split by) ---------------------------------------------
@@ -150,9 +160,12 @@ class LabelsCard extends Card {
     showMonthLabels = new ToggleSwitch({ name: "showMonthLabels", displayName: "Month labels", value: true });
     showWeekdayLabels = new ToggleSwitch({ name: "showWeekdayLabels", displayName: "Weekday labels", value: true });
     showHeader = new ToggleSwitch({ name: "showHeader", displayName: "KPI header", value: false });
+    // MVP-A (research-backed): ISO-8601 week numbers along each year band's bottom
+    // edge. Off by default so existing reports and sweep snapshots are unchanged.
+    showWeekNumbers = new ToggleSwitch({ name: "showWeekNumbers", displayName: "Week numbers", value: false });
     name = "labels";
     displayName = "Labels";
-    slices = [this.showMonthLabels, this.showWeekdayLabels, this.showHeader];
+    slices = [this.showMonthLabels, this.showWeekdayLabels, this.showHeader, this.showWeekNumbers];
 }
 
 // --- Colors -----------------------------------------------------------------

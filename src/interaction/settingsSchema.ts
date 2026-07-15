@@ -150,6 +150,7 @@ const KEYS: Record<string, Entry> = {
     // Time intelligence — surfaced in the gear (the Format-pane card is hidden), so
     // fiscal year stays reachable from the visual's own settings.
     fiscalStart: dropdown("timeIntel", "fiscalStart", m => m.timeIntel.fiscalStart),
+    fiscalDisplay: bool("timeIntel", "fiscalDisplay", m => m.timeIntel.fiscalDisplay),
     // Color
     paletteMode: dropdown("colors", "paletteMode", m => m.colors.paletteMode),
     ramp: { // selecting a palette also activates ramp mode so it's actually used.
@@ -177,6 +178,7 @@ const KEYS: Record<string, Entry> = {
     showMonths: bool("labels", "showMonthLabels", m => m.labels.showMonthLabels),
     showWeekdays: bool("labels", "showWeekdayLabels", m => m.labels.showWeekdayLabels),
     showKpi: bool("labels", "showHeader", m => m.labels.showHeader),
+    showWeekNums: bool("labels", "showWeekNumbers", m => m.labels.showWeekNumbers),
     // Elements — legend (placement folds show + position)
     legendPlacement: {
         get: m => (!m.legend.show.value ? "off" : (m.legend.position.value.value === "top" ? "top" : "bottom")),
@@ -350,7 +352,10 @@ export const SB_CATS: SBCategory[] = [
         { id: "layout", name: "Layout", info: "Arrange the calendar as one continuous year grid or as separate month blocks.", kind: "menu", key: "layout", options: [["continuous", "Year"], ["month", "Months"]] },
         { id: "aggregate", name: "Aggregate", info: "Choose how multiple values that fall on the same day are combined into a single number.", kind: "menu", key: "aggregate", options: [["sum", "Sum"], ["avg", "Average"], ["min", "Min"], ["max", "Max"], ["count", "Count"]] },
         { id: "week", name: "Week start", info: "Set which weekday each column starts on — Sunday or Monday.", kind: "menu", key: "weekStart", options: [["0", "Sun"], ["1", "Mon"]] },
-        { id: "fiscal", name: "Fiscal year", info: "Month the fiscal year starts on. Only shifts the year-over-year insight; needs two or more (fiscal) years of data to show a difference.", kind: "menu", key: "fiscalStart", options: [["1", "Jan"], ["2", "Feb"], ["3", "Mar"], ["4", "Apr"], ["5", "May"], ["6", "Jun"], ["7", "Jul"], ["8", "Aug"], ["9", "Sep"], ["10", "Oct"], ["11", "Nov"], ["12", "Dec"]] },
+        { id: "fiscal", name: "Fiscal year", info: "Month the fiscal year starts on. Shifts the year-over-year insight, and — with Fiscal layout on — also starts the calendar's year bands on this month.", kind: "menu", key: "fiscalStart", options: [["1", "Jan"], ["2", "Feb"], ["3", "Mar"], ["4", "Apr"], ["5", "May"], ["6", "Jun"], ["7", "Jul"], ["8", "Aug"], ["9", "Sep"], ["10", "Oct"], ["11", "Nov"], ["12", "Dec"]] },
+        { id: "fiscallayout", name: "Fiscal layout", info: "Lay the calendar out by fiscal year: year bands start on the fiscal start month and are labeled FY (numbered by the year the fiscal year ends in). Applies to the continuous layout.", kind: "fields", width: 250, fields: [
+            { control: "switch", label: "Fiscal year layout", key: "fiscalDisplay" },
+        ] },
         { id: "facets", name: "Small multiples", info: "Applies when a Split-by category is bound: how many panel columns to lay out (0 = automatic), and whether every panel shares one color scale so colors compare across panels.", kind: "fields", width: 260, fields: [
             { control: "stepper", label: "Columns (0 = auto)", key: "facets.columns", min: 0, max: 8 },
             { control: "switch", label: "Shared color scale", key: "facets.sharedScale" },
@@ -385,10 +390,11 @@ export const SB_CATS: SBCategory[] = [
         ] },
     ] },
     { id: "elements", name: "Elements", subs: [
-        { id: "labels", name: "Labels", info: "Show or hide the month names, weekday names, and the KPI header above the grid.", kind: "fields", width: 220, fields: [
+        { id: "labels", name: "Labels", info: "Show or hide the month names, weekday names, the KPI header above the grid, and ISO week numbers below each year band.", kind: "fields", width: 220, fields: [
             { control: "switch", label: "Months", key: "showMonths" },
             { control: "switch", label: "Weekdays", key: "showWeekdays" },
             { control: "switch", label: "KPI header", key: "showKpi" },
+            { control: "switch", label: "Week numbers", key: "showWeekNums" },
         ] },
         { id: "legend", name: "Legend", info: "Configure the color legend — placement, alignment, title, swatch sizing, labels, and the no-data swatch.", kind: "fields", width: 282, fields: [
             { control: "segText", label: "Placement", key: "legendPlacement", options: [["off", "Off"], ["bottom", "Bottom"], ["top", "Top"]] },

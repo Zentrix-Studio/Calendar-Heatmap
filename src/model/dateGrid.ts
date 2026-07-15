@@ -21,6 +21,33 @@ export function weekdayRow(date: Date, firstDayOfWeek: number): number {
 }
 
 /**
+ * ISO-8601 week number (1..53). Weeks start Monday; week 1 is the week holding
+ * the year's first Thursday. Computed in UTC so local DST shifts can't skew the
+ * day arithmetic. (MVP-A: the week-number rail — a competitor's 1★ "wrong week
+ * number" complaint is exactly why this is the standards-track algorithm and
+ * not a naive day-count.)
+ */
+export function isoWeek(date: Date): number {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = (d.getUTCDay() + 6) % 7;            // Mon=0 .. Sun=6
+    d.setUTCDate(d.getUTCDate() - dayNum + 3);         // shift to this week's Thursday
+    const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+    const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
+    firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
+    return 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 86400000));
+}
+
+/**
+ * Fiscal year a date belongs to, numbered by the calendar year the fiscal year
+ * ENDS in (US/UK/India convention: Apr 2025 with a start month of 4 → FY 2026).
+ * A start month of 1 (January) degenerates to the calendar year.
+ */
+export function fiscalYearOf(date: Date, fiscalStartMonth: number): number {
+    if (fiscalStartMonth <= 1) return date.getFullYear();
+    return date.getMonth() + 1 >= fiscalStartMonth ? date.getFullYear() + 1 : date.getFullYear();
+}
+
+/**
  * Every local calendar day in [min, max] inclusive.
  * Increments via setDate so 23h/25h DST days and Feb 29 are preserved exactly.
  */
