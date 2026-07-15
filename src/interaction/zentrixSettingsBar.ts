@@ -946,7 +946,15 @@ const CSS = `
   --accent-soft:rgba(124,92,255,.12); --accent-mid:rgba(124,92,255,.18);
   --accent-grad:linear-gradient(135deg,#7C5CFF 0%,#5B8DEF 100%); --grad-soft:linear-gradient(135deg,rgba(124,92,255,.14) 0%,rgba(91,141,239,.10) 100%);
   --accent-glow:0 2px 12px rgba(124,92,255,.38); --seg-glow:0 2px 8px rgba(124,92,255,.32);
-  --tb-bg:#13141F; --tb-pill:rgba(255,255,255,.07); --tb-pill-active:rgba(124,92,255,.22); --tb-text:rgba(255,255,255,.55); --tb-text-active:#C5AEFF; --tb-border:rgba(255,255,255,.08);
+  /* Toolbar chrome. The bar follows [data-theme] exactly like every other surface —
+     these are the LIGHT values; the dark block below overrides the whole group.
+     Every colour inside a .zsb-bar rule must resolve from a --tb-* token. */
+  --tb-bg:#FFFFFF; --tb-border:rgba(20,23,50,.10); --tb-shadow:0 2px 8px rgba(16,24,64,.08),0 18px 44px -14px rgba(16,24,64,.22);
+  --tb-pill:rgba(20,23,50,.04); --tb-pill-hover:rgba(20,23,50,.07); --tb-pill-active:rgba(124,92,255,.14); --tb-pill-active-fg:#5B3FD6;
+  --tb-text:#54566B; --tb-text-strong:#15161E; --tb-text-active:#5B3FD6; --tb-icon:#8A8C9E;
+  --tb-gear-hover-border:rgba(20,23,50,.14); --tb-divider:rgba(20,23,50,.10); --tb-ring:rgba(124,92,255,.35);
+  --tb-brand-dot:rgba(124,92,255,.85); --tb-brand-glow:0 0 6px rgba(124,92,255,.45); --tb-brand-text:rgba(20,23,50,.42);
+  --tb-danger-bg:rgba(229,72,77,.12); --tb-danger-fg:#C42B30;
   --shadow-card:0 1px 2px rgba(16,24,64,.05),0 10px 24px -12px rgba(16,24,64,.18);
   --shadow-popover:0 2px 4px rgba(16,24,64,.06),0 18px 44px -14px rgba(16,24,64,.24);
   --ease-standard:cubic-bezier(0.16,1,0.3,1);
@@ -961,6 +969,12 @@ const CSS = `
   --text-primary:#F4F4F6; --text-secondary:#A6A6B5; --text-tertiary:#70707F; --text-faint:#4A4A56;
   --border-subtle:rgba(255,255,255,.07); --border-default:rgba(255,255,255,.11); --border-strong:rgba(255,255,255,.18);
   --hover-overlay:rgba(255,255,255,.04); --accent-soft:rgba(124,92,255,.18);
+  --tb-bg:#13141F; --tb-border:rgba(255,255,255,.08); --tb-shadow:0 2px 8px rgba(0,0,0,.35),0 18px 44px -10px rgba(0,0,0,.5);
+  --tb-pill:rgba(255,255,255,.07); --tb-pill-hover:rgba(255,255,255,.12); --tb-pill-active:rgba(124,92,255,.22); --tb-pill-active-fg:#C5AEFF;
+  --tb-text:rgba(255,255,255,.55); --tb-text-strong:#FFFFFF; --tb-text-active:#C5AEFF; --tb-icon:rgba(255,255,255,.4);
+  --tb-gear-hover-border:rgba(255,255,255,.16); --tb-divider:rgba(255,255,255,.10);
+  --tb-brand-glow:0 0 6px rgba(124,92,255,.8); --tb-brand-text:rgba(255,255,255,.35);
+  --tb-danger-bg:rgba(229,72,77,.22); --tb-danger-fg:#FF8A8D;
   --shadow-card:0 1px 0 rgba(255,255,255,.04) inset,0 12px 28px -12px rgba(0,0,0,.7);
   --shadow-popover:0 1px 0 rgba(255,255,255,.06) inset,0 18px 48px -16px rgba(0,0,0,.8); }
 
@@ -978,21 +992,37 @@ const CSS = `
    the UA will strip. Selected fills invert (accent fill + background-colour text)
    so they keep a guaranteed-contrast pair. */
 .zsb-anchor[data-theme="hc"]{ color-scheme:only light;
-  --hc-fg:CanvasText; --hc-bg:Canvas; --hc-accent:Highlight;
+  --hc-fg:CanvasText; --hc-bg:Canvas; --hc-accent:Highlight; --hc-on-accent:HighlightText;
   --surface-base:var(--hc-bg); --surface-subtle:var(--hc-bg); --surface-card:var(--hc-bg); --surface-elevated:var(--hc-bg); --surface-glass:var(--hc-bg);
   --text-primary:var(--hc-fg); --text-secondary:var(--hc-fg); --text-tertiary:var(--hc-fg); --text-faint:var(--hc-fg);
   --border-subtle:var(--hc-fg); --border-default:var(--hc-fg); --border-strong:var(--hc-fg);
   --hover-overlay:transparent; --accent:var(--hc-accent); --accent-b:var(--hc-accent); --accent-strong:var(--hc-accent);
   --accent-soft:transparent; --accent-mid:var(--hc-accent);
   --accent-grad:var(--hc-accent); --grad-soft:transparent; --accent-glow:none; --seg-glow:none;
-  --tb-bg:var(--hc-bg); --tb-pill:var(--hc-bg); --tb-pill-active:var(--hc-accent); --tb-text:var(--hc-fg); --tb-text-active:var(--hc-accent); --tb-border:var(--hc-fg);
+  --tb-bg:var(--hc-bg); --tb-border:var(--hc-fg); --tb-shadow:none;
+  --tb-pill:var(--hc-bg); --tb-pill-hover:var(--hc-bg); --tb-pill-active:var(--hc-accent); --tb-pill-active-fg:var(--hc-on-accent);
+  --tb-text:var(--hc-fg); --tb-text-strong:var(--hc-fg); --tb-text-active:var(--hc-accent); --tb-icon:var(--hc-fg);
+  --tb-gear-hover-border:var(--hc-fg); --tb-divider:var(--hc-fg); --tb-ring:var(--hc-accent);
+  --tb-brand-dot:var(--hc-fg); --tb-brand-glow:none; --tb-brand-text:var(--hc-fg);
+  --tb-danger-bg:var(--hc-bg); --tb-danger-fg:var(--hc-fg);
   --shadow-card:none; --shadow-popover:none; }
 /* borders for elements that normally rely on a fill/shadow for their shape */
 .zsb-anchor[data-theme="hc"] .zsb-group, .zsb-anchor[data-theme="hc"] .zsb-page{ border:1px solid var(--hc-fg); }
 .zsb-anchor[data-theme="hc"] .zsb-group[data-open="true"]{ outline:2px solid var(--hc-accent); box-shadow:none; }
 .zsb-anchor[data-theme="hc"] .zsb-rail-row[data-active="true"], .zsb-anchor[data-theme="hc"] .zsb-trigger[data-open="true"]{ outline:1.5px solid var(--hc-accent); }
-/* selected fills invert: accent fill, background-colour text */
-.zsb-anchor[data-theme="hc"] .zsb-seg-btn[data-active="true"]{ color:var(--hc-bg); box-shadow:none; }
+/* Z-170 — the inversion is now carried by --tb-pill-active-fg (see the theme blocks),
+   NOT by a hand-maintained per-selector list here.
+   WHY: in HC, --tb-pill-active and --tb-text-active BOTH resolve to Highlight, so any
+   surface that fills with the first and labels with the second is Highlight-on-Highlight
+   — an invisible label. This block used to patch exactly three selectors, which meant
+   every NEW control that filled with the accent had to remember to join the list, and
+   nothing enforced it. The token cannot be forgotten: it is read at the point of use.
+   Anything that fills with --tb-pill-active MUST label with --tb-pill-active-fg. */
+/* The active segment is one of the four DELIBERATE literal exceptions (white text on a
+   saturated accent fill — see the README). Its fill is --accent-grad, not --tb-pill-active,
+   so it can't read the token implicitly; in HC the accent collapses to Highlight and the
+   literal #fff would be white-on-Highlight. Flip it explicitly, via the same token. */
+.zsb-anchor[data-theme="hc"] .zsb-seg-btn[data-active="true"]{ color:var(--tb-pill-active-fg); box-shadow:none; }
 .zsb-anchor[data-theme="hc"] .zsb-switch{ background:var(--hc-bg); box-shadow:inset 0 0 0 1.5px var(--hc-fg); }
 .zsb-anchor[data-theme="hc"] .zsb-switch i{ background:var(--hc-fg); box-shadow:none; }
 .zsb-anchor[data-theme="hc"] .zsb-switch[data-on="true"]{ background:var(--hc-accent); box-shadow:none; }
@@ -1020,11 +1050,11 @@ const CSS = `
   color:var(--text-secondary); border:1px solid var(--border-subtle); background:var(--surface-card); box-shadow:var(--shadow-card); transition:all .2s var(--ease-standard); }
 .zsb-gear:hover{ color:var(--text-primary); border-color:var(--border-default); }
 .zsb-gear.is-open{ background:var(--accent-soft); border-color:transparent; color:var(--accent); box-shadow:none; }
-/* the gear lives in the dark bar while open — give it the toolbar's pill treatment.
-   The collapsed launcher keeps the light card style above (it sits on the chart). */
-.zsb-bar .zsb-gear{ width:34px; height:34px; background:var(--tb-pill); border-color:var(--tb-border); color:rgba(255,255,255,.55); box-shadow:none; }
-.zsb-bar .zsb-gear:hover{ color:#fff; border-color:rgba(255,255,255,.16); }
-.zsb-bar .zsb-gear.is-open{ background:var(--tb-pill-active); border-color:transparent; color:var(--tb-text-active); box-shadow:0 0 0 1px rgba(124,92,255,.35); }
+/* the gear lives in the bar while open — give it the toolbar's pill treatment.
+   The collapsed launcher keeps the card style above (it sits on the chart). */
+.zsb-bar .zsb-gear{ width:34px; height:34px; background:var(--tb-pill); border-color:var(--tb-border); color:var(--tb-text); box-shadow:none; }
+.zsb-bar .zsb-gear:hover{ color:var(--tb-text-strong); border-color:var(--tb-gear-hover-border); }
+.zsb-bar .zsb-gear.is-open{ background:var(--tb-pill-active); border-color:transparent; color:var(--tb-pill-active-fg); box-shadow:0 0 0 1px var(--tb-ring); }
 /* Gear spin uses CSS animations, NOT a transition: buildBar()/collapse() re-parent
    the gear between the anchor and the bar, and a re-parent cancels transitions — but
    an animation replays on (re)insertion, so the spin survives the move. forwards holds
@@ -1035,7 +1065,7 @@ const CSS = `
 @keyframes zsbGearClose{ from{ transform:rotate(180deg); } to{ transform:rotate(0); } }
 
 .zsb-bar{ position:relative; display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:14px;
-  background:var(--tb-bg); border:1px solid var(--tb-border); box-shadow:0 2px 8px rgba(0,0,0,.35),0 18px 44px -10px rgba(0,0,0,.5); }
+  background:var(--tb-bg); border:1px solid var(--tb-border); box-shadow:var(--tb-shadow); }
 /* Entrance: the bar unfurls out of the gear via a clip-path reveal — the gear edge
    stays put (~50px is left unclipped) and the options sweep out from it, while the
    gear icon spins (see .zsb-gear.is-open below). Reveal direction follows the gear's
@@ -1056,31 +1086,31 @@ const CSS = `
 @keyframes zsbBarHideL{ from{ clip-path:inset(0 0 0 0 round 13px); } to{ clip-path:inset(0 calc(100% - 50px) 0 0 round 13px); } }
 @keyframes zsbBarHideR{ from{ clip-path:inset(0 0 0 0 round 13px); } to{ clip-path:inset(0 0 0 calc(100% - 50px) round 13px); } }
 @media (prefers-reduced-motion:reduce){ .zsb-anchor .zsb-bar, .zsb-gear svg{ animation:none !important; } }
-.zsb-div{ width:1px; height:20px; background:rgba(255,255,255,.10); flex:none; }
+.zsb-div{ width:1px; height:20px; background:var(--tb-divider); flex:none; }
 .zsb-row{ display:flex; align-items:center; gap:4px; width:max-content; transition:transform .34s var(--ease-standard); }
 .zsb-viewport{ max-width:600px; overflow:hidden; }
 .zsb-page{ flex:none; width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:8px; cursor:pointer;
-  padding:0; background:transparent; color:rgba(255,255,255,.55); transition:background .14s,color .14s; }
-.zsb-page:hover{ background:var(--tb-pill); color:#fff; }
+  padding:0; background:transparent; color:var(--tb-text); transition:background .14s,color .14s; }
+.zsb-page:hover{ background:var(--tb-pill-hover); color:var(--tb-text-strong); }
 .zsb-page-anim{ animation:zsbFade .18s var(--ease-standard); }
 @keyframes zsbFade{ from{ opacity:0; } to{ opacity:1; } }
 .zsb-reset{ flex:none; display:flex; align-items:center; gap:6px; height:30px; padding:0 11px 0 9px; border:0; border-radius:8px; cursor:pointer;
   background:transparent; color:var(--tb-text); font:600 12px var(--font-ui); white-space:nowrap; transition:background .14s, color .14s; }
-.zsb-reset:hover{ background:var(--tb-pill); color:#fff; }
-.zsb-reset svg{ color:rgba(255,255,255,.4); flex:none; }
-.zsb-reset:hover svg{ color:#fff; }
-.zsb-reset.zsb-reset--armed{ background:rgba(229,72,77,.22); color:#FF8A8D; }
-.zsb-reset.zsb-reset--armed svg{ color:#FF8A8D; }
+.zsb-reset:hover{ background:var(--tb-pill-hover); color:var(--tb-text-strong); }
+.zsb-reset svg{ color:var(--tb-icon); flex:none; }
+.zsb-reset:hover svg{ color:var(--tb-text-strong); }
+.zsb-reset.zsb-reset--armed{ background:var(--tb-danger-bg); color:var(--tb-danger-fg); }
+.zsb-reset.zsb-reset--armed svg{ color:var(--tb-danger-fg); }
 .zsb-brand{ display:flex; align-items:center; gap:6px; padding:0 6px 0 2px; flex:none; }
-.zsb-brand-dot{ width:6px; height:6px; border-radius:50%; background:rgba(124,92,255,.85); box-shadow:0 0 6px rgba(124,92,255,.8); }
-.zsb-brand-name{ font:500 11px var(--font-mono); letter-spacing:.5px; color:rgba(255,255,255,.35); }
+.zsb-brand-dot{ width:6px; height:6px; border-radius:50%; background:var(--tb-brand-dot); box-shadow:var(--tb-brand-glow); }
+.zsb-brand-name{ font:500 11px var(--font-mono); letter-spacing:.5px; color:var(--tb-brand-text); }
 .zsb-mwrap{ position:relative; display:flex; }
 .zsb-group{ display:flex; align-items:center; gap:6px; white-space:nowrap; padding:6px 13px; border:0; background:var(--tb-pill);
   cursor:pointer; border-radius:8px; font:500 12.5px var(--font-ui); color:var(--tb-text); transition:all .18s var(--ease-standard); }
-.zsb-group:hover{ background:rgba(255,255,255,.12); color:rgba(255,255,255,.85); }
-.zsb-group[data-open="true"]{ background:var(--tb-pill-active); color:var(--tb-text-active); font-weight:600; box-shadow:0 0 0 1px rgba(124,92,255,.35),var(--accent-glow); }
-.zsb-group svg{ color:rgba(255,255,255,.4); transition:transform .2s, color .2s; }
-.zsb-group[data-open="true"] svg{ color:var(--tb-text-active); }
+.zsb-group:hover{ background:var(--tb-pill-hover); color:var(--tb-text-strong); }
+.zsb-group[data-open="true"]{ background:var(--tb-pill-active); color:var(--tb-pill-active-fg); font-weight:600; box-shadow:0 0 0 1px var(--tb-ring),var(--accent-glow); }
+.zsb-group svg{ color:var(--tb-icon); transition:transform .2s, color .2s; }
+.zsb-group[data-open="true"] svg{ color:var(--tb-pill-active-fg); }
 
 /* master-detail popover */
 .zsb-pop{ position:absolute; bottom:calc(100% + 12px); background:var(--surface-glass); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
