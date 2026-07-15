@@ -253,7 +253,15 @@ export class ZentrixSettingsBar {
         this.gear.setAttribute("aria-label", "Visual settings");
         this.gear.setAttribute("aria-haspopup", "true");
         this.gear.appendChild(gearIcon());
-        this.gear.onclick = (e) => { e.stopPropagation(); this.open ? this.collapse() : this.expand(); };
+        this.gear.onclick = (e) => {
+            e.stopPropagation();
+            if (this.open) { this.collapse(); return; }
+            // UAT-7 — a host-set gate may consume the click (e.g. switch the
+            // report to focus mode first and reopen there via forceOpen, which
+            // deliberately bypasses the gate).
+            if (this.openGate && this.openGate()) return;
+            this.expand();
+        };
         this.anchor.appendChild(this.gear);
         host.appendChild(this.anchor);
     }
@@ -292,6 +300,11 @@ export class ZentrixSettingsBar {
         if (this.pop) this.pop.classList.toggle("zsb-pop--down", this.opensDown);
     }
     private get opensDown(): boolean { return this.corner === "tl" || this.corner === "tr"; }
+
+    /** UAT-7 — gate consulted before a gear CLICK expands the bar; return true to
+     *  consume the click. forceOpen() bypasses it by design. */
+    private openGate: (() => boolean) | null = null;
+    setOpenGate(fn: (() => boolean) | null): void { this.openGate = fn; }
 
     /** Harness/host helper: open the bar and, if given, the category containing `subId`. */
     forceOpen(subId?: string): void {

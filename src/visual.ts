@@ -132,6 +132,9 @@ export class Visual implements IVisual {
     private tableView = true;
     /** Cell element that opened the detail panel — focus returns here on Esc/close. */
     private panelOrigin: SVGElement | null = null;
+    /** UAT-7 — a small-tile gear click switched us into focus mode; open the bar
+     *  on the first in-focus update so the click still lands in settings. */
+    private pendingFocusOpen = false;
 
     /** Author-written annotations (Z-152), hydrated from the persisted blob each update(). */
     private notes = new NoteStore();
@@ -289,6 +292,27 @@ export class Visual implements IVisual {
             // can only overlap the grid, so hide it — resize the tile to author.
             const tooSmallForGear = options.viewport.width < 300 || options.viewport.height < 180;
             this.toolbar.update(this.formattingSettings, dark, readingView || tooSmallForGear);
+            // UAT-7 — tiles too small for the settings popover to make sense: the
+            // gear click switches the report into FOCUS MODE instead. The visual
+            // fills the canvas, update() re-runs with isInFocus, and the bar
+            // auto-opens there so the click still lands in settings. forceOpen
+            // bypasses the gate by design; hosts without focus support fall back
+            // to opening in place (gate returns false).
+            // Threshold: the master+detail popover is ~640px wide and ~430px tall;
+            // under that the popover buries the grid (UAT-7 screenshot). 1200×420
+            // stays in-place — the popover covering a SHORT tile vertically has
+            // always been the normal config UX; it's narrow tiles that break.
+            const needsFocusForSettings = !readingView && !options.isInFocus
+                && (options.viewport.width < 640 || options.viewport.height < 400);
+            this.toolbar.setOpenGate(needsFocusForSettings ? () => {
+                try { this.host.switchFocusModeState(true); } catch { return false; }
+                this.pendingFocusOpen = true;
+                return true;
+            } : null);
+            if (options.isInFocus && this.pendingFocusOpen) {
+                this.pendingFocusOpen = false;
+                this.toolbar.forceOpen();
+            }
             this.premium.refresh();
 
             const viewport = options.viewport;

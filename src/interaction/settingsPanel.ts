@@ -145,6 +145,11 @@ export class SettingsOverlay {
         this.onChange?.();
     }
 
+    /** UAT-7 — passthrough: gate a gear CLICK (forceOpen still bypasses it). */
+    setOpenGate(fn: (() => boolean) | null): void {
+        this.bar.setOpenGate(fn);
+    }
+
     /** Called by the visual after layout when position = Auto. No-op otherwise. */
     setCorner(corner: string): void {
         if (this.pref === "auto") this.bar.setCorner(corner);
