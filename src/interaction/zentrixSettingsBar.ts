@@ -1064,7 +1064,12 @@ const CSS = `
 @keyframes zsbGearOpen{ from{ transform:rotate(0); } to{ transform:rotate(180deg); } }
 @keyframes zsbGearClose{ from{ transform:rotate(180deg); } to{ transform:rotate(0); } }
 
+/* UAT-6 — the bar must never outgrow the tile. Power BI visuals render in their
+   own iframe, so 100vw IS the tile width; clamping here makes the viewport shrink
+   on narrow tiles, which is what engages the built-in paging (measure/applyOffset
+   + the double-chevrons) instead of the bar clipping at the tile edge. */
 .zsb-bar{ position:relative; display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:14px;
+  max-width:calc(100vw - 16px);
   background:var(--tb-bg); border:1px solid var(--tb-border); box-shadow:var(--tb-shadow); }
 /* Entrance: the bar unfurls out of the gear via a clip-path reveal — the gear edge
    stays put (~50px is left unclipped) and the options sweep out from it, while the
@@ -1088,7 +1093,9 @@ const CSS = `
 @media (prefers-reduced-motion:reduce){ .zsb-anchor .zsb-bar, .zsb-gear svg{ animation:none !important; } }
 .zsb-div{ width:1px; height:20px; background:var(--tb-divider); flex:none; }
 .zsb-row{ display:flex; align-items:center; gap:4px; width:max-content; transition:transform .34s var(--ease-standard); }
-.zsb-viewport{ max-width:600px; overflow:hidden; }
+/* min-width:0 lets the viewport shrink below its content inside the clamped bar
+   (flex min-width:auto would otherwise refuse, and the bar would still overflow). */
+.zsb-viewport{ max-width:600px; min-width:0; overflow:hidden; }
 .zsb-page{ flex:none; width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:8px; cursor:pointer;
   padding:0; background:transparent; color:var(--tb-text); transition:background .14s,color .14s; }
 .zsb-page:hover{ background:var(--tb-pill-hover); color:var(--tb-text-strong); }
