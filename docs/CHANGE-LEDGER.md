@@ -368,3 +368,63 @@ the table before any chrome planning.
   table is up — a future feature added ONLY below the early return will
   silently not apply in table view. The gear is parked top-right in table view
   so it can't collide with the bottom-right switch.
+
+---
+
+## Merge reconciliation: local ↔ Zentrix-Studio/Calendar-Heatmap (2026-07-15)
+
+**Context.** The local working folder had diverged from the GitHub remote with no
+shared git history (fresh `git init` locally). Remote `main` was an older
+v1.0.0.0 export + Windows-QA edits; the local tree was newer (annotations/Z-152,
+`aggMode`, this ledger). The reconciliation grafted real remote history under the
+local tree (branch `sync/local-source-of-truth`) and re-integrated two features
+the local refactor had dropped while remote still had them. Method: ported
+remote's own implementation onto local's structure, then pinned with remote's
+own tests (adapted to local's API).
+
+### HL-01 — `capabilities.supportsHighlight:true` was declared but NOT implemented
+- **Status:** FIXED
+- **Symptom:** External cross-highlight was a no-op. When another visual filtered
+  the report, this visual did not dim its un-highlighted days — yet
+  `capabilities.json` advertised `"supportsHighlight": true` (a cert/quality red
+  flag: claiming an interaction you don't perform).
+- **Evidence:** local `dataTransform.ts` never read `valueColumn.highlights`;
+  `DayCell` had no `isHighlighted`/`highlightValue`; `states.ts` had no
+  `applyHighlight`. Remote had all three (dropped in the local refactor).
+- **Root cause:** two-way divergence — the highlight-consumption code lived only
+  on remote `main` (`src/model/dataTransform.ts`, `src/render/states.ts`,
+  `src/types.ts`).
+- **Fix:** `src/model/dataTransform.ts` — `ParsedRow.highlight`,
+  `ParsedDataView.hasHighlights`, `parseDataView` reads `values[].highlights[]`,
+  `assembleModel` aggregates highlights with the SAME `aggMode` as values and sets
+  `DayCell.highlightValue`/`isHighlighted` + `CalendarModel.hasHighlights`.
+  `src/render/states.ts` — `applyHighlight()` (reuses `applyCrossHighlight`'s dim).
+  `src/visual.ts` — `applyState()` calls `applyHighlight(cells)` when
+  `model.hasHighlights && !selectionManager.hasSelection()` (user selection wins;
+  host highlight is the idle dim). The no-highlight path is byte-identical — all
+  329 sweep snapshots unchanged.
+- **Pinned by:** `test/highlights.test.ts` (model: hasHighlights flag +
+  highlightValue/isHighlighted, incl. same-mode aggregation) and
+  `test/highlightRender.test.ts` (render: `applyHighlight` dims to
+  `STATE.dimOpacity`, matches `applyCrossHighlight`).
+- **Blast radius:** `aggregateByDay` now runs a third time when highlights are
+  present; highlight fields are `undefined` in the normal path so any code reading
+  them must treat undefined as "no highlight". Do NOT remove
+  `supportsHighlight` from `capabilities.json` without also removing this code.
+
+### KB-01 — keyboard had no context-menu affordance (ContextMenu / Shift+F10)
+- **Status:** FIXED
+- **Symptom:** A keyboard-only user could navigate + select cells but could not
+  open the host context menu on the focused day (accessibility gap; mouse users
+  had right-click via `bindSelection`).
+- **Root cause:** local `KeyboardParams` had no `onContextMenu`; `bindKeyboard`
+  ignored the `ContextMenu`/`F10` keys. Remote had both.
+- **Fix:** `src/interaction/keyboard.ts` — `onContextMenu?` param + a
+  `ContextMenu`/`Shift+F10` case (bare F10 ignored). `src/visual.ts` — wired to
+  `selectionManager.showContextMenu` anchored at the focused cell's
+  `getBoundingClientRect()`, mirroring the right-click path.
+- **Pinned by:** `test/keyboard.test.ts` (ContextMenu key + Shift+F10 open the
+  menu with `preventDefault`; bare F10 does not).
+- **Blast radius:** `keyboard.test.ts`'s `CalendarModel` literal now needs
+  `aggMode` (local made it required). The keyboard handler swallows F10 only when
+  Shift is held — bare F10 stays available to the host/browser.

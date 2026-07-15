@@ -87,6 +87,9 @@ interface ParsedRow {
     date: Date;
     value: number;        // NaN when null/blank
     target: number;       // NaN when no Target field or blank
+    /** Highlight value for this row from `values[].highlights[]`; NaN when the host
+     * supplied no highlight array (the normal, non-cross-highlighted render). */
+    highlight: number;
     category?: string;    // Split-by value, if the role is bound
     /** Index into the original DataView columns — for selection IDs & tooltip reads. */
     origIndex: number;
@@ -100,6 +103,10 @@ interface ParsedDataView {
     targetColumn: DataViewValueColumn | null;
     tooltipColumns: DataViewValueColumn[];
     categoryColumn: DataViewCategoryColumn | null;
+    /** True when the host supplied a `values[].highlights[]` array on the Value
+     * column (external cross-highlight is active). When false, the render path is
+     * identical to today — no dimming, no highlight model fields. */
+    hasHighlights: boolean;
 }
 
 function findCategory(dataView: DataView, role: string): DataViewCategoryColumn | null {
@@ -116,6 +123,12 @@ function parseDataView(dataView: DataView): ParsedDataView | null {
     const tooltipColumns = (dataView.categorical?.values ?? []).filter(v => v.source.roles?.["tooltips"]);
     const categoryColumn = findCategory(dataView, "category");
 
+    // capabilities.json declares supportsHighlight:true, so the host supplies a
+    // parallel highlights[] on the Value column when another visual cross-highlights
+    // this one. Absent (undefined) in the normal render.
+    const highlights = valueColumn.highlights;
+    const hasHighlights = !!highlights;
+
     const rows: ParsedRow[] = [];
     const rawDates = dateCategory.values;
     for (let i = 0; i < rawDates.length; i++) {
@@ -123,16 +136,18 @@ function parseDataView(dataView: DataView): ParsedDataView | null {
         if (date == null) continue;
         const v = valueColumn.values[i];
         const t = targetColumn ? targetColumn.values[i] : null;
+        const h = highlights ? highlights[i] : null;
         const cat = categoryColumn ? categoryColumn.values[i] : null;
         rows.push({
             date,
             value: v == null ? NaN : Number(v),
             target: t == null ? NaN : Number(t),
+            highlight: h == null ? NaN : Number(h),
             category: categoryColumn ? (cat == null ? "" : String(cat)) : undefined,
             origIndex: i,
         });
     }
-    return { rows, dateCategory, valueColumn, targetColumn, tooltipColumns, categoryColumn };
+    return { rows, dateCategory, valueColumn, targetColumn, tooltipColumns, categoryColumn, hasHighlights };
 }
 
 /** Inclusive [min,max] day extent over a set of rows (assumes non-empty). */
@@ -181,6 +196,11 @@ function assembleModel(a: AssembleParams): CalendarModel {
     const dates = rows.map(r => r.date);
     const byDay = aggregateByDay(dates, rows.map(r => r.value), aggMode);
     const targetByDay = p.targetColumn ? aggregateByDay(dates, rows.map(r => r.target), aggMode) : null;
+    // Highlights ride the same aggregation as the value so a day's highlight reads
+    // consistently with its rendered value. Only computed when the host is actually
+    // cross-highlighting (p.hasHighlights) — otherwise the highlight fields stay
+    // undefined and the render path is byte-identical to the no-highlight case.
+    const highlightByDay = p.hasHighlights ? aggregateByDay(dates, rows.map(r => r.highlight), aggMode) : null;
 
     const { rows: gridRows, cols, weeks } = layout(gridDays, firstDayOfWeek);
     const labels: MonthLabel[] = monthLabels(gridDays, cols);
@@ -202,12 +222,19 @@ function assembleModel(a: AssembleParams): CalendarModel {
         }));
         const tAgg = targetByDay?.get(date.getTime());
         const target = noData || !tAgg ? null : tAgg.value;
+        // Highlight: when the host supplied a highlights[] array, a day is highlighted
+        // iff its aggregated highlight is present and non-zero. undefined (not null)
+        // when no highlight is in effect so the render path can cheaply skip dimming.
+        const hAgg = highlightByDay?.get(date.getTime());
+        const highlightValue = !highlightByDay ? undefined : (noData || !hAgg ? null : hAgg.value);
+        const isHighlighted = !highlightByDay ? undefined : (highlightValue != null && highlightValue !== 0);
         return {
             date, value, noData,
             col: cols[i], row: gridRows[i],
             selectionId,
             sourceIndex: origIndex,
             tooltips, target,
+            highlightValue, isHighlighted,
             facetKey: a.facetKey,
             facetIndex: a.facetIndex ?? 0,
         };
@@ -240,6 +267,7 @@ function assembleModel(a: AssembleParams): CalendarModel {
         aggMode,
         targetName: p.targetColumn?.source.displayName,
         totalDays,
+        hasHighlights: p.hasHighlights,
         series,
     };
 }
