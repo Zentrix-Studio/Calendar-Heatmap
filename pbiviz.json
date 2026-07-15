@@ -7,7 +7,7 @@
         "version": "1.0.0.0",
         "description": "A clean, performant, full-year GitHub-style calendar heatmap with strong tooltips, cross-filtering, anomaly markers, and accessibility.",
         "supportUrl": "https://zentrixstudio.in/support",
-        "gitHubUrl": ""
+        "gitHubUrl": "https://github.com/Zentrix-Studio/Calendar-Heatmap"
     },
     "apiVersion": "5.11.0",
     "author": {
