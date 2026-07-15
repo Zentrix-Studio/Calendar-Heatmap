@@ -265,17 +265,23 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
         }
 
         if (showWeekNums) {
-            // ISO week number under each week column, keyed to the column's first
-            // day. Thinned by a fixed pitch so two-digit labels never collide as
-            // cells shrink (mirrors the month-label thinning philosophy).
+            // ISO week number under each week column. WK-01: ISO-8601 weeks run
+            // Mon–Sun, so in a Sunday-start column ONLY the leading Sunday belongs
+            // to the previous ISO week — keying the label to the column's first day
+            // read "1, 1, 2, …". Anchor on the first NON-Sunday day instead: exact
+            // for Monday-start columns (identity) and for partial edge columns
+            // (a lone-Sunday column keeps its Sunday, which IS its only week).
+            // Thinned by a fixed pitch so two-digit labels never collide as cells
+            // shrink (mirrors the month-label thinning philosophy).
             const labelEvery = Math.max(1, Math.ceil((weekNumStyle.size * 1.9) / stepX));
-            const firstDayIdxByCol = new Map<number, number>();
-            b.days.forEach((_, i) => {
+            const anchorIdxByCol = new Map<number, number>();
+            b.days.forEach((d, i) => {
                 const c = b.cols[i];
-                if (!firstDayIdxByCol.has(c)) firstDayIdxByCol.set(c, i);
+                const cur = anchorIdxByCol.get(c);
+                if (cur === undefined || (d.date.getDay() !== 0 && b.days[cur].date.getDay() === 0)) anchorIdxByCol.set(c, i);
             });
             const footerY = cellsTop + 7 * stepY - gapY + footerH - 3;
-            for (const [c, i] of firstDayIdxByCol) {
+            for (const [c, i] of anchorIdxByCol) {
                 if (c % labelEvery !== 0) continue;
                 applyText(group.append("text").classed("weeknum", true)
                     .attr("x", contentLeft + c * stepX + size / 2).attr("y", footerY)
