@@ -574,14 +574,20 @@ export class VisualFormattingSettingsModel extends Model {
 
     constructor() {
         super();
-        // The in-visual floating gear is the primary settings surface (its whole
-        // point). The native Format pane intentionally keeps ONLY the three cards
-        // that belong there: Toolbar (controls the gear itself), Accessibility
-        // (host-level a11y, expected natively for compliance), and Zentrix branding.
-        // Every other card is reachable from the gear — including Fiscal year, which
-        // is wired into the gear's Data category (settingsSchema.ts) so nothing is
-        // lost by hiding Time intelligence here.
-        const PANE_CARDS = new Set(["toolbar", "accessibility", "branding"]);
+        // The in-visual floating gear is the primary settings surface. The native
+        // Format pane keeps: Toolbar (controls the gear), Accessibility (host-level
+        // a11y for compliance), Zentrix branding — AND Colors.
+        //
+        // Colors is here on purpose (persistence, not preference). Power BI only
+        // persists a `fill`/`text` property reliably when its card is part of the
+        // formatting model returned by getFormattingModel(); a hidden card is
+        // filtered OUT of that model (FormattingSettingsService.buildFormattingModel),
+        // so a custom colour edited only through the gear never survived a reload.
+        // Registering the card gives the host a descriptor for every colour slice,
+        // so the native pane's own persistence backs them. The gear's Custom Colors
+        // and this card share one model + one `colors` object, so an edit in either
+        // place shows in the other automatically (two-way synced by construction).
+        const PANE_CARDS = new Set(["toolbar", "accessibility", "branding", "colors"]);
         for (const c of this.cards) {
             (c as unknown as { name: string; visible?: boolean }).visible = PANE_CARDS.has(c.name);
         }

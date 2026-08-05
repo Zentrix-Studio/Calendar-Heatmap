@@ -6,8 +6,16 @@ type IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import { VisualFormattingSettingsModel } from "../settings";
 import { ZentrixSettingsBar } from "./zentrixSettingsBar";
 import { SB_CATS, SB_FONTS, SB_PALETTES, SB_PRESETS, SB_EMOJI, makeCfg, applyLocal, readLocal } from "./settingsSchema";
+import type { PersistWrite } from "./settingsSchema";
 
 type Model = VisualFormattingSettingsModel;
+
+/** Does a gear engine key drive a ColorPicker? Matches every colour key —
+ *  `col.*` (palette), `*.color` (text styles, rules) and `*Color` (header rule,
+ *  annotation marker). Edits to these persist through the durable colour blob
+ *  (Visual.persistColors), not the object's `fill` property, because the host
+ *  drops a structural `fill` written via persistProperties. */
+const isColorKey = (key: string): boolean => /^col\.|\.color$|Color$/.test(key);
 
 /** Shallow-clone a slice value so the live model can't share a default object
  *  reference with the throwaway defaults model (which would alias future edits). */
@@ -42,13 +50,32 @@ export class SettingsOverlay {
      *  freshly-populated model so a stale update() can't revert the canvas. */
     private pending = new Map<string, unknown>();
 
-    constructor(root: HTMLElement, private host: IVisualHost, private onChange?: () => void) {
-        const persist = (object: string, prop: string, value: powerbi.DataViewPropertyValue) =>
-            this.host.persistProperties({ merge: [{ objectName: object, selector: null, properties: { [prop]: value } }] } as powerbi.VisualObjectInstancesToPersist);
+    constructor(root: HTMLElement, private host: IVisualHost, private onChange?: () => void,
+        private persistColors?: () => void) {
+        // Flush all property writes of one edit as a SINGLE persistProperties merge,
+        // grouped by object. `selector: null` = static binding to metadata.objects
+        // (the documented shape for a global property). This reliably persists
+        // ValueTypeDescriptor primitives (enum/text/number). Structural `fill`
+        // colours are NOT persisted here — the host drops a fill written this way;
+        // they go through the colour blob (see Visual.persistColors) instead.
+        const persist = (writes: PersistWrite[]) => {
+            const byObject = new Map<string, Record<string, powerbi.DataViewPropertyValue>>();
+            for (const w of writes) {
+                const props = byObject.get(w.object) ?? {};
+                props[w.prop] = w.value;
+                byObject.set(w.object, props);
+            }
+            const merge = [...byObject].map(([objectName, properties]) => ({ objectName, selector: null, properties }));
+            this.host.persistProperties({ merge } as powerbi.VisualObjectInstancesToPersist);
+        };
         // On every edit: record it as pending (so the next host update() can't clobber it)
         // and repaint immediately from the optimistically-updated model.
         const cfg = makeCfg(() => this.settings, persist, (key, value) => {
             this.pending.set(key, value);
+            // Fill colours persist through the durable text blob (the host drops a
+            // structural fill written via persistProperties). setLocal has already
+            // updated the live model, so snapshot it now.
+            if (isColorKey(key)) this.persistColors?.();
             this.onChange?.();
         }, () => this.reset());
         this.bar = new ZentrixSettingsBar(root, {
@@ -142,6 +169,10 @@ export class SettingsOverlay {
             });
         });
         this.pending.clear();
+        // The colour blob is NOT a card, so the removeObject/merge above can't reset
+        // it — snapshot the now-default fills into the blob explicitly, or Reset would
+        // leave the old custom colours in place on the next reload.
+        this.persistColors?.();
         this.onChange?.();
     }
 

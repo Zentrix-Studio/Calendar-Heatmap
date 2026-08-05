@@ -1,7 +1,7 @@
 {
   "name": "zentrix-calendar-heatmap",
   "description": "Power BI custom visual — full-year GitHub-style calendar heatmap.",
-  "version": "1.0.0.0",
+  "version": "1.0.1.0",
   "license": "MIT",
   "scripts": {
     "pbiviz": "pbiviz",

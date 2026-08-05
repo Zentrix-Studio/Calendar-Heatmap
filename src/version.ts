@@ -8,4 +8,4 @@
  * Surfaced on the landing page (and available for support/diagnostics) so a user
  * can tell exactly which build they're running at a glance.
  */
-export const VERSION = "1.0.0.0";
+export const VERSION = "1.0.1.0";

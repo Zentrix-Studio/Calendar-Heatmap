@@ -16,6 +16,13 @@ import type { SBCategory, SBCfg, SBField, SBFont, SBPalette } from "./zentrixSet
 
 type Model = VisualFormattingSettingsModel;
 type PersistFn = (object: string, prop: string, value: powerbi.DataViewPropertyValue) => void;
+/** One property write inside a single logical edit. */
+export type PersistWrite = { object: string; prop: string; value: powerbi.DataViewPropertyValue };
+/** Flush all writes from one `cfg.set` as ONE persistProperties call. Multiple
+ *  synchronous persistProperties calls are coalesced by the Power BI host (last
+ *  write wins), which silently dropped the earlier property of any two-write
+ *  edit — e.g. a custom color (colour + paletteMode) reverting on refresh. */
+export type PersistBatch = (writes: PersistWrite[]) => void;
 
 /* ───────────── shared design data ───────────── */
 
@@ -87,24 +94,48 @@ const color = (obj: string, prop: string, ref: (m: Model) => any): Entry => ({
     setLocal: (m, v) => { ref(m).value = { value: String(v) }; },
 });
 /** A custom-color row that also switches paletteMode so the edit takes visible effect
- *  (the design's "editing a custom color makes the palette custom"). */
-const colorMode = (prop: string, ref: (m: Model) => any, mode: string): Entry => ({
-    get: m => ref(m).value.value,
-    set: (p, v) => { p("colors", prop, { solid: { color: String(v) } } as any); p("colors", "paletteMode", mode); },
-    setLocal: (m, v) => { ref(m).value = { value: String(v) }; m.colors.paletteMode.value = pickItem(m.colors.paletteMode, mode); },
-});
+ *  (the design's "editing a custom color makes the palette custom").
+ *
+ *  Persistence rule (CB-persist2): the Power BI host DROPS a `fill` property that
+ *  shares a persistProperties call with any other property — it only stores a fill
+ *  persisted ALONE (the native Format pane works precisely because it persists one
+ *  slice at a time). So we persist paletteMode ONLY when it actually changes; when
+ *  the palette is already in `mode` (the common "tweak the colour" case) the colour
+ *  goes out by itself and survives a reload. `setLocal` runs before `set` (makeCfg),
+ *  so the flag it sets is current when `set` reads it. */
+const colorMode = (prop: string, ref: (m: Model) => any, mode: string): Entry => {
+    let modeChanged = false;
+    return {
+        get: m => ref(m).value.value,
+        set: (p, v) => {
+            p("colors", prop, { solid: { color: String(v) } } as any);
+            if (modeChanged) p("colors", "paletteMode", mode);   // bundle only when unavoidable
+        },
+        setLocal: (m, v) => {
+            modeChanged = String(m.colors.paletteMode.value.value) !== mode;
+            ref(m).value = { value: String(v) };
+            m.colors.paletteMode.value = pickItem(m.colors.paletteMode, mode);
+        },
+    };
+};
 /** The Start/hue row is mode-aware (QA-D4): in mono/theme it is the single hue and the
  *  edit must NOT kick the palette into duotone (that made mono unreachable); anywhere
  *  else it keeps the original "editing start begins a duotone" behavior. `setLocal`
- *  always runs before `set` (makeCfg), so the persisted mode matches the local one. */
+ *  always runs before `set` (makeCfg), so the persisted mode matches the local one.
+ *  Persists paletteMode only on an actual mode change (CB-persist2 — see colorMode). */
 const startColorEntry = (): Entry => {
     let lastMode = "duotone";
+    let modeChanged = false;
     return {
         get: m => m.colors.startColor.value.value,
-        set: (p, v) => { p("colors", "startColor", { solid: { color: String(v) } } as any); p("colors", "paletteMode", lastMode); },
+        set: (p, v) => {
+            p("colors", "startColor", { solid: { color: String(v) } } as any);
+            if (modeChanged) p("colors", "paletteMode", lastMode);
+        },
         setLocal: (m, v) => {
             const cur = String(m.colors.paletteMode.value.value);
             lastMode = cur === "mono" || cur === "theme" ? "mono" : "duotone";
+            modeChanged = cur !== lastMode;
             m.colors.startColor.value = { value: String(v) };
             m.colors.paletteMode.value = pickItem(m.colors.paletteMode, lastMode);
         },
@@ -281,7 +312,7 @@ export function readLocal(m: Model, key: string): unknown { return KEYS[key]?.ge
  * record the optimistic edit and trigger an immediate re-render.
  */
 export function makeCfg(
-    getModel: () => Model, persist: PersistFn,
+    getModel: () => Model, persist: PersistBatch,
     onChange?: (key: string, value: unknown) => void, reset?: () => void,
 ): SBCfg {
     return {
@@ -289,7 +320,14 @@ export function makeCfg(
         set(key: string, value: unknown): void {
             const e = KEYS[key]; if (!e) return;
             e.setLocal(getModel(), value);   // optimistic: edit shows up now, not after the host round-trip
-            e.set(persist, value);           // durable: survives reloads / report save
+            // Buffer every property this edit persists and flush as ONE call. An
+            // entry may write >1 property (a custom colour also sets paletteMode);
+            // firing them as separate persistProperties calls lets the host's
+            // last-write-wins coalescing drop all but the last, so the colour
+            // reverted to default on refresh. One merge keeps them atomic.
+            const writes: PersistWrite[] = [];
+            e.set((object, prop, v) => writes.push({ object, prop, value: v }), value);
+            if (writes.length) persist(writes);   // durable: survives reloads / report save
             onChange?.(key, value);
         },
         reset,

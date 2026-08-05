@@ -1070,6 +1070,15 @@
                 }
             }
         },
+        "colorStore": {
+            "properties": {
+                "data": {
+                    "type": {
+                        "text": true
+                    }
+                }
+            }
+        },
         "summaryTable": {
             "properties": {
                 "show": {

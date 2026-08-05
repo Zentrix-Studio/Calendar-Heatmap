@@ -145,6 +145,14 @@ export class Visual implements IVisual {
      * update() must not revert an edit the user can already see.
      */
     private pendingNotes: string | null = null;
+    /** Custom colour blob we last persisted but the host hasn't echoed back — same
+     *  in-flight contract as `pendingNotes` (see `syncColors`). */
+    private pendingColors: string | null = null;
+    /** Last `colors` fill values the host handed us, per property. Lets `syncColors`
+     *  tell a fresh native-Format-pane colour edit (value changed) apart from a
+     *  stale one, so a pane edit is folded into the blob but a gear edit isn't
+     *  clobbered by the pane's old value. */
+    private lastPaneColors: Record<string, string> = {};
     /**
      * Authoring context (Edit / focus-in-edit). Annotations are author-only:
      * persistProperties writes visual metadata, which only survives a report save.
@@ -191,7 +199,8 @@ export class Visual implements IVisual {
         // The settings overlay mutates the live formatting model optimistically and
         // calls back here so the canvas repaints immediately — no waiting on the async
         // persistProperties → host → update() loop, which is flaky for fresh edits.
-        this.toolbar = new SettingsOverlay(options.element, this.host, () => this.rerenderFromSettings());
+        this.toolbar = new SettingsOverlay(options.element, this.host, () => this.rerenderFromSettings(),
+            () => this.persistColors());
         // Premium licence gate for the diagnostic insight engine; repaints when the
         // async plan check resolves (free core + premium gate, Phase-8 decision).
         this.premium = new PremiumGate(this.host, () => this.rerenderFromSettings());
@@ -273,6 +282,11 @@ export class Visual implements IVisual {
             this.formattingSettings =
                 this.formattingSettingsService.populateFormattingSettingsModel(
                     VisualFormattingSettingsModel, dataView);
+            // Custom heatmap colours persist as a JSON text blob, NOT the `colors`
+            // object's fill properties (the host drops a structural `fill` written
+            // via persistProperties; text/enum survive). Apply the blob over the
+            // freshly-populated model before anything reads colours.
+            this.syncColors(dataView);
             const palette = this.host.colorPalette;
             const dark = !palette.isHighContrast && isDarkColor(palette.background && palette.background.value);
             // In-visual settings are author tools (CEO call): show the gear only in an
@@ -427,6 +441,92 @@ export class Visual implements IVisual {
             merge: [{ objectName: "notesStore", selector: null, properties: { data: json } }],
         } as powerbi.VisualObjectInstancesToPersist);
         this.rerenderFromSettings();
+    }
+
+    // -- custom colours (blob persistence) -----------------------------------
+
+    /**
+     * EVERY ColorPicker slice in the model, keyed by `object.property`. The host
+     * drops a structural `fill` written via persistProperties for ALL of them —
+     * not just the palette — so the heatmap colours, all text-style colours, the
+     * three rule colours, the header rule colour and the annotation marker colour
+     * all persist through the blob. Rule colours live in `badges.slices` (flattened
+     * by RuleSlot.slices()), so a flat walk of each card's slices reaches them.
+     */
+    private colorSlices(): { key: string; obj: string; prop: string; slice: { value: { value: string } } }[] {
+        const out: { key: string; obj: string; prop: string; slice: { value: { value: string } } }[] = [];
+        const cards = this.formattingSettings.cards as
+            { name: string; slices?: { name: string; type?: string; value: { value: string } }[] }[];
+        for (const card of cards) {
+            for (const slice of card.slices ?? []) {
+                if (slice.type === "ColorPicker") {
+                    out.push({ key: `${card.name}.${slice.name}`, obj: card.name, prop: slice.name, slice });
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Apply the persisted colour blob over the freshly-populated model, and fold a
+     * fresh native-Format-pane colour edit back into the blob so the gear and pane
+     * stay in sync. Fills persist here (as text) rather than on the `colors` object,
+     * because the host drops a structural `fill` written via persistProperties.
+     * Reconciles an in-flight optimistic edit like `loadNotes` does.
+     */
+    private syncColors(dataView?: DataView): void {
+        const objects = dataView?.metadata?.objects as
+            Record<string, Record<string, { solid?: { color?: string } } | powerbi.DataViewPropertyValue>> | undefined;
+        const raw = objects?.colorStore?.data;
+        const blobJson = typeof raw === "string" ? raw : "";
+        if (this.pendingColors != null) {
+            if (blobJson === this.pendingColors) this.pendingColors = null; // host confirmed
+            // else: our write is still in flight → keep applying the pending copy
+        }
+        const effective = this.pendingColors ?? blobJson;
+        let blob: Record<string, string> = {};
+        try { blob = effective ? JSON.parse(effective) as Record<string, string> : {}; } catch { blob = {}; }
+
+        let merged = false;
+        for (const { key, obj, prop, slice } of this.colorSlices()) {
+            // A native-pane fill (host-persisted) for this object/property, if any.
+            const paneVal = (objects?.[obj]?.[prop] as { solid?: { color?: string } } | undefined)?.solid?.color;
+            const seen = key in this.lastPaneColors;
+            const paneChanged = typeof paneVal === "string" && paneVal !== this.lastPaneColors[key];
+            if (typeof paneVal === "string") this.lastPaneColors[key] = paneVal;
+            if (seen && paneChanged) {
+                // The pane fill CHANGED after we'd already recorded it → a fresh native
+                // Format-pane edit. It wins and is folded into the durable blob. (A gear
+                // edit never changes the pane fill — the host drops it — so it can't be
+                // mistaken for this.)
+                blob[key] = paneVal as string;
+                merged = true;
+            } else if (blob[key] == null && typeof paneVal === "string") {
+                // No gear-set value yet, but the pane already has one (e.g. first load
+                // of a report that only ever used the native pane) → adopt it. When the
+                // blob DOES have the key it wins, so a gear edit survives a reload.
+                blob[key] = paneVal;
+                merged = true;
+            }
+            if (typeof blob[key] === "string") slice.value = { value: blob[key] };
+        }
+        if (merged && this.pendingColors == null) this.persistColorBlob(blob);
+    }
+
+    /** Snapshot every ColorPicker in the model to the durable blob (called on a gear
+     *  colour edit and on Reset). */
+    private persistColors(): void {
+        const blob: Record<string, string> = {};
+        for (const { key, slice } of this.colorSlices()) blob[key] = slice.value.value;
+        this.persistColorBlob(blob);
+    }
+
+    private persistColorBlob(blob: Record<string, string>): void {
+        const json = JSON.stringify(blob);
+        this.pendingColors = json;
+        this.host.persistProperties({
+            merge: [{ objectName: "colorStore", selector: null, properties: { data: json } }],
+        } as unknown as powerbi.VisualObjectInstancesToPersist);
     }
 
     /**
