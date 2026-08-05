@@ -4,7 +4,7 @@
         "displayName": "Zentrix Calendar Heatmap",
         "guid": "zentrixCalendarHeatmap5CE70751AD604156B6E6C10EC14067FB",
         "visualClassName": "Visual",
-        "version": "1.0.0.0",
+        "version": "1.0.1.0",
         "description": "A clean, performant, full-year GitHub-style calendar heatmap with strong tooltips, cross-filtering, anomaly markers, and accessibility.",
         "supportUrl": "https://zentrixstudio.in/support",
         "gitHubUrl": "https://github.com/Zentrix-Studio/Calendar-Heatmap"
@@ -22,5 +22,5 @@
     "capabilities": "capabilities.json",
     "dependencies": null,
     "stringResources": [],
-    "version": "1.0.0.0"
+    "version": "1.0.1.0"
 }
