@@ -945,11 +945,19 @@ export class Visual implements IVisual {
                 x: 2, y: height - insightsH + 2, width: width - 4,
                 font: "Segoe UI, -apple-system, sans-serif",
                 labelColor, textColor: strongColor,
-                // UAT-5: in high contrast every mark maps to the host palette — the
-                // tone dots included, or they keep brand color on an HC background.
+                // Tone dots track the ACTIVE PALETTE so they recolour with the grid:
+                // the dot uses the palette's strong high (More) stop by default, and
+                // only a negative insight drops to the low (Less) stop. A mid stop
+                // reads muddy on a small dot, so neutral shares the high stop. UAT-5:
+                // in high contrast every mark maps to the host palette instead.
                 toneColors: hc
                     ? { positive: palette.foreground.value, negative: palette.foreground.value, neutral: palette.foreground.value }
-                    : { positive: "#2EA043", negative: "#E5484D", neutral: s.header.ruleColor.value.value || "#7C5CFF" },
+                    : (() => {
+                        const sw = colors.swatches;
+                        const high = sw[sw.length - 1] || strongColor;
+                        const low = sw[0] || high;
+                        return { positive: high, negative: low, neutral: high };
+                    })(),
             });
         }
 
