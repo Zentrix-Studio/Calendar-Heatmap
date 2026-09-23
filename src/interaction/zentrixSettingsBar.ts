@@ -399,7 +399,7 @@ export class ZentrixSettingsBar {
         this.buildBrand();
         this.anchor.appendChild(this.bar);
 
-        this.offset = 0; this.measure();
+        this.offset = 0; this.measure(); this.measureSoon();
         this.ro = new ResizeObserver(() => this.measure());
         // Observing the host re-clamps the bar when the TILE resizes (UAT-6b),
         // not just when the bar's own content changes.
@@ -501,6 +501,19 @@ export class ZentrixSettingsBar {
         this.offset = Math.min(this.offset, this.maxOffset);
         this.applyOffset();
     }
+    /**
+     * Re-measure after the browser has laid the bar out. The first measure() runs while the bar is
+     * still animating in, so scrollWidth and clientWidth can both be provisional: a row that
+     * overflows then reports maxOffset 0 and the ›› page hint never appears, leaving whole
+     * categories reachable only by an undiscoverable sideways scroll (Action Matrix #19).
+     */
+    private measureSoon(): void {
+        requestAnimationFrame(() => {
+            this.measure();
+            requestAnimationFrame(() => this.measure());
+        });
+    }
+
     private applyOffset(): void {
         if (!this.row || !this.vp || !this.pageL || !this.pageR) return;
         const canL = this.offset > 1, canR = this.offset < this.maxOffset - 1;
@@ -1163,7 +1176,12 @@ const CSS = `
 .zsb-group[data-open="true"] svg{ color:var(--tb-pill-active-fg); }
 
 /* master-detail popover */
-.zsb-pop{ position:absolute; bottom:calc(100% + 12px); background:var(--surface-glass); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+/* OPAQUE surface, NOT a backdrop-filter glass: backdrop-filter promotes the popover
+   to a permanent GPU composite layer, and text on that layer is rasterised soft — so
+   the whole panel read blurry at rest (not just during the entrance). An opaque
+   elevated surface keeps text crisp (direct-to-screen) while the shadow still gives
+   depth. The entrance animation below is unaffected. */
+.zsb-pop{ position:absolute; bottom:calc(100% + 12px); background:var(--surface-elevated);
   border:1px solid var(--border-subtle); border-radius:16px; box-shadow:var(--shadow-popover); padding:0; overflow:hidden; z-index:40; }
 .zsb-pop--down{ bottom:auto; top:calc(100% + 12px); }
 /* Entrance: the popover rises out of the toolbar — up when the bar sits at the
@@ -1238,7 +1256,7 @@ const CSS = `
 .zsb-field-exp{ padding:5px 4px 7px; animation:zsbExp .16s var(--ease-standard); }
 @keyframes zsbExp{ from{ transform:translateY(-4px); } to{ transform:translateY(0); } }
 
-.zsb-input{ height:32px; box-sizing:border-box; width:148px; max-width:148px; border:1px solid var(--border-default); border-radius:9px;
+.zsb-input{ height:32px; box-sizing:border-box; width:148px; max-width:min(148px, 100%); border:1px solid var(--border-default); border-radius:9px;
   background:var(--surface-subtle); padding:0 11px; font:500 12.5px var(--font-ui); color:var(--text-primary); transition:.15s; }
 .zsb-input::placeholder{ color:var(--text-tertiary); }
 .zsb-input:focus{ outline:none; border-color:var(--accent); background:var(--surface-card); box-shadow:0 0 0 3px var(--accent-soft); }
