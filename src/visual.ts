@@ -19,8 +19,8 @@ import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import DataView = powerbi.DataView;
 
 import { VisualFormattingSettingsModel } from "./settings";
-import { EmptyReason, CalendarModel, DayCell, FacetedRender } from "./types";
-import { buildFacetedModel, AggregationMode } from "./model/dataTransform";
+import { EmptyReason, CalendarModel, DayCell, FacetedRender, HourModel, HourCell } from "./types";
+import { buildFacetedModel, buildHourModel, AggregationMode } from "./model/dataTransform";
 import {
     buildColorAccessor, ColorAccessor, ScaleMode, PaletteMode, RampPreset, resolvePalette, NO_DATA_DARK, NO_DATA_LIGHT,
 } from "./render/colors";
@@ -37,22 +37,34 @@ import {
     drawRuleOutline, applyHighlight,
 } from "./render/states";
 import { renderAnnotations, NoteAnchor } from "./render/annotations";
-import { renderSummaryTable } from "./render/summaryTable";
+import { renderSummaryTable, TableGrain } from "./render/summaryTable";
+import { renderInsightView, InsightAction } from "./render/insightView";
+import { renderHourGrid, predictHourGridSize, asColorCell, hourLabel, HourGridOptions, HourCellSel } from "./render/hourGrid";
+import { drawNonWorking, drawEventMarker, renderEventKey, isWeekend, NonWorkingStyle, EventMarker, WeekendSet } from "./render/marks";
 import { drawPattern, PatternStyle } from "./render/patterns";
+import { rankedDays, filterColors, DayFilterMode } from "./render/dayFilter";
+import { setNumberFormat, chosenFormat, formatValue } from "./render/format";
+import { drawCellLabels } from "./render/cellLabels";
 import { evaluateRules, Rule } from "./render/rules";
 import {
     accent as ACCENT_TOKEN, fontFamily as FONT_FAMILY, resolveSurface, HcColors,
+    surfaceElevatedLight, textPrimary, textPrimaryLight,
 } from "./theme/zentrixTokens";
 import { bindSelection, syncSelectionState, bindBackgroundContextMenu } from "./interaction/selection";
 import { HeatmapTooltip } from "./interaction/tooltip";
-import { autoHeaderTitle, dateLabel, dayKey } from "./interaction/dayData";
+import { TooltipRouter, TooltipStyle, HoverContent, dayTooltipItems } from "./interaction/tooltipRouter";
+import { autoHeaderTitle, dateLabel, dayKey, formatNum as formatNumber, metricLabel } from "./interaction/dayData";
 import { DayDetailPanel, PanelPosition } from "./interaction/detailPanel";
 import { bindKeyboard } from "./interaction/keyboard";
 import { SettingsOverlay } from "./interaction/settingsPanel";
 import { PremiumGate } from "./interaction/license";
 import { LandingPage } from "./interaction/landingPage";
 import { NoteEditor } from "./interaction/noteEditor";
-import { ViewToggle } from "./interaction/viewToggle";
+import { ViewToggle, ViewMode, PILL_STRIP } from "./interaction/viewToggle";
+import { ActionBar, ExportFormat, AB_STRIP, AB_TOP, AB_BELOW_GEAR } from "./interaction/actionBar";
+import { buildExportTables, toCsv, fileStem } from "./interaction/exportData";
+import { buildWorkbookBase64, buildPdfBase64 } from "./interaction/exportFiles";
+import { captureVisualSnapshot } from "./interaction/exportSnapshot";
 import { NoteStore, cellNoteKey, isMarkerStyle } from "./notes/store";
 import type { AnnotationTheme, MarkerStyle, Note, NoteMode } from "./notes/core";
 
@@ -90,7 +102,32 @@ function isDarkColor(hex?: string): boolean {
     return (0.299 * r + 0.587 * g + 0.114 * b) < 128;
 }
 
+/**
+ * Colours › Canvas (HM-V2-20): where the visual's surface comes from. `dark` drives
+ * every themed surface (labels, tooltip, panel, Table/Insight); `bg` is the colour
+ * painted behind the visual, or null to stay transparent over the report page.
+ * "Follow report theme" is the pre-port behaviour, unchanged. High contrast always
+ * wins — the host's two colours, nothing of ours.
+ */
+export function resolveCanvas(
+    mode: string, customBg: string, palette: { isHighContrast?: boolean; background?: { value: string } },
+): { dark: boolean; bg: string | null } {
+    if (palette.isHighContrast) return { dark: false, bg: null };
+    if (mode === "light") return { dark: false, bg: resolveSurface(false).bg };
+    if (mode === "dark") return { dark: true, bg: resolveSurface(true).bg };
+    if (mode === "custom" && /^#[0-9a-fA-F]{6}$/.test(customBg)) return { dark: isDarkColor(customBg), bg: customBg };
+    return { dark: isDarkColor(palette.background && palette.background.value), bg: null };
+}
+
 type Group = Selection<SVGGElement, unknown, null, undefined>;
+
+/** The host download service, typed loosely enough for a host that predates
+ *  `exportStatus` (API 4.6) or `exportVisualsContentExtended` (API 5.3). */
+interface DownloadServiceLike {
+    exportVisualsContent(content: string, fileName: string, fileType: string, fileDescription: string): Promise<boolean>;
+    exportVisualsContentExtended?(content: string, fileName: string, fileType: string, fileDescription: string): Promise<{ downloadCompleted: boolean; fileName?: string }>;
+    exportStatus?(): Promise<number>;
+}
 
 export class Visual implements IVisual {
     private host: IVisualHost;
@@ -109,12 +146,16 @@ export class Visual implements IVisual {
 
     private selectionManager: ISelectionManager;
     private tooltip: HeatmapTooltip;
+    /** Overlays › Tooltip style: card / native / off (HM-V2-20). Every hover goes through it. */
+    private tips: TooltipRouter;
     private panel: DayDetailPanel;
     private noteEditor: NoteEditor;
     private toolbar: SettingsOverlay;
     private premium: PremiumGate;
     private landing: LandingPage;
     private viewToggle: ViewToggle;
+    /** Top-right quick-action bar — Export (HM-V2-30). */
+    private actionBar: ActionBar;
     private events: IVisualEventService;
 
     private formattingSettings: VisualFormattingSettingsModel;
@@ -123,13 +164,31 @@ export class Visual implements IVisual {
     /** Last successful render inputs, replayed on in-visual settings changes. */
     private lastRender?: { render: FacetedRender; width: number; height: number; firstDayOfWeek: number };
     /**
-     * Which view fills the canvas while the Summary-table option is ON: the table
-     * (default) or the calendar. Flipped by the bottom-right ViewToggle. Session-
-     * local on purpose — it must work for report READERS in Reading view, where a
-     * persistProperties write would not survive. Re-armed to `true` whenever the
-     * option is off, so turning it on always opens on the table.
+     * Which view fills the canvas: the calendar, the Table or the Insight page.
+     * Flipped by the bottom-right Calendar / Table / Insight pill. Session-local on
+     * purpose — it must work for report READERS in Reading view, where a
+     * persistProperties write would not survive (ledger ST-B). Seeded ONCE per mount
+     * from `viewSwitch.defaultView` (HM-V2-01), then left to the reader.
      */
-    private tableView = true;
+    private viewMode: ViewMode = "visual";
+    private viewSeeded = false;
+    /** Full-canvas DOM host for the Table / Insight views (hidden in calendar view). */
+    private viewHost: HTMLDivElement;
+    /** Table row grain — session UI state, kept across re-renders. */
+    private tableGrain: TableGrain | undefined;
+    /** Durable Table-view UI state (stat cards collapsed), from the `tableState` blob. */
+    private tableState: { statsCollapsed?: boolean } | null = null;
+    /** tableState JSON persisted but not yet echoed back — same in-flight contract as
+     *  `pendingNotes`. */
+    private pendingTableState: string | null = null;
+    /** The DataView behind `lastRender` — the Hours layout reads raw timestamps from it. */
+    private lastDataView?: DataView;
+    /** Hours model cache, keyed by the inputs that shape it (HM-V2-12). */
+    private hourCache: { dv: DataView; key: string; model: HourModel | null } | null = null;
+    /** Hour buckets the reader has cross-filtered (Hours layout). */
+    private hourSelected = new Set<HourCell>();
+    /** Every cell the last calendar render drew — resolves an Insight card's day. */
+    private lastDrawnDays: DayCell[] = [];
     /** Cell element that opened the detail panel — focus returns here on Esc/close. */
     private panelOrigin: SVGElement | null = null;
     /** UAT-7 — a small-tile gear click switched us into focus mode; open the bar
@@ -175,6 +234,7 @@ export class Visual implements IVisual {
         this.selectionManager = this.host.createSelectionManager();
         this.events = this.host.eventService;
         this.tooltip = new HeatmapTooltip(options.element);
+        this.tips = new TooltipRouter(this.tooltip, this.host.tooltipService);
         // Persistent day-detail panel (Z-145). Closing it clears the cross-filter
         // (DD-2: panel and selection are unified) and restores focus to the cell.
         this.panel = new DayDetailPanel(options.element, {
@@ -206,15 +266,31 @@ export class Visual implements IVisual {
         this.premium = new PremiumGate(this.host, () => this.rerenderFromSettings());
         // Onboarding carousel — shown only when nothing is bound (the "noData" state).
         this.landing = new LandingPage(options.element);
-        // Visual ⇄ Summary-table switch (bottom-right), shown only while the
-        // Summary table option is on. An open note editor is committed first —
-        // same contract as the canvas-click handler: the user can already see
-        // their text, so discarding it on a view flip would read as data loss.
+        // Calendar / Table / Insight switch (bottom-right, beside the gear). An open
+        // note editor is committed first — same contract as the canvas-click
+        // handler: the user can already see their text, so discarding it on a view
+        // flip would read as data loss.
         this.viewToggle = new ViewToggle(options.element, (mode) => {
             this.noteEditor.commit();
-            this.tableView = mode === "table";
+            this.viewMode = mode;
             this.rerenderFromSettings();
         });
+        this.viewToggle.onLockedClick = () => this.premium.notifyBlocked();
+        // Quick-action bar (HM-V2-30). The host's answer on downloads arrives async; when
+        // it changes whether the bar can show, the calendar re-lays out, because the
+        // bar's strip is only reserved while the bar is on screen.
+        this.actionBar = new ActionBar(options.element,
+            this.host as unknown as { downloadService?: powerbi.extensibility.IDownloadService }, {
+                onExport: (format) => this.exportData(format),
+                onAvailabilityChange: () => this.rerenderFromSettings(),
+            });
+        // The pill steps aside while the gear's bar is expanded over the same strip.
+        this.toolbar.onOpenChange((open) => this.viewToggle.setBarOpen(open));
+        this.viewHost = document.createElement("div");
+        this.viewHost.className = "zx-alt-view";
+        // Above the SVG, below the pill (12), the gear (20) and every popover.
+        this.viewHost.style.cssText = "position:absolute;inset:0;z-index:5;display:none";
+        options.element.appendChild(this.viewHost);
 
         this.svg = select(options.element)
             .append("svg")
@@ -247,6 +323,8 @@ export class Visual implements IVisual {
             this.panel.close();
             this.selectedGroup.selectAll("*").remove();
             this.contentGroup.selectAll<SVGRectElement, DayCell>("rect.cell").attr("fill-opacity", 1);
+            this.hourSelected.clear();
+            this.contentGroup.selectAll("rect.hour-cell").attr("fill-opacity", 1);
         });
 
         // Native right-click menu on the empty canvas (empty-selection context menu).
@@ -287,8 +365,7 @@ export class Visual implements IVisual {
             // via persistProperties; text/enum survive). Apply the blob over the
             // freshly-populated model before anything reads colours.
             this.syncColors(dataView);
-            const palette = this.host.colorPalette;
-            const dark = !palette.isHighContrast && isDarkColor(palette.background && palette.background.value);
+            const dark = this.canvas().dark;
             // In-visual settings are author tools (CEO call): show the gear only in an
             // authoring context (Edit / focus-in-edit), hide it for report consumers in
             // Reading view — where their edits wouldn't persist anyway. viewMode is
@@ -328,6 +405,7 @@ export class Visual implements IVisual {
                 this.toolbar.forceOpen();
             }
             this.premium.refresh();
+            this.actionBar.refreshAvailability();
 
             const viewport = options.viewport;
             this.svg.attr("width", viewport.width).attr("height", viewport.height);
@@ -336,11 +414,13 @@ export class Visual implements IVisual {
             // Hydrate the annotation store from the persisted blob (reconciling any
             // optimistic edit the host hasn't echoed back yet).
             this.loadNotes(dataView);
+            this.hydrateTableState(dataView);
 
             const reason = this.checkRoles(dataView);
             if (reason) {
                 // No data → no view to switch between; the toggle would dangle.
-                this.viewToggle.hide();
+                this.exitAltView();
+                this.forgetRender();
                 // ALWAYS draw the SVG text guidance first — it cannot fail and
                 // guarantees the canvas is never blank even if the (DOM-overlay)
                 // landing page throws in the host sandbox.
@@ -369,13 +449,15 @@ export class Visual implements IVisual {
             const aggMode = s.dataDisplay.aggregation.value.value as AggregationMode;
             const render = buildFacetedModel(dataView!, this.host, firstDayOfWeek, aggMode);
             if (!render) {
-                this.viewToggle.hide();
+                this.exitAltView();
+                this.forgetRender();
                 this.renderEmptyState("noData", viewport.width, viewport.height);
                 this.events.renderingFinished(options);
                 return;
             }
 
             this.lastRender = { render, width: viewport.width, height: viewport.height, firstDayOfWeek };
+            this.lastDataView = dataView;
             this.render(render, viewport.width, viewport.height, firstDayOfWeek);
             this.events.renderingFinished(options);
         } catch (e) {
@@ -395,6 +477,127 @@ export class Visual implements IVisual {
      * formatting model was mutated in place by the overlay, so reading it fresh
      * reflects the change without a host round-trip.
      */
+    /**
+     * Opacity of the days a selection or cross-highlight leaves out (HM-V2-20).
+     * Cells › Click & hover: "Dim other days" off → 1 (selection shows by its rings
+     * alone); otherwise 1 − strength, strength clamped to 10–95 % so a selection can
+     * neither vanish the rest of the year nor become invisible. Default 72 % → 0.28,
+     * the pre-port constant (STATE.dimOpacity).
+     */
+    private dimOpacity(): number {
+        const it = this.formattingSettings.interactions;
+        if (!it.dimUnselected.value) return 1;
+        const pct = Math.min(95, Math.max(10, Number(it.dimStrength.value) || 0));
+        return Math.round((1 - pct / 100) * 100) / 100;
+    }
+
+    /** The resolved canvas surface for the current settings (see `resolveCanvas`). */
+    private canvas(): { dark: boolean; bg: string | null } {
+        const c = this.formattingSettings.canvas;
+        return resolveCanvas(c.surfaceMode.value.value as string, c.bgFill.value.value, this.host.colorPalette);
+    }
+
+    // -- quick-action bar + export (HM-V2-30) ----------------------------------
+
+    /** The bar's own surface: the visual's light / dark card, or the host's two
+     *  colours in high contrast. */
+    private themeActionBar(dark: boolean, hc: boolean): void {
+        const palette = this.host.colorPalette;
+        const hcColors = hc ? { background: palette.background.value, foreground: palette.foreground.value } : null;
+        const surface = resolveSurface(dark, hcColors);
+        const edge = hc ? surface.fg : (dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.10)");
+        this.actionBar.setTheme(dark, surface, edge, ACCENT_TOKEN, surfaceElevatedLight, hc);
+    }
+
+    /** The corner box the bar occupies, as a pickCorner content rect. */
+    private barRect(canvasW: number): number[] {
+        return [canvasW - AB_STRIP, 0, AB_STRIP, AB_TOP + 44];
+    }
+
+    /** A gear pinned to the top-right takes the bar's corner: start the bar below it. */
+    private syncBarTop(): void {
+        this.actionBar.setTop(this.toolbar.isVisible() && this.toolbar.corner() === "tr" ? AB_BELOW_GEAR : AB_TOP);
+    }
+
+    private downloadService(): DownloadServiceLike | null {
+        try {
+            const dl = (this.host as unknown as { downloadService?: DownloadServiceLike }).downloadService;
+            return dl && typeof dl.exportVisualsContent === "function" ? dl : null;
+        } catch { return null; }
+    }
+
+    /** Why the host would refuse before a file is built; null = go ahead. `exportStatus`
+     *  is API 4.6+; a host without it doesn't pre-screen (Sankey Pro parity). */
+    private async exportBlockedReason(dl: DownloadServiceLike): Promise<string | null> {
+        if (typeof dl.exportStatus !== "function") return null;
+        try {
+            const status = await dl.exportStatus();
+            if (status === 1 /* NotDeclared */) return "Export isn't declared in this build of the visual.";
+            if (status === 2 /* NotSupported */) return "Downloads aren't supported in this Power BI host.";
+            if (status === 3 /* DisabledByAdmin */) return "Your Power BI admin has turned off custom-visual downloads.";
+            return null;
+        } catch { return null; } // advisory — let the real call decide
+    }
+
+    /** Hand one file to the host. `exportVisualsContentExtended` (API 5.3+) reports
+     *  whether the download completed; the older call resolves a boolean. A falsy
+     *  result means the host refused, which must never look like nothing happened. */
+    private async sendFile(dl: DownloadServiceLike, content: string, name: string, type: string, desc: string): Promise<boolean> {
+        if (typeof dl.exportVisualsContentExtended === "function") {
+            const r = await dl.exportVisualsContentExtended(content, name, type, desc);
+            return !!r?.downloadCompleted;
+        }
+        return !!(await dl.exportVisualsContent(content, name, type, desc));
+    }
+
+    /**
+     * Export the calendar's data as CSV (one file per table), an Excel workbook (one
+     * sheet per table) or a PDF (a snapshot of the calendar, then the tables). Every
+     * outcome — done, refused, or a build error — is reported in the bar's status line.
+     * Files and types follow learn.microsoft.com/power-bi/developer/visuals/file-download-api
+     * (csv as text; pdf / xlsx as "base64").
+     */
+    private async exportData(format: ExportFormat): Promise<void> {
+        const dl = this.downloadService();
+        const r = this.lastRender;
+        if (!dl || !r) return;
+        const blocked = await this.exportBlockedReason(dl);
+        if (blocked) { this.actionBar.flash(blocked); return; }
+        const input = r.render;
+        const tables = buildExportTables(input, r.firstDayOfWeek, input.categoryName);
+        const stem = fileStem(input.combined.valueName);
+        const refused = "The download was refused by Power BI. Check your tenant's custom-visual download setting.";
+        try {
+            if (format === "csv") {
+                let ok = true;
+                for (const t of tables) {
+                    ok = (await this.sendFile(dl, toCsv(t.rows), `${stem}-${t.name.toLowerCase()}.csv`, "csv", `${t.name} table`)) && ok;
+                }
+                this.actionBar.flash(ok ? `Downloaded ${tables.length} CSV files.` : refused);
+                return;
+            }
+            if (format === "xlsx") {
+                const ok = await this.sendFile(dl, buildWorkbookBase64(tables), `${stem}.xlsx`, "base64", "Calendar data");
+                this.actionBar.flash(ok ? `Downloaded ${stem}.xlsx.` : refused);
+                return;
+            }
+            const surface = this.canvas();
+            const snapshot = await captureVisualSnapshot(this.svg.node() as SVGSVGElement, r.width, r.height,
+                surface.bg ?? resolveSurface(surface.dark).bg);
+            const pdf = buildPdfBase64({
+                jpegBase64: snapshot.jpegBase64, imageWidth: snapshot.width, imageHeight: snapshot.height,
+                title: `Calendar heatmap: ${input.combined.valueName || "value"}`,
+                footnote: "The day and month tables follow this snapshot.",
+                sections: tables.map(t => ({ title: `${t.name} CSV`, csv: toCsv(t.rows) })),
+            });
+            const ok = await this.sendFile(dl, pdf, `${stem}.pdf`, "base64", "Calendar snapshot and data");
+            this.actionBar.flash(ok ? `Downloaded ${stem}.pdf.` : refused);
+        } catch {
+            // Host or tenant refused, or the snapshot couldn't be built — say so.
+            this.actionBar.flash(refused);
+        }
+    }
+
     private rerenderFromSettings(): void {
         const r = this.lastRender;
         if (!r) return;
@@ -441,6 +644,94 @@ export class Visual implements IVisual {
             merge: [{ objectName: "notesStore", selector: null, properties: { data: json } }],
         } as powerbi.VisualObjectInstancesToPersist);
         this.rerenderFromSettings();
+    }
+
+    // -- alternate views (Table / Insight) -----------------------------------
+
+    /** Back to the calendar with the pill and the view host hidden (no-data / empty
+     *  states: nothing to switch between). */
+    private exitAltView(): void {
+        this.viewMode = "visual";
+        this.viewToggle.hide();
+        this.hideViewHost();
+    }
+
+    /**
+     * HM-V2-13 — the data went away (fields unbound, no rows): drop every cached render
+     * input. `rerenderFromSettings` repaints from `lastRender`, and it is called by the
+     * gear, the note editor, the view pill AND the licence check resolving later — so a
+     * cache that outlives the data lets any of those resurrect the previous calendar
+     * over the empty state (the HeatStreams #83 failure class, inverted).
+     */
+    private forgetRender(): void {
+        this.lastRender = undefined;
+        this.lastDataView = undefined;
+        this.hourCache = null;
+        this.hourSelected.clear();
+        this.lastDrawnDays = [];
+        this.panel.close();
+        this.tips.hide();
+        // Nothing to export without data.
+        this.actionBar.setWanted(false);
+    }
+
+    private hideViewHost(): void {
+        if (this.viewHost.style.display === "none") return;
+        this.viewHost.textContent = "";
+        this.viewHost.style.display = "none";
+    }
+
+    /** Restore the Table view's UI state from its durable blob, honouring an
+     *  in-flight optimistic write exactly like `loadNotes` (Sankey parity). */
+    private hydrateTableState(dataView?: DataView): void {
+        const obj = (dataView?.metadata?.objects as { tableState?: { data?: unknown } } | undefined)?.tableState;
+        const stored = typeof obj?.data === "string" ? obj.data : "";
+        if (this.pendingTableState != null) {
+            if (stored === this.pendingTableState) this.pendingTableState = null;
+            else return; // keep the optimistic state until the host echoes it
+        }
+        if (!stored) { this.tableState = null; return; }
+        try {
+            const o = JSON.parse(stored) as { statsCollapsed?: unknown };
+            this.tableState = o && typeof o === "object" ? { statsCollapsed: o.statsCollapsed === true } : null;
+        } catch { this.tableState = null; }
+    }
+
+    /** Table-view UI change (stat cards collapsed/expanded) → persist durably. It is a
+     *  non-card blob, so the gear's Reset (removeObject over every card) leaves it. */
+    private persistTableState(statsCollapsed: boolean): void {
+        this.tableState = { statsCollapsed };
+        const blob = JSON.stringify(this.tableState);
+        if (blob === this.pendingTableState) return;
+        this.pendingTableState = blob;
+        this.host.persistProperties({
+            merge: [{ objectName: "tableState", selector: null, properties: { data: blob } }],
+        } as powerbi.VisualObjectInstancesToPersist);
+    }
+
+    /**
+     * An Insight card's number was clicked: flip back to the calendar and open that
+     * day — a transient, session-local preview (family pattern; never a cross-filter,
+     * never a persisted setting). With a Split-by bound the date exists in every
+     * panel, so the panel whose value is largest that day is the one opened. A day
+     * outside the drawn window (render cap) just lands on the calendar.
+     */
+    private applyInsightAction(a: InsightAction): void {
+        this.viewMode = "visual";
+        this.viewToggle.set("visual");
+        this.rerenderFromSettings();
+        let hit: DayCell | undefined;
+        for (const d of this.lastDrawnDays) {
+            if (d.date.getTime() !== a.time) continue;
+            if (!hit || (d.value ?? -Infinity) > (hit.value ?? -Infinity)) hit = d;
+        }
+        if (!hit) return;
+        this.focusGroup.selectAll("*").remove();
+        drawFocusRing(this.focusGroup, cellBox(hit));
+        if (this.formattingSettings.dayDetail.enabled.value) {
+            this.panelOrigin = null;
+            this.panel.open(hit, { focus: false });
+        }
     }
 
     // -- custom colours (blob persistence) -----------------------------------
@@ -569,16 +860,26 @@ export class Visual implements IVisual {
         this.noteEditor.open(note, dateLabel(d.date), !existing);
     }
 
-    private render(input: FacetedRender, width: number, height: number, firstDayOfWeek: number): void {
-        const combined = input.combined;
-        const faceted = input.facets.length > 1;
-        // The cells actually drawn — one model's days (single) or every panel's (faceted).
-        const drawnDays: DayCell[] = faceted ? input.facets.flatMap(f => f.model.days) : combined.days;
+    private render(input: FacetedRender, canvasW: number, canvasH: number, firstDayOfWeek: number): void {
         const s = this.formattingSettings;
+        const combined = input.combined;
+        // Labels › Numbers (HM-V2-31) — set before ANY surface formats a number: the
+        // Table and Insight views below, the header, tooltip and panel after.
+        setNumberFormat(s.labels.displayUnits.value.value as string, s.labels.decimals.value);
+        // Hours layout (HM-V2-12) folds every row into weekday × hour: no day cells, and
+        // always the all-groups data (a note says so when a Split-by is bound).
+        const hoursMode = (s.dataDisplay.layout.value.value as string) === "hours";
+        const faceted = input.facets.length > 1 && !hoursMode;
+        // The cells actually drawn — one model's days (single) or every panel's (faceted).
+        const drawnDays: DayCell[] = hoursMode ? [] : faceted ? input.facets.flatMap(f => f.model.days) : combined.days;
         const palette = this.host.colorPalette;
         const hc = palette.isHighContrast;
-        // Auto-detect a dark report theme from the canvas background.
-        const dark = !hc && isDarkColor(palette.background && palette.background.value);
+        // Colours › Canvas: follow the report theme (auto-detect dark from its
+        // background — the default), or pin a Zentrix light / dark / custom surface.
+        const surface = this.canvas();
+        const dark = surface.dark;
+        this.element.style.background = surface.bg ?? "";
+        this.tips.setStyle(s.tooltip.type.value.value as TooltipStyle);
 
         const ramp = hc
             ? [palette.background.value, palette.foreground.value]
@@ -596,30 +897,96 @@ export class Visual implements IVisual {
         const labelColor = hc ? palette.foreground.value : (dark ? "#8A8A99" : "#70707F");
         const strongColor = hc ? palette.foreground.value : (dark ? "#F4F4F6" : "#1A1A22");
 
-        // Summary table — an ALTERNATE VIEW, not a chrome band: while active it
-        // fills the whole canvas and the calendar (and all its chrome) does not
-        // draw at all. The bottom-right ViewToggle flips `tableView` and repaints
-        // through rerenderFromSettings, so the flip works in Reading view too.
-        const summaryOn = s.summaryTable.show.value;
-        if (!summaryOn) this.tableView = true; // re-arm: enabling always opens on the table
+        // Table / Insight — ALTERNATE VIEWS, not chrome bands: while one is active it
+        // fills the whole canvas and the calendar (and all its chrome) does not draw
+        // at all (ST-A). The bottom-right pill flips `viewMode` and repaints through
+        // rerenderFromSettings, so the flip works in Reading view too (ST-B).
         const hcColorsForOverlay = hc
             ? { background: palette.background.value, foreground: palette.foreground.value }
             : null;
-        if (summaryOn) this.viewToggle.show(this.tableView ? "table" : "visual", dark, hcColorsForOverlay);
-        else this.viewToggle.hide();
-        if (summaryOn && this.tableView) {
+        const tableOn = s.summaryTable.show.value;
+        const insightWanted = s.viewSwitch.insight.value && !!combined.series;
+        // Same gate as the insight band (fail-open PremiumGate). Locked = a visible,
+        // greyed teaser whose click raises the upgrade banner (NG-274 parity).
+        const insightLocked = insightWanted && !this.premium.active;
+        // On a tile too small for the gear the pill is pure occlusion; drop it.
+        const tiny = canvasW < 300 || canvasH < 180;
+        if (!this.viewSeeded) {
+            const want = s.viewSwitch.defaultView.value.value as ViewMode;
+            this.viewMode = want === "table" && tableOn ? "table"
+                : want === "insight" && insightWanted && !insightLocked ? "insight" : "visual";
+            this.viewSeeded = true;
+        }
+        this.viewToggle.setTheme(dark, hcColorsForOverlay);
+        this.viewToggle.setSegments({ table: !tiny && tableOn, insight: !tiny && insightWanted });
+        this.viewToggle.setLocked({ insight: insightLocked },
+            "Insight is a premium feature. Start your free trial to unlock it here.");
+        // A view just switched off (or locked) falls back to the calendar.
+        this.viewToggle.set(this.viewMode);
+        this.viewMode = this.viewToggle.current();
+        const pillShown = this.viewToggle.hasAlternate();
+        const gearAuto = (s.toolbar.position.value.value as string) === "auto";
+
+        if (this.viewMode !== "visual") {
             // Cell-anchored surfaces can't survive without cells.
             this.panel.close();
-            this.tooltip.hide();
-            renderSummaryTable(this.contentGroup, input, {
-                width, height, labelColor, strongColor,
-                accentColor: hc ? palette.foreground.value : ACCENT_TOKEN,
-                valueName: combined.valueName,
-                categoryName: input.categoryName,
-            });
-            // The table + the ViewToggle own the bottom of the canvas; park the
-            // gear top-right so the two floating controls never collide.
-            this.toolbar.setCorner("tr");
+            this.tips.hide();
+            this.lastDrawnDays = [];
+            // Export is a calendar-view tool, as in every sibling (Sankey: diagram only).
+            this.actionBar.setWanted(false);
+            const polarity = s.insights.polarity.value.value as Polarity;
+            if (this.viewMode === "table") {
+                renderSummaryTable(this.viewHost, input, {
+                    dark, hc: hcColorsForOverlay,
+                    valueName: combined.valueName,
+                    categoryName: input.categoryName,
+                    firstDayOfWeek,
+                    grain: this.tableGrain,
+                    onGrainChange: (g) => { this.tableGrain = g; },
+                    statsCollapsed: this.tableState?.statsCollapsed,
+                    onStatsChange: (collapsed) => this.persistTableState(collapsed),
+                });
+            } else {
+                renderInsightView(this.viewHost, input, {
+                    dark, hc: hcColorsForOverlay, polarity,
+                    fiscalStartMonth: parseInt(s.timeIntel.fiscalStart.value.value as string, 10) || 1,
+                    findings: Math.max(5, Math.round(s.insights.count.value)),
+                    onAction: (a) => this.applyInsightAction(a),
+                });
+            }
+            // The gear and the pill share the bottom-right corner as one cluster
+            // (the family placement); the gear stays reachable in every view.
+            if (gearAuto) this.toolbar.setCorner("br");
+            this.viewToggle.setGearAtBr(this.toolbar.isVisible() && this.toolbar.corner() === "br");
+            return;
+        }
+        this.hideViewHost();
+        // Quick-action bar (HM-V2-30): calendar view only, and not on a tile under the
+        // Sankey's 380×240 floor, where a corner card is pure occlusion. While it shows,
+        // the calendar leaves a strip on the right free for it — the pill strip's idea
+        // turned sideways — so the bar never sits on a KPI chip, the legend or a day.
+        const barWanted = Boolean(s.toolbar.actions.value) && canvasW >= 380 && canvasH >= 240;
+        const barShown = this.actionBar.shownIf(barWanted);
+        this.actionBar.setWanted(barWanted);
+        this.themeActionBar(dark, hc);
+        const width = canvasW - (barShown ? AB_STRIP : 0);
+        // While the pill is up the calendar leaves the bottom strip free for it (and
+        // the gear beside it), so neither ever sits on a day cell. Layout below reads
+        // `height`; only the gear corner and the annotation clamp use the full canvas.
+        const height = canvasH - (pillShown ? PILL_STRIP : 0);
+        const hourModel = hoursMode ? this.getHourModel(firstDayOfWeek) : null;
+        if (hoursMode && (!hourModel || !hourModel.hasTime)) {
+            // Honest empty state rather than one meaningless midnight column.
+            this.panel.close();
+            this.tips.hide();
+            this.lastDrawnDays = [];
+            this.renderMessage(hourModel
+                ? "The Hours layout needs a Date field with times of day. This one has dates only."
+                : "No rows to place on the hour grid.", width, height, labelColor);
+            this.toolbar.setCorner(pillShown && gearAuto ? "br"
+                : pickCorner(canvasW, canvasH, barShown ? [this.barRect(canvasW)] : []));
+            this.viewToggle.setGearAtBr(this.toolbar.isVisible() && this.toolbar.corner() === "br");
+            this.syncBarTop();
             return;
         }
         // No-data is "absence", not a value — defaults to a theme-neutral gray so it
@@ -628,6 +995,14 @@ export class Visual implements IVisual {
         const noData = hc ? palette.background.value
             : (/^#[0-9a-fA-F]{6}$/.test(noDataOverride) ? noDataOverride : (dark ? NO_DATA_DARK : NO_DATA_LIGHT));
 
+        // Event marker colour: one per Event type (the host's own theme palette, so it
+        // follows the report theme), the brand accent when no type is bound, the
+        // foreground in high contrast.
+        const eventColorOf = (d: Pick<DayCell, "eventType">): string => {
+            if (hc) return palette.foreground.value;
+            if (d.eventType && typeof palette.getColor === "function") return palette.getColor(d.eventType).value;
+            return ACCENT_TOKEN;
+        };
         const colorOpts = {
             mode: s.colors.scaleMode.value.value as ScaleMode,
             buckets: parseInt(s.colors.bucketCount.value.value as string, 10) || 0,
@@ -637,10 +1012,15 @@ export class Visual implements IVisual {
         // default is a SHARED scale (fit across every panel's day values) so colors are
         // comparable across panels; the user can opt into a per-panel scale instead.
         const sharedScale = !faceted || s.smallMultiples.sharedScale.value;
-        const colors = buildColorAccessor(
-            { ...combined, days: drawnDays, valueDomain: input.sharedDomain }, colorOpts);
+        // Filter › Top N / Bottom N days (HM-V2-20): days outside the cut paint as
+        // no-data. Calendar layouts only — the Hours grid has no days to rank.
+        const keepDays = hourModel ? null : rankedDays(drawnDays,
+            s.filter.mode.value.value as DayFilterMode, s.filter.count.value);
+        const colors = hourModel
+            ? buildColorAccessor({ ...combined, days: hourModel.cells.map(asColorCell), valueDomain: hourModel.valueDomain }, colorOpts)
+            : filterColors(buildColorAccessor({ ...combined, days: drawnDays, valueDomain: input.sharedDomain }, colorOpts), keepDays);
         const facetColors: ColorAccessor[] = faceted && !sharedScale
-            ? input.facets.map(f => buildColorAccessor(f.model, colorOpts))
+            ? input.facets.map(f => filterColors(buildColorAccessor(f.model, colorOpts), keepDays))
             : [];
         const colorsFor = (i: number): ColorAccessor => (sharedScale ? colors : facetColors[i]);
 
@@ -663,9 +1043,10 @@ export class Visual implements IVisual {
         const insightsOn = s.insights.show.value && !!combined.series && premiumOk;
         const polarity = s.insights.polarity.value.value as Polarity;
         const fiscalStartMonth = parseInt(s.timeIntel.fiscalStart.value.value as string, 10) || 1;
-        const insightItemsAll = insightsOn
-            ? computeInsights(combined.series!, { ...DEFAULT_INSIGHT_CONFIG, polarity, fiscalStartMonth }, Math.max(1, Math.round(s.insights.count.value)))
-            : [];
+        // The read-out lives on the Insight page (view switch) now, so the calendar
+        // view no longer reserves a bottom band of insight lines under the grid. The
+        // engine still feeds the Insight page and the tooltip's anomaly line.
+        const insightItemsAll: ReturnType<typeof computeInsights> = [];
         const INSIGHT_LINE_H = 18, INSIGHT_OVERHEAD = 24;
 
         // Base grid options shared by the predictor and the real render. Heights /
@@ -706,7 +1087,15 @@ export class Visual implements IVisual {
         // reservation and let the planner shed the lowest-priority band first.
         const HEADER_H = 42; // renderHeader's fixed band height
         const headerRequested = s.labels.showHeader.value;
+        const hourOpts = (top: number, h: number): HourGridOptions => ({
+            width, height: h, topOffset: top,
+            cellSize: s.cells.cellSize.value, gapX: s.cells.cellGapX.value, gapY: s.cells.cellGapY.value,
+            radius: s.cells.cornerRadius.value, colors, labelColor,
+            cellStroke: hc ? palette.foreground.value : undefined,
+            weekdayStyle: s.weekdayRail.toStyle(), monthStyle: s.monthRail.toStyle(),
+        });
         const predict = (top: number, bottom: number): number => {
+            if (hourModel) return predictHourGridSize(hourOpts(top, height - bottom));
             if (faceted) {
                 return predictFacetSize(input.facets,
                     facetLayout({ x: 0, y: top, w: width, h: height - top - bottom - 4 }));
@@ -765,8 +1154,12 @@ export class Visual implements IVisual {
             topOffset: headerH + legendTopH,
         };
 
-        let geo: GridGeometry, cells: CellSel;
-        if (faceted) {
+        let geo: GridGeometry, cells: CellSel | null = null, hourCells: HourCellSel | null = null;
+        if (hourModel) {
+            const res = renderHourGrid(this.contentGroup, hourModel,
+                hourOpts(headerH + legendTopH, height - legendBottomH - insightsH));
+            geo = res.geo; hourCells = res.cells;
+        } else if (faceted) {
             // Small multiples: tile one calendar per category into the content band.
             const top = headerH + legendTopH;
             const region = { x: 0, y: top, w: width, h: height - top - legendBottomH - insightsH - 4 };
@@ -796,17 +1189,46 @@ export class Visual implements IVisual {
                 showLabels: lg.showLabels.value && plan.legendLabels,
                 lessLabel: lg.lessLabel.value || "Less",
                 moreLabel: lg.moreLabel.value || "More",
-                showNoData: lg.showNoData.value && drawnDays.some(d => d.noData),
+                showNoData: lg.showNoData.value && (hourModel
+                    ? hourModel.cells.some(c => c.value == null)
+                    : drawnDays.some(d => d.noData)),
                 noDataSide: lg.noDataSide.value.value as NoDataSide,
                 title: lg.title.value,
                 textStyle: s.legendText.toStyle(),
             });
+            // Event-type key (HM-V2-11) shares the legend band, on the side the legend
+            // doesn't use, capped so the two can never meet.
+            const types = combined.eventTypes ?? [];
+            if (!hourModel && s.events.show.value && s.events.showKey.value && types.length) {
+                const align = lg.align.value.value as LegendAlign;
+                const ts = s.legendText.toStyle();
+                const cap = geo.gridWidth * (align === "center" ? 0.22 : 0.42);
+                renderEventKey(this.contentGroup, {
+                    right: align === "end" ? geo.marginLeft + cap : geo.marginLeft + geo.gridWidth,
+                    y: legendY + legendBandH / 2 - 2, maxWidth: cap, types,
+                    colorOf: (t) => eventColorOf({ eventType: t }),
+                    labelColor, fontSize: Math.max(9, ts.size - 1), font: FONT_FAMILY,
+                });
+            }
         }
 
         // No-data cells get a subtle inset outline so empty days read as "empty",
         // never as a value — independent of the chosen palette (DECISION 3).
         for (const d of drawnDays) {
             if (d.noData) drawNoDataHairline(this.badgeGroup, cellBox(d), dark);
+        }
+
+        // Weekends + holidays (HM-V2-10): drawn under the badges and markers so a
+        // day's emoji / event flag always sits on top of the non-working wash.
+        const nw = s.nonWorking;
+        const wkSet = nw.weekend.value.value as WeekendSet;
+        const nwStyle = nw.style.value.value as NonWorkingStyle;
+        const nwInk = hc ? palette.foreground.value : labelColor;
+        if (nw.shadeWeekends.value || nw.showHolidays.value) {
+            for (const d of drawnDays) {
+                const off = (nw.shadeWeekends.value && isWeekend(d.date, wkSet)) || (nw.showHolidays.value && !!d.holiday);
+                if (off) drawNonWorking(this.defs, this.badgeGroup, cellBox(d), nwStyle, dark, nwInk, hc);
+            }
         }
 
         // Day badges — emoji on notable days (peak / threshold) across every panel.
@@ -863,6 +1285,42 @@ export class Visual implements IVisual {
 
         for (const [d, emoji] of badgeByDay) drawBadge(this.badgeGroup, cellBox(d), emoji);
 
+        // Labels › Cell values (HM-V2-32) — after the badges, so a badged day keeps its
+        // badge (both sit at the centre). A day the Filter faded to no-data has no
+        // number to show. Ink is chosen per cell against that cell's own fill.
+        if (s.labels.showCellValues.value) {
+            const fmt = chosenFormat();
+            const labelOpts = {
+                fontSize: Math.min(24, Math.max(6, Number(s.labels.cellValueSize.value) || 10)),
+                fontFamily: FONT_FAMILY,
+                inkA: hc ? palette.foreground.value : textPrimaryLight,
+                inkB: hc ? palette.background.value : textPrimary,
+                // Auto = compact (1.2K), the only scale that fits a day cell.
+                format: (n: number) => (fmt ? formatValue(n, fmt.units, fmt.decimals) : formatValue(n, "auto", 1)),
+            };
+            if (hourModel) {
+                drawCellLabels(this.badgeGroup, hourModel.cells, {
+                    ...labelOpts, fillOf: c => colors.of(asColorCell(c)),
+                });
+            } else {
+                const facetIndex = new Map(input.facets.map((f, i) => [f.key, i] as [string, number]));
+                drawCellLabels(this.badgeGroup, drawnDays, {
+                    ...labelOpts,
+                    fillOf: d => colorsFor(faceted && !sharedScale ? (facetIndex.get(d.facetKey ?? "") ?? 0) : 0).of(d),
+                    skip: d => d.noData || badgeByDay.has(d) || (keepDays != null && !keepDays.has(d)),
+                });
+            }
+        }
+
+        // Events from the data (HM-V2-11) — bottom-right corner, clear of the note dot
+        // (top-left) and the badge (centre).
+        if (s.events.show.value) {
+            const marker = s.events.marker.value.value as EventMarker;
+            for (const d of drawnDays) {
+                if (d.events?.length) drawEventMarker(this.badgeGroup, cellBox(d), marker, eventColorOf(d), d.events.length);
+            }
+        }
+
         // Author-written annotations (Z-152). Notes are keyed by ISO date + facet, so
         // resolving them means matching each stored note against the days actually
         // drawn this render. A note whose day is filtered out or falls outside the
@@ -889,7 +1347,7 @@ export class Visual implements IVisual {
                 markerStyle: (isMarkerStyle(styleRaw) ? styleRaw : "number") as MarkerStyle,
                 markerIcon: ann.markerIcon.value || "📌",
                 markerColor: ann.markerColor.value.value || ACCENT_TOKEN,
-                dark, width, height,
+                dark, width, height: canvasH,
                 editable: this.authoring,
             });
             // A callout is directly manipulable while authoring: drag to move it,
@@ -925,6 +1383,10 @@ export class Visual implements IVisual {
         if (combined.totalDays > combined.days.length) {
             notes.push(`Showing last ${combined.days.length} of ${combined.totalDays} days`);
         }
+        if (hoursMode && input.facets.length > 1) {
+            notes.push(`Hours layout: all ${input.categoryName ?? "groups"} combined`);
+        }
+        for (const issue of combined.fieldIssues ?? []) notes.push(issue);
         if (faceted && input.totalCategories > input.facets.length) {
             notes.push(`Showing ${input.facets.length} of ${input.totalCategories} groups`);
         }
@@ -970,7 +1432,14 @@ export class Visual implements IVisual {
             contentRects.push([geo.marginLeft, lY, Math.max(240, geo.gridWidth), legendBandH]);
         }
         if (insightsH > 0) contentRects.push([0, height - insightsH, width, insightsH]);
-        this.toolbar.setCorner(pickCorner(width, height, contentRects));
+        // The bar's corner is taken too: Auto must not park the gear under it.
+        if (barShown) contentRects.push(this.barRect(canvasW));
+        // With the pill up, the gear joins it bottom-right in the reserved strip (one
+        // control cluster, the family placement); otherwise it avoids content as before.
+        this.toolbar.setCorner(pillShown && gearAuto ? "br" : pickCorner(canvasW, canvasH, contentRects));
+        this.viewToggle.setGearAtBr(this.toolbar.isVisible() && this.toolbar.corner() === "br");
+        this.syncBarTop();
+        this.lastDrawnDays = drawnDays;
 
         // Anomaly lookup for the tooltip (top-1 line on flagged days) — overall series.
         let anomalyMap: Map<number, { score: number; direction: "high" | "low"; severity: "moderate" | "strong" }> | undefined;
@@ -985,6 +1454,7 @@ export class Visual implements IVisual {
         const interactModel: CalendarModel = faceted ? { ...combined, days: drawnDays } : combined;
         this.tooltip.setContext(interactModel, colors, dark, anomalyMap, polarity);
         this.tooltip.setRuleNames(ruleNameByDay); // Z-146 — surface matched rule name
+        this.tooltip.setEventColor(s.events.show.value ? eventColorOf : undefined); // HM-V2-11
         this.tooltip.setBranding(s.branding.showBranding.value); // ZENTRIX-BRAND
 
         // Day detail panel context (Z-145). HC colors come from the host palette so
@@ -994,6 +1464,7 @@ export class Visual implements IVisual {
             ? { background: palette.background.value, foreground: palette.foreground.value }
             : null;
         this.panel.setContext({
+            eventColorOf: s.events.show.value ? eventColorOf : undefined,
             model: interactModel,
             colors,
             dark,
@@ -1016,7 +1487,93 @@ export class Visual implements IVisual {
         // detail panel (which already opens on a cell click). With the panel turned
         // off there'd be no way in, so a click then opens the editor directly.
         const annotateOnClick = !dd.enabled.value && this.authoring && ann.show.value;
-        this.wireInteractions(interactModel, cells, s.accessibility.focusRing.value, dd.enabled.value, annotateOnClick);
+        if (hourCells && hourModel) {
+            // No day under an hour bucket: the day panel and notes don't apply here.
+            this.panel.close();
+            this.lastDrawnDays = [];
+            this.wireHourInteractions(hourCells, hourModel);
+        } else if (cells) {
+            this.wireInteractions(interactModel, cells, s.accessibility.focusRing.value, dd.enabled.value, annotateOnClick);
+        }
+    }
+
+    /** The Hours model for the current DataView, built once per (data, week start,
+     *  aggregate) — it makes a selection id per row, so it is not rebuilt per repaint. */
+    private getHourModel(firstDayOfWeek: number): HourModel | null {
+        const dv = this.lastDataView;
+        if (!dv) return null;
+        const agg = this.formattingSettings.dataDisplay.aggregation.value.value as AggregationMode;
+        const key = `${firstDayOfWeek}|${agg}`;
+        if (this.hourCache && this.hourCache.dv === dv && this.hourCache.key === key) return this.hourCache.model;
+        const model = buildHourModel(dv, this.host, firstDayOfWeek, agg);
+        this.hourCache = { dv, key, model };
+        this.hourSelected.clear();
+        return model;
+    }
+
+    /**
+     * Hours layout interactions: hover → tooltip (bucket, value, row count), click →
+     * cross-filter EVERY row in the bucket (Ctrl/⌘ adds), canvas click clears. Each
+     * cell carries a spoken label for screen readers.
+     */
+    private wireHourInteractions(cells: HourCellSel, model: HourModel): void {
+        const WD = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const slot = (c: HourCell) => `${WD[c.weekday]} ${hourLabel(c.hour)}–${hourLabel((c.hour + 1) % 24)}`;
+        const valueText = (c: HourCell) => (c.value == null ? "no data" : formatNumber(c.value));
+        const label = metricLabel(model.valueName, model.aggMode);
+        cells.attr("role", "img")
+            .attr("aria-label", c => `${slot(c)}: ${label} ${valueText(c)}`);
+        const hourTip = (c: HourCell): HoverContent => ({
+            card: (x, y) => {
+                const lines = [slot(c).toUpperCase(), c.value == null ? "No data" : formatNumber(c.value), label];
+                if (c.rows) lines.push(`${c.rows} row${c.rows === 1 ? "" : "s"} in this hour`);
+                this.tooltip.showLines(lines, x, y);
+            },
+            items: () => [
+                { displayName: "When", value: slot(c) },
+                { displayName: label, value: valueText(c) },
+                ...(c.rows ? [{ displayName: "Rows", value: String(c.rows) }] : []),
+            ],
+            identities: c.selectionIds,
+        });
+
+        const paint = () => {
+            const any = this.hourSelected.size > 0;
+            const dim = this.dimOpacity();
+            cells.attr("fill-opacity", c => (!any || this.hourSelected.has(c) ? 1 : dim));
+            this.selectedGroup.selectAll("*").remove();
+            cells.each((c) => { if (this.hourSelected.has(c)) drawSelectedRing(this.selectedGroup, { x: c.px ?? 0, y: c.py ?? 0, size: c.ps ?? 0 }); });
+        };
+        paint();
+
+        cells
+            .on("click", (e: MouseEvent, c: HourCell) => {
+                e.stopPropagation();
+                if (!c.selectionIds.length) return;
+                const multi = e.ctrlKey || e.metaKey;
+                if (!multi) {
+                    const only = this.hourSelected.size === 1 && this.hourSelected.has(c);
+                    this.hourSelected.clear();
+                    if (!only) this.hourSelected.add(c);
+                } else if (this.hourSelected.has(c)) this.hourSelected.delete(c);
+                else this.hourSelected.add(c);
+                const ids = [...this.hourSelected].flatMap(h => h.selectionIds);
+                (ids.length ? this.selectionManager.select(ids, false) : this.selectionManager.clear()).then(paint, paint);
+                paint();
+            })
+            .on("contextmenu", (e: MouseEvent, c: HourCell) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.selectionManager.showContextMenu(c.selectionIds[0] ?? ({} as powerbi.visuals.ISelectionId), { x: e.clientX, y: e.clientY });
+            })
+            .on("mouseenter", (e: MouseEvent, c: HourCell) => {
+                if (this.toolbar.isOpen()) return;
+                this.hoverGroup.selectAll("*").remove();
+                drawHoverRing(this.hoverGroup, { x: c.px ?? 0, y: c.py ?? 0, size: c.ps ?? 0 });
+                this.tips.show(e, hourTip(c));
+            })
+            .on("mousemove", (e: MouseEvent, c: HourCell) => { if (!this.toolbar.isOpen()) this.tips.move(e, hourTip(c)); })
+            .on("mouseleave", () => { this.hoverGroup.selectAll("*").remove(); this.tips.hide(); });
     }
 
     /** Close the detail panel, clear the unified selection (DD-2), restore cell focus. */
@@ -1065,8 +1622,9 @@ export class Visual implements IVisual {
         // no manual selection, honor that highlight dim instead — same opacity
         // treatment, so host highlight ⊃ idle state (capabilities supportsHighlight).
         const applyState = () => {
-            const isSelected = syncSelectionState(cells, this.selectionManager);
-            if (model.hasHighlights && !this.selectionManager.hasSelection()) applyHighlight(cells);
+            const dim = this.dimOpacity();
+            const isSelected = syncSelectionState(cells, this.selectionManager, dim);
+            if (model.hasHighlights && !this.selectionManager.hasSelection()) applyHighlight(cells, dim);
             this.selectedGroup.selectAll("*").remove();
             cells.each((d) => { if (isSelected(d)) drawSelectedRing(this.selectedGroup, box(d)); });
         };
@@ -1094,20 +1652,26 @@ export class Visual implements IVisual {
         // While the settings bar is open, suppress the hover card + ring so they don't
         // overlap/compete with the menu (issue #7). The persistent day-detail panel is
         // unaffected — it only ever opens on an explicit click/Enter, never on hover.
+        const metric = metricLabel(model.valueName, model.aggMode);
+        const dayTip = (d: DayCell): HoverContent => ({
+            card: (x, y) => this.tooltip.show(d, x, y),
+            items: () => dayTooltipItems(d, metric, model.targetName),
+            identities: d.selectionId ? [d.selectionId] : [],
+        });
         cells
             .on("mouseenter", (e: MouseEvent, d: DayCell) => {
                 if (this.toolbar.isOpen()) return;
                 this.hoverGroup.selectAll("*").remove();
                 drawHoverRing(this.hoverGroup, box(d));
-                this.tooltip.show(d, e.clientX, e.clientY);
+                this.tips.show(e, dayTip(d));
             })
-            .on("mousemove", (e: MouseEvent) => {
+            .on("mousemove", (e: MouseEvent, d: DayCell) => {
                 if (this.toolbar.isOpen()) return;
-                this.tooltip.move(e.clientX, e.clientY);
+                this.tips.move(e, dayTip(d));
             })
             .on("mouseleave", () => {
                 this.hoverGroup.selectAll("*").remove();
-                this.tooltip.hide();
+                this.tips.hide();
             });
 
         // Keyboard navigation + ARIA.

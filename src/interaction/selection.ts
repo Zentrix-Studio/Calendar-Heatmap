@@ -56,11 +56,11 @@ export function bindBackgroundContextMenu(
 }
 
 /** Re-derive selection state from the manager and apply the cross-highlight dim. */
-export function syncSelectionState(cells: CellSel, selectionManager: ISelectionManager): IsSelected {
+export function syncSelectionState(cells: CellSel, selectionManager: ISelectionManager, dimOpacity?: number): IsSelected {
     const ids = selectionManager.getSelectionIds() as ISelectionId[];
     const anySelected = ids.length > 0;
     const isSelected: IsSelected = (d) =>
         !!d.selectionId && ids.some(id => id.equals(d.selectionId!));
-    applyCrossHighlight(cells, isSelected, anySelected);
+    applyCrossHighlight(cells, isSelected, anySelected, dimOpacity);
     return isSelected;
 }

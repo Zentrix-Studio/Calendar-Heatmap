@@ -1,6 +1,7 @@
 "use strict";
 
 import { CalendarModel, DayCell, AggregationMode } from "../types";
+import { formatWith } from "../render/format";
 
 /**
  * dayData.ts — shared day-level derivations for the hover tooltip AND the
@@ -30,7 +31,8 @@ export function buildValueByDay(model: CalendarModel): Map<string, number> {
 
 /** Number formatter shared by tooltip + panel (locale-aware, ≤2 fraction digits). */
 export function formatNum(n: number): string {
-    return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    // Labels › Numbers (HM-V2-31): the author's units win; "auto" keeps the full number.
+    return formatWith(n, v => v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
 }
 
 /** Strip a leading host aggregation prefix ("Sum of Tickets" → "Tickets") so a
@@ -159,4 +161,30 @@ export function span(style: string, text: string): HTMLSpanElement {
     s.style.cssText = style;
     s.textContent = text;
     return s;
+}
+
+/**
+ * Holiday + data-bound events for a day (HM-V2-10/11), identically in the hover
+ * tooltip and the day-detail panel. `colorOf` resolves the event marker colour so the
+ * chip here matches the marker on the grid.
+ */
+export function appendDayMarks(
+    el: HTMLElement, d: DayCell, muted: string, strong: string, colorOf?: (d: DayCell) => string,
+): void {
+    if (d.holiday) {
+        const row = div(`margin-top:5px;font-size:11px;color:${muted}`, "Holiday: ");
+        row.appendChild(span(`color:${strong};font-weight:600`, d.holiday));
+        el.appendChild(row);
+    }
+    const events = d.events ?? [];
+    if (!events.length) return;
+    const color = colorOf ? colorOf(d) : strong;
+    for (const e of events.slice(0, 5)) {
+        const row = div(`margin-top:4px;font-size:12px;font-weight:600;color:${strong};display:flex;align-items:center`);
+        row.appendChild(span(`width:0;height:0;border-left:7px solid transparent;border-bottom:7px solid ${color};margin-right:6px;display:inline-block`, ""));
+        row.appendChild(span("", e));
+        el.appendChild(row);
+    }
+    if (events.length > 5) el.appendChild(div(`margin-top:2px;font-size:11px;color:${muted}`, `+${events.length - 5} more`));
+    if (d.eventType) el.appendChild(div(`margin-top:2px;font-size:10px;color:${muted}`, d.eventType));
 }

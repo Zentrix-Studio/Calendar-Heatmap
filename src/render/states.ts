@@ -19,16 +19,19 @@ export const STATE = {
     // meaning-bearing "bad/over-threshold" cue → Okabe-Ito orange, not raw red.
     accent: ACCENT_TOKEN,
     threshold: NEG_SAFE_TOKEN,
-    dimOpacity: 0.28,
+    dimOpacity: 0.28,   // = Interactions › Dim strength 72 %, the default
     hairlineLight: "rgba(0,0,0,0.20)",
     hairlineDark: "rgba(255,255,255,0.18)",
 };
 
 export interface CellBox { x: number; y: number; size: number; }
 
-/** Cross-highlight: dim cells not in the selection to 28%, full when none selected. */
-export function applyCrossHighlight(cells: CellSel, isSelected: (d: DayCell) => boolean, anySelected: boolean): void {
-    cells.attr("fill-opacity", d => (!anySelected ? 1 : isSelected(d) ? 1 : STATE.dimOpacity));
+/** Cross-highlight: dim cells not in the selection (to 28% by default — Cells ›
+ *  Click & hover › Dim strength overrides it), full when none selected. */
+export function applyCrossHighlight(
+    cells: CellSel, isSelected: (d: DayCell) => boolean, anySelected: boolean, dimOpacity: number = STATE.dimOpacity,
+): void {
+    cells.attr("fill-opacity", d => (!anySelected ? 1 : isSelected(d) ? 1 : dimOpacity));
 }
 
 /**
@@ -39,8 +42,8 @@ export function applyCrossHighlight(cells: CellSel, isSelected: (d: DayCell) => 
  * highlights array is present (model.hasHighlights) — the no-highlight render
  * never touches fill-opacity, keeping existing behavior/snapshots intact.
  */
-export function applyHighlight(cells: CellSel): void {
-    applyCrossHighlight(cells, d => d.isHighlighted === true, true);
+export function applyHighlight(cells: CellSel, dimOpacity: number = STATE.dimOpacity): void {
+    applyCrossHighlight(cells, d => d.isHighlighted === true, true, dimOpacity);
 }
 
 function ring(overlay: GroupSel, box: CellBox, opts: {

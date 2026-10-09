@@ -4,7 +4,7 @@ import { CalendarModel, DayCell, AggregationMode } from "../types";
 import { ColorAccessor } from "../render/colors";
 import { appendTooltipBrand } from "../branding/zentrixBrand"; // ZENTRIX-BRAND
 import { fontFamily, posSafe, negSafe, accent, resolveSurface } from "../theme/zentrixTokens";
-import { buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, metricLabel, formatNum, clear, div, span } from "./dayData";
+import { buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, metricLabel, formatNum, clear, div, span, appendDayMarks } from "./dayData";
 
 const FONT = fontFamily;
 // Up/over/gain vs down/under/loss — CVD-safe Okabe-Ito pair (Z-148, replaces the
@@ -65,6 +65,30 @@ export class HeatmapTooltip {
     /** Z-152 — author-written annotation text keyed by `${facetKey}|${epoch}`. */
     setNotes(map: Map<string, string>): void { this.noteByDay = map; }
 
+    /** HM-V2-11 — event marker colour, so the tooltip chip matches the grid. */
+    private eventColorOf?: (d: DayCell) => string;
+    setEventColor(fn: ((d: DayCell) => string) | undefined): void { this.eventColorOf = fn; }
+
+    /**
+     * Plain lines for a non-day cell (the Hours layout, HM-V2-12): first line is the
+     * muted eyebrow, the second the big value, the rest detail rows.
+     */
+    showLines(lines: string[], clientX: number, clientY: number): void {
+        const theme = resolveSurface(this.dark);
+        this.el.style.background = theme.bg;
+        this.el.style.color = theme.fg;
+        clear(this.el);
+        lines.forEach((text, i) => {
+            const style = i === 0 ? `font-size:10px;letter-spacing:.5px;color:${theme.muted}`
+                : i === 1 ? "margin-top:4px;font-size:20px;font-weight:700;line-height:1.1"
+                    : `margin-top:3px;font-size:11px;color:${theme.muted}`;
+            this.el.appendChild(div(style, text));
+        });
+        if (this.brandingOn) appendTooltipBrand(this.el, this.dark);
+        this.el.style.display = "block";
+        this.move(clientX, clientY);
+    }
+
     /** ZENTRIX-BRAND — host toggles the subtle tooltip attribution on/off. */
     setBranding(on: boolean): void { this.brandingOn = on; }
 
@@ -83,6 +107,9 @@ export class HeatmapTooltip {
         if (d.facetKey) {
             this.el.appendChild(div(`margin-top:2px;font-size:11px;font-weight:600;color:${strong}`, d.facetKey));
         }
+
+        // Holiday + events from the data (HM-V2-10/11).
+        appendDayMarks(this.el, d, muted, strong, this.eventColorOf);
 
         // Author-written annotation (Z-152) — this is how a Marker-only note reads
         // its text: the callout isn't drawn, so hover is the reveal.

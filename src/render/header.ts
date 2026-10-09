@@ -3,6 +3,7 @@
 import { GroupSel } from "./grid";
 import { CalendarModel } from "../types";
 import { TextStyle, applyText, defaultText } from "./text";
+import { formatWith } from "./format";
 
 export interface HeaderOptions {
     width: number;
@@ -22,6 +23,11 @@ export interface HeaderOptions {
 
 /** Compact number formatting for KPI chips (1234 → 1.2K, 68400 → 68.4K). */
 function compact(n: number): string {
+    // Labels › Numbers (HM-V2-31): the author's units win; "auto" keeps the chip scale.
+    return formatWith(n, chipScale);
+}
+
+function chipScale(n: number): string {
     const abs = Math.abs(n);
     if (abs >= 1e9) return (n / 1e9).toFixed(1) + "B";
     if (abs >= 1e6) return (n / 1e6).toFixed(1) + "M";

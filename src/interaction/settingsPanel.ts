@@ -82,7 +82,32 @@ export class SettingsOverlay {
             cfg, cats: SB_CATS, fonts: SB_FONTS, palettes: SB_PALETTES, presets: SB_PRESETS, emoji: SB_EMOJI,
             corner: "bl", dark: false, closeOnAway: true,
         });
+        // Open/close notification for the view pill (it steps aside while the bar is
+        // expanded across the bottom strip — family parity). The bar is a mirror and
+        // has no hook in this generation, so watch the class flips it already makes
+        // on open/close rather than editing the vendored engine.
+        if (typeof MutationObserver !== "undefined") {
+            let wasOpen = this.bar.isOpen();
+            new MutationObserver(() => {
+                const open = this.bar.isOpen();
+                if (open === wasOpen) return;
+                wasOpen = open;
+                this.openListener?.(open);
+            }).observe(root, { subtree: true, attributes: true, attributeFilter: ["class"] });
+        }
     }
+
+    private openListener: ((open: boolean) => void) | null = null;
+    /** The corner the gear last resolved to (Auto-placed or author-pinned). */
+    private resolved = "bl";
+    private visible = true;
+
+    /** Called whenever the bar opens or closes. */
+    onOpenChange(fn: (open: boolean) => void): void { this.openListener = fn; }
+    /** Where the gear currently sits ("bl" | "br" | "tl" | "tr"). */
+    corner(): string { return this.pref !== "auto" ? this.pref : this.resolved; }
+    /** True when the gear is on screen (Toolbar › Show on, not forced hidden). */
+    isVisible(): boolean { return this.visible; }
 
     update(s: Model, dark: boolean, forceHidden = false): void {
         // Reconcile pending optimistic edits against the freshly-populated model.
@@ -94,7 +119,8 @@ export class SettingsOverlay {
         }
         this.settings = s;
         this.applyTheme(dark);
-        this.bar.setVisible(s.toolbar.show.value && !forceHidden);
+        this.visible = s.toolbar.show.value && !forceHidden;
+        this.bar.setVisible(this.visible);
         this.bar.setCloseOnAway(s.toolbar.closeOnClickAway.value);
         this.pref = (s.toolbar.position.value.value as string) || "auto";
         if (this.pref !== "auto") this.bar.setCorner(this.pref);
@@ -183,7 +209,7 @@ export class SettingsOverlay {
 
     /** Called by the visual after layout when position = Auto. No-op otherwise. */
     setCorner(corner: string): void {
-        if (this.pref === "auto") this.bar.setCorner(corner);
+        if (this.pref === "auto") { this.resolved = corner; this.bar.setCorner(corner); }
     }
 
     /** Harness helper — open the bar and (optionally) the sub-group `active`. */

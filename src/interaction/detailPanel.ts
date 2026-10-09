@@ -10,6 +10,7 @@ import { MAX_NOTES } from "../notes/store";
 import {
     buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, topContributor,
     metricLabel, formatNum, clear, div, span,
+    appendDayMarks,
 } from "./dayData";
 
 /**
@@ -31,6 +32,8 @@ const UP = posSafe, DOWN = negSafe;
 const NARROW_W = 360;
 
 export interface PanelContext {
+    /** HM-V2-11 — event marker colour, so the panel chip matches the grid. */
+    eventColorOf?: (d: DayCell) => string;
     model: CalendarModel;
     colors: ColorAccessor | null;
     dark: boolean;
@@ -163,6 +166,9 @@ export class DayDetailPanel {
         if (d.facetKey) {
             this.el.appendChild(div(`margin-top:4px;font-size:11px;font-weight:600;color:${t.strong}`, d.facetKey));
         }
+
+        // Holiday + events from the data (HM-V2-10/11) — same block as the tooltip.
+        appendDayMarks(this.el, d, t.muted, t.strong, c.eventColorOf);
 
         // 3. Annotation block (Z-152) — the author's note for this day, plus the
         // entry point that creates one. This panel is the primary way in: it already

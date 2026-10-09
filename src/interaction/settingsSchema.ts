@@ -210,6 +210,11 @@ const KEYS: Record<string, Entry> = {
     showWeekdays: bool("labels", "showWeekdayLabels", m => m.labels.showWeekdayLabels),
     showKpi: bool("labels", "showHeader", m => m.labels.showHeader),
     showWeekNums: bool("labels", "showWeekNumbers", m => m.labels.showWeekNumbers),
+    // Labels › Numbers + Cell values (HM-V2-31/32) — Sankey Pro's `labels.*` key names.
+    "labels.displayUnits": dropdown("labels", "displayUnits", m => m.labels.displayUnits),
+    "labels.decimals": num("labels", "decimals", m => m.labels.decimals),
+    "labels.showCellValues": bool("labels", "showCellValues", m => m.labels.showCellValues),
+    "labels.cellValueSize": num("labels", "cellValueSize", m => m.labels.cellValueSize),
     // Elements — legend (placement folds show + position)
     legendPlacement: {
         get: m => (!m.legend.show.value ? "off" : (m.legend.position.value.value === "top" ? "top" : "bottom")),
@@ -247,9 +252,19 @@ const KEYS: Record<string, Entry> = {
     ...ruleEntries(1),
     ...ruleEntries(2),
     ...ruleEntries(3),
-    // Summary table — the full-screen alternate view (calendar XOR table; the
-    // bottom-right ViewToggle flips between them while this is on).
+    // View switch — the Table + Insight alternate views (calendar XOR view; the
+    // bottom-right Calendar / Table / Insight pill flips between them).
     "summaryTable.show": bool("summaryTable", "show", m => m.summaryTable.show),
+    "viewSwitch.insight": bool("viewSwitch", "insight", m => m.viewSwitch.insight),
+    // Weekends & holidays (HM-V2-10) + events from data (HM-V2-11).
+    "nonWorking.shadeWeekends": bool("nonWorking", "shadeWeekends", m => m.nonWorking.shadeWeekends),
+    "nonWorking.weekend": dropdown("nonWorking", "weekend", m => m.nonWorking.weekend),
+    "nonWorking.showHolidays": bool("nonWorking", "showHolidays", m => m.nonWorking.showHolidays),
+    "nonWorking.style": dropdown("nonWorking", "style", m => m.nonWorking.style),
+    "events.show": bool("events", "show", m => m.events.show),
+    "events.marker": dropdown("events", "marker", m => m.events.marker),
+    "events.showKey": bool("events", "showKey", m => m.events.showKey),
+    "viewSwitch.defaultView": dropdown("viewSwitch", "defaultView", m => m.viewSwitch.defaultView),
     // Day detail panel (Z-145)
     "dayDetail.enabled": bool("dayDetail", "enabled", m => m.dayDetail.enabled),
     "dayDetail.position": dropdown("dayDetail", "position", m => m.dayDetail.position),
@@ -269,6 +284,22 @@ const KEYS: Record<string, Entry> = {
     // Small multiples (QA-D2) — active when a Split-by category is bound.
     "facets.columns": num("smallMultiples", "columns", m => m.smallMultiples.columns),
     "facets.sharedScale": bool("smallMultiples", "sharedScale", m => m.smallMultiples.sharedScale),
+    // Family cross-cutting settings (HM-V2-20), ported under the feature ratchet.
+    "tooltip.type": dropdown("tooltip", "type", m => m.tooltip.type),
+    "canvas.surfaceMode": dropdown("canvas", "surfaceMode", m => m.canvas.surfaceMode),
+    // `…Color` suffix on purpose: settingsPanel's isColorKey routes it through the
+    // durable colour blob (the host drops a structural fill — CB-persist2).
+    "canvas.bgColor": color("canvas", "bgFill", m => m.canvas.bgFill),
+    "filter.mode": dropdown("filter", "mode", m => m.filter.mode),
+    "filter.count": num("filter", "count", m => m.filter.count),
+    "interactions.dimUnselected": bool("interactions", "dimUnselected", m => m.interactions.dimUnselected),
+    "interactions.dimStrength": num("interactions", "dimStrength", m => m.interactions.dimStrength),
+    // Overlays › Gear icon — the toolbar card stays in the Format pane too (it holds
+    // Show gear, which cannot live inside the gear it hides).
+    "gear.position": dropdown("toolbar", "position", m => m.toolbar.position),
+    "gear.closeOnAway": bool("toolbar", "closeOnClickAway", m => m.toolbar.closeOnClickAway),
+    // The family's own key name for the quick-action bar (Sankey Pro / Gantt).
+    "toolbar.actions": bool("toolbar", "actions", m => m.toolbar.actions),
     // Text groups
     ...typeEntries("headline", m => m.headline),
     ...typeEntries("statChips", m => m.statChips),
@@ -386,8 +417,15 @@ const typeFields = (prefix: string) => ([
 ]);
 
 export const SB_CATS: SBCategory[] = [
-    { id: "data", name: "Data", subs: [
-        { id: "layout", name: "Layout", info: "Arrange the calendar as one continuous year grid or as separate month blocks.", kind: "menu", key: "layout", options: [["continuous", "Year"], ["month", "Months"]] },
+    // Canonical family taxonomy (visuals/SETTINGS-TAXONOMY.md, Network Graph reference):
+    // Layout · Cells (≡ Nodes, domain) · Colours · Labels · Filter · Rules · Overlays ·
+    // Analysis, plus Accessibility as this visual's extra. HM-V2-20 regrouped the old
+    // Data / Color / Cells / Elements / Text tabs into it. Sub `id`s are UNCHANGED (they
+    // back last-open state and every forceOpen() in the tests); only grouping and the
+    // UI labels moved. Category ids "data" / "color" / "cells" / "text" / "access" are
+    // kept for the tabs they became.
+    { id: "data", name: "Layout", subs: [
+        { id: "layout", name: "Calendar", info: "Arrange the calendar as one continuous year grid, as separate month blocks, or as an hour × weekday grid (needs a Date field with times of day).", kind: "menu", key: "layout", options: [["continuous", "Year"], ["month", "Months"], ["hours", "Hours"]] },
         { id: "aggregate", name: "Aggregate", info: "Choose how multiple values that fall on the same day are combined into a single number.", kind: "menu", key: "aggregate", options: [["sum", "Sum"], ["avg", "Average"], ["min", "Min"], ["max", "Max"], ["count", "Count"]] },
         { id: "week", name: "Week start", info: "Set which weekday each column starts on — Sunday or Monday.", kind: "menu", key: "weekStart", options: [["0", "Sun"], ["1", "Mon"]] },
         { id: "fiscal", name: "Fiscal year", info: "Month the fiscal year starts on. Shifts the year-over-year insight, and — with Fiscal layout on — also starts the calendar's year bands on this month.", kind: "menu", key: "fiscalStart", options: [["1", "Jan"], ["2", "Feb"], ["3", "Mar"], ["4", "Apr"], ["5", "May"], ["6", "Jun"], ["7", "Jul"], ["8", "Aug"], ["9", "Sep"], ["10", "Oct"], ["11", "Nov"], ["12", "Dec"]] },
@@ -399,11 +437,27 @@ export const SB_CATS: SBCategory[] = [
             { control: "switch", label: "Shared color scale", key: "facets.sharedScale" },
         ] },
     ] },
-    { id: "color", name: "Color", subs: [
+    { id: "cells", name: "Cells", subs: [
+        { id: "density", name: "Density", info: "Set how large each day cell is drawn.", kind: "menu", key: "density", options: [[10, "Compact"], [16, "Cozy"], [22, "Roomy"]] },
+        { id: "gaps", name: "Gaps", info: "Set the spacing between day cells — independently for rows (vertical) and columns (horizontal).", kind: "fields", width: 240, fields: [
+            { control: "stepper", label: "Row gap", key: "cellGapY", min: 0, max: 12, suffix: "px" },
+            { control: "stepper", label: "Column gap", key: "cellGapX", min: 0, max: 12, suffix: "px" },
+        ] },
+        { id: "radius", name: "Corner radius", info: "Round the corners of each day cell, from sharp squares to soft rounded tiles.", kind: "fields", width: 240, fields: [
+            { control: "stepper", label: "Corner radius", key: "cornerRadius", min: 0, max: 12, suffix: "px" },
+        ] },
+        // Family "Click & drag" sub (Sankey Nodes › Click & drag) — the calendar has no
+        // drag, so only the click half: how hard a selection dims the rest of the year.
+        { id: "clicks", name: "Click & hover", info: "What happens to the other days when you click one (or another visual cross-highlights this one). Dimming makes the selected days stand out; turn it off to mark the selection with its outline only.", kind: "fields", width: 282, fields: [
+            { control: "switch", label: "Dim other days", key: "interactions.dimUnselected" },
+            { control: "stepper", label: "Dim strength", key: "interactions.dimStrength", min: 10, max: 95, step: 5, suffix: "%", visibleIf: g => Boolean(g("interactions.dimUnselected")) },
+        ] },
+    ] },
+    { id: "color", name: "Colours", subs: [
         { id: "palette", name: "Palette", info: "Pick a built-in color scheme for the heatmap cells.", kind: "swatch", key: "ramp", swatches: [...PRESET_IDS] },
         { id: "scale", name: "Scale", info: "Control how values map to colors: quantile spreads colors by rank, linear by value, log compresses large ranges.", kind: "menu", key: "scale", options: [["quantile", "Quantile"], ["linear", "Linear"], ["log", "Log"]] },
         { id: "buckets", name: "Buckets", info: "Group values into a fixed number of discrete color steps, or keep a continuous gradient.", kind: "menu", key: "buckets", options: [["0", "Continuous"], ["3", "3"], ["5", "5"], ["7", "7"]] },
-        { id: "custom", name: "Custom colors", info: "Override individual colors to build your own duotone (Start/End) or diverging split (low/mid/high) palette. Editing any of these switches the palette to your custom colors. Mode picks how cell colors are produced — Mono tints a single hue, Theme tints the report theme's accent. Plus the no-data color.", kind: "fields", width: 282, fields: [
+        { id: "custom", name: "Custom colours", info: "Override individual colors to build your own duotone (Start/End) or diverging split (low/mid/high) palette. Editing any of these switches the palette to your custom colors. Mode picks how cell colors are produced — Mono tints a single hue, Theme tints the report theme's accent. Plus the no-data color.", kind: "fields", width: 282, fields: [
             { control: "heading", label: "Edits here build your own palette" },
             // QA-D4 — the explicit mode row is what makes mono/theme reachable at all;
             // the implicit switches (edit Start/End → duotone, edit Split → split,
@@ -416,36 +470,34 @@ export const SB_CATS: SBCategory[] = [
             { control: "color", label: "Split high", key: "col.splitHigh" },
             { control: "color", label: "No-data", key: "col.noData" },
         ] },
-    ] },
-    { id: "cells", name: "Cells", subs: [
-        { id: "density", name: "Density", info: "Set how large each day cell is drawn.", kind: "menu", key: "density", options: [[10, "Compact"], [16, "Cozy"], [22, "Roomy"]] },
-        { id: "gaps", name: "Gaps", info: "Set the spacing between day cells — independently for rows (vertical) and columns (horizontal).", kind: "fields", width: 240, fields: [
-            { control: "stepper", label: "Row gap", key: "cellGapY", min: 0, max: 12, suffix: "px" },
-            { control: "stepper", label: "Column gap", key: "cellGapX", min: 0, max: 12, suffix: "px" },
-        ] },
-        { id: "radius", name: "Corner radius", info: "Round the corners of each day cell, from sharp squares to soft rounded tiles.", kind: "fields", width: 240, fields: [
-            { control: "stepper", label: "Corner radius", key: "cornerRadius", min: 0, max: 12, suffix: "px" },
+        // Canvas — the STRUCTURAL colours, as opposed to the data colours above (Sankey
+        // Colours › Canvas). Follow report theme is the pre-port behaviour.
+        { id: "canvas", name: "Canvas", info: "Where the background comes from. Follow report theme picks light or dark from the theme the report uses (View › Themes) and stays transparent, like the built-in charts. Light / Dark pin the visual's own surface regardless of the theme — useful on a dark card. Custom lets you pick the background; text switches to light or dark to stay readable on it.", kind: "fields", width: 282, fields: [
+            { control: "segText", label: "Canvas", key: "canvas.surfaceMode", options: [["theme", "Theme"], ["light", "Light"], ["dark", "Dark"], ["custom", "Custom"]] },
+            { control: "color", label: "Canvas colour", key: "canvas.bgColor", visibleIf: g => String(g("canvas.surfaceMode")) === "custom" },
         ] },
     ] },
-    { id: "elements", name: "Elements", subs: [
-        { id: "labels", name: "Labels", info: "Show or hide the month names, weekday names, the KPI header above the grid, and ISO week numbers below each year band.", kind: "fields", width: 220, fields: [
+    { id: "text", name: "Labels", subs: [
+        { id: "labels", name: "Show labels", info: "Show or hide the month names, weekday names, the KPI header above the grid, and ISO week numbers below each year band.", kind: "fields", width: 220, fields: [
             { control: "switch", label: "Months", key: "showMonths" },
             { control: "switch", label: "Weekdays", key: "showWeekdays" },
             { control: "switch", label: "KPI header", key: "showKpi" },
             { control: "switch", label: "Week numbers", key: "showWeekNums" },
         ] },
-        { id: "legend", name: "Legend", info: "Configure the color legend — placement, alignment, title, swatch sizing, labels, and the no-data swatch.", kind: "fields", width: 282, fields: [
-            { control: "segText", label: "Placement", key: "legendPlacement", options: [["off", "Off"], ["bottom", "Bottom"], ["top", "Top"]] },
-            { control: "segIcon", label: "Align", key: "legendAlign", iconOptions: [["start", "left"], ["center", "center"], ["end", "right"]] },
-            { control: "text", label: "Title", key: "legendTitle", placeholder: "(none)" },
-            { control: "stepper", label: "Swatch size", key: "legendSwatch", min: 6, max: 30, suffix: "px", visibleIf: g => String(g("buckets")) !== "0" },
-            { control: "stepper", label: "Gradient length", key: "legendGradient", min: 40, max: 320, step: 10, suffix: "px", visibleIf: g => String(g("buckets")) === "0" },
-            { control: "divider" },
-            { control: "switch", label: "Low / high labels", key: "legendLabels" },
-            { control: "text", label: "Low label", key: "legendLow", placeholder: "Less" },
-            { control: "text", label: "High label", key: "legendHigh", placeholder: "More" },
-            { control: "switch", label: "No-data swatch", key: "legendNoData" },
-            { control: "segText", label: "No-data side", key: "legendNoDataSide", options: [["left", "Left"], ["right", "Right"]] },
+        // Numbers — one home for the format that governs every surface (Sankey Pro's
+        // labelsNumbers). Seven units need a select; this gear generation has none, so
+        // they ride an abbreviated segText until the NG-048 engine lands (same
+        // precedent as Gear icon › Position's arrow glyphs).
+        { id: "numbers", name: "Numbers", info: "How every number in the visual is written — the tooltip, the day panel, the KPI chips, values in cells, the Table and the Insight page. Auto keeps each place's own scale: full numbers in the tooltip, K / M / B in the chips. Pick a unit to use it everywhere, with your decimals. Exports always carry the raw numbers.", kind: "fields", width: 300, fields: [
+            { control: "segText", label: "Units", key: "labels.displayUnits",
+                options: [["auto", "Auto"], ["none", "None"], ["thousands", "K"], ["millions", "M"], ["billions", "B"], ["lakhs", "L"], ["crores", "Cr"]] },
+            { control: "stepper", label: "Decimals", key: "labels.decimals", min: 0, max: 4, step: 1,
+                visibleIf: g => String(g("labels.displayUnits")) !== "auto" },
+        ] },
+        { id: "cellValues", name: "Cell values", info: "Print each day's number inside its cell. A cell too small for its number keeps its colour and drops the label, so on a full year this mostly shows on larger cells — the Months layout, or a roomier cell size. The text colour switches between dark and light to stay readable on every shade. A cell with a badge keeps the badge.", kind: "fields", width: 282, fields: [
+            { control: "switch", label: "Values in cells", key: "labels.showCellValues" },
+            { control: "stepper", label: "Text size", key: "labels.cellValueSize", min: 6, max: 24, step: 1, suffix: "px",
+                visibleIf: g => Boolean(g("labels.showCellValues")) },
         ] },
         { id: "header", name: "Header", info: "Configure the header title text, its alignment, and the accent rule drawn beneath it.", kind: "fields", width: 282, fields: [
             { control: "text", label: "Title", key: "header.title", placeholder: "(field name)" },
@@ -454,6 +506,23 @@ export const SB_CATS: SBCategory[] = [
             { control: "color", label: "Rule color", key: "header.ruleColor" },
             { control: "stepper", label: "Rule width", key: "header.ruleWidth", min: 1, max: 12, suffix: "px" },
         ] },
+        { id: "headline", name: "Headline", info: "Font, size, style, and color of the headline text.", kind: "fields", width: 282, fields: typeFields("headline") },
+        { id: "stats", name: "Stats", info: "Font, size, style, and color of the stat chips.", kind: "fields", width: 282, fields: typeFields("statChips") },
+        { id: "months", name: "Months", info: "Font, size, style, and color of the month labels.", kind: "fields", width: 282, fields: typeFields("monthRail") },
+        { id: "weekdays", name: "Weekdays", info: "Font, size, style, and color of the weekday labels.", kind: "fields", width: 282, fields: typeFields("weekdayRail") },
+        { id: "years", name: "Years", info: "Font, size, style, and color of the year tags.", kind: "fields", width: 282, fields: typeFields("yearTags") },
+        { id: "facettitle", name: "Facet titles", info: "Font, size, style, and color of the small-multiple panel titles (shown when a Split-by category is bound).", kind: "fields", width: 282, fields: typeFields("facetTitle") },
+    ] },
+    { id: "filter", name: "Filter", flat: true, subs: [
+        { id: "filter", name: "Filter", info: "Keep only the highest or lowest days in colour. Every other day fades to the no-data colour but stays in place, keeps its tooltip and can still be clicked — a calendar can't drop a date the way a bar chart drops a bar. The legend, Table and Insight page still read every day. Applies to the Year and Months layouts.", kind: "fields", width: 282, fields: [
+            { control: "segText", label: "Show", key: "filter.mode", options: [["off", "All"], ["top", "Top N"], ["bottom", "Bottom N"]] },
+            { control: "stepper", label: "How many (N)", key: "filter.count", min: 1, max: 366, step: 1, visibleIf: g => String(g("filter.mode")) !== "off" },
+            { control: "heading", label: "Ranked by the day's value, across every panel", visibleIf: g => String(g("filter.mode")) !== "off" },
+        ] },
+    ] },
+    // Rules — the family's conditional-formatting tab. Here it is the day-rule engine
+    // (peak, legacy threshold, three rule slots), the same shape as the Gantt's `rules`.
+    { id: "rules", name: "Rules", flat: true, subs: [
         { id: "badges", name: "Day badges", info: "Mark notable days. Peak day + a legacy single threshold (kept for back-compat), plus three rules — each compares the day's value (or value vs target) and applies a badge, color cue, and CVD hatch.", kind: "fields", width: 282, fields: [
             { control: "switch", label: "Mark peak", key: "badge.peakOn" },
             { control: "emoji", label: "Peak emoji", key: "badge.peakEmoji", visibleIf: g => Boolean(g("badge.peakOn")) },
@@ -472,18 +541,22 @@ export const SB_CATS: SBCategory[] = [
             { control: "divider" },
             ...ruleFields(3, "Target breach"),
         ] },
-        { id: "insights", name: "Insights", info: "The automatic insight lines above the grid — peaks, streaks, unusual days. Polarity declares whether higher values are good or bad (colors the insight text); Max caps how many lines show.", kind: "fields", width: 282, fields: [
-            { control: "switch", label: "Show insights", key: "insights.show" },
-            { control: "segText", label: "Higher is", key: "insights.polarity", options: [["good", "Good"], ["bad", "Bad"], ["neutral", "Neutral"]], visibleIf: g => Boolean(g("insights.show")) },
-            { control: "stepper", label: "Max insights", key: "insights.count", min: 1, max: 6, visibleIf: g => Boolean(g("insights.show")) },
+    ] },
+    // Overlays — the family's fixed sub set: Tooltip · View switch · Annotations ·
+    // Gear icon · Legend (Sankey Pro order).
+    { id: "overlays", name: "Overlays", subs: [
+        { id: "tooltip", name: "Tooltip", info: "What appears when you hover a day. Zentrix card is the branded hover card with the day-over-day change. Native uses Power BI's own tooltip, which follows the report theme and supports report-page tooltips. Off shows nothing — the hover outline still marks the day.", kind: "fields", width: 282, fields: [
+            { control: "segText", label: "Tooltip style", key: "tooltip.type", options: [["card", "Zentrix card"], ["report", "Native"], ["off", "Off"]] },
         ] },
-        { id: "summaryTable", name: "Summary table", info: "Replace the calendar with a full-screen summary table — one row per month, or one per group when a Split-by field is bound. While it's on, a Visual/Table switch floats at the bottom right so anyone viewing the report can flip between the two views.", kind: "fields", width: 260, fields: [
+        { id: "summaryTable", name: "View switch", info: "Which alternate views the floating Calendar / Table / Insight switch offers. Session-only, so a reader can use them in Reading view without edit rights. Summary table: the same days as sortable, searchable rows by month, weekday, day or group. Insight page: a full page of plain-language findings about the calendar.", kind: "fields", width: 282, fields: [
             { control: "switch", label: "Summary table", key: "summaryTable.show" },
-        ] },
-        { id: "dayDetail", name: "Day detail", info: "Click a day to open a persistent detail panel showing its date, value, target variance, notes, and (on faceted reports) the top contributor.", kind: "fields", width: 282, fields: [
-            { control: "switch", label: "Show panel", key: "dayDetail.enabled" },
-            { control: "segText", label: "Position", key: "dayDetail.position", options: DAY_DETAIL_POSITION_OPTS, visibleIf: g => Boolean(g("dayDetail.enabled")) },
-            { control: "switch", label: "Top contributor (faceted)", key: "dayDetail.topContributor", visibleIf: g => Boolean(g("dayDetail.enabled")) },
+            { control: "switch", label: "Insight page", key: "viewSwitch.insight" },
+            { control: "divider" },
+            // Session-local switch → every fresh load re-seeds the view. This is what it
+            // seeds FROM (Gantt G-061 parity); it never persists a reader's choice.
+            { control: "segText", label: "Opens on", key: "viewSwitch.defaultView",
+                options: [["visual", "Calendar"], ["table", "Table"], ["insight", "Insight"]],
+                visibleIf: g => Boolean(g("summaryTable.show")) || Boolean(g("viewSwitch.insight")) },
         ] },
         { id: "annotations", name: "Annotations", info: "Click any day to add a note to it — the text and its styling are set in the note editor. These controls govern how notes appear on the grid: the marker (a number, a dot, or an emoji) and what a newly-added note shows by default.", kind: "fields", width: 282, fields: [
             { control: "switch", label: "Show annotations", key: "annotation.show" },
@@ -492,15 +565,60 @@ export const SB_CATS: SBCategory[] = [
             { control: "color", label: "Marker color", key: "annotation.markerColor", visibleIf: g => Boolean(g("annotation.show")) && String(g("annotation.markerStyle")) !== "icon" },
             { control: "segText", label: "New note shows", key: "annotation.defaultMode", options: NOTE_MODE_OPTS, visibleIf: g => Boolean(g("annotation.show")) },
         ] },
-    ] },
-    { id: "text", name: "Text", subs: [
-        { id: "headline", name: "Headline", info: "Font, size, style, and color of the headline text.", kind: "fields", width: 282, fields: typeFields("headline") },
-        { id: "stats", name: "Stats", info: "Font, size, style, and color of the stat chips.", kind: "fields", width: 282, fields: typeFields("statChips") },
-        { id: "months", name: "Months", info: "Font, size, style, and color of the month labels.", kind: "fields", width: 282, fields: typeFields("monthRail") },
-        { id: "weekdays", name: "Weekdays", info: "Font, size, style, and color of the weekday labels.", kind: "fields", width: 282, fields: typeFields("weekdayRail") },
-        { id: "years", name: "Years", info: "Font, size, style, and color of the year tags.", kind: "fields", width: 282, fields: typeFields("yearTags") },
+        // The in-visual chrome. Show gear stays pane-only: a switch that hides this panel
+        // cannot live inside it (Sankey Pro's ovGear note, same reason).
+        { id: "gear", name: "Gear icon", info: "Where this settings gear sits and how it closes, and the quick-action bar in the top-right corner (Export: CSV, Excel or PDF — shown only where Power BI allows downloads). Auto keeps it away from whichever corner the calendar is crowding. To hide the gear itself, use Toolbar › Show gear in the Format pane — a switch that hides this panel can't live inside it.", kind: "fields", width: 282, fields: [
+            { control: "segText", label: "Position", key: "gear.position", options: [["auto", "Auto"], ["tl", "↖"], ["tr", "↗"], ["bl", "↙"], ["br", "↘"]] },
+            { control: "switch", label: "Close when you click away", key: "gear.closeOnAway" },
+            { control: "divider" },
+            // Sankey Pro's ovGear row. The bar holds Export; it appears only where the
+            // host can actually download (tenant switch on, Desktop or Service).
+            { control: "switch", label: "Quick-action bar", key: "toolbar.actions" },
+        ] },
+        { id: "legend", name: "Legend", info: "Configure the color legend — placement, alignment, title, swatch sizing, labels, and the no-data swatch.", kind: "fields", width: 282, fields: [
+            { control: "segText", label: "Placement", key: "legendPlacement", options: [["off", "Off"], ["bottom", "Bottom"], ["top", "Top"]] },
+            { control: "segIcon", label: "Align", key: "legendAlign", iconOptions: [["start", "left"], ["center", "center"], ["end", "right"]] },
+            { control: "text", label: "Title", key: "legendTitle", placeholder: "(none)" },
+            { control: "stepper", label: "Swatch size", key: "legendSwatch", min: 6, max: 30, suffix: "px", visibleIf: g => String(g("buckets")) !== "0" },
+            { control: "stepper", label: "Gradient length", key: "legendGradient", min: 40, max: 320, step: 10, suffix: "px", visibleIf: g => String(g("buckets")) === "0" },
+            { control: "divider" },
+            { control: "switch", label: "Low / high labels", key: "legendLabels" },
+            { control: "text", label: "Low label", key: "legendLow", placeholder: "Less" },
+            { control: "text", label: "High label", key: "legendHigh", placeholder: "More" },
+            { control: "switch", label: "No-data swatch", key: "legendNoData" },
+            { control: "segText", label: "No-data side", key: "legendNoDataSide", options: [["left", "Left"], ["right", "Right"]] },
+        ] },
         { id: "legendtext", name: "Legend text", info: "Font, size, style, and color of the legend labels.", kind: "fields", width: 282, fields: typeFields("legendText") },
-        { id: "facettitle", name: "Facet titles", info: "Font, size, style, and color of the small-multiple panel titles (shown when a Split-by category is bound).", kind: "fields", width: 282, fields: typeFields("facetTitle") },
+    ] },
+    { id: "analysis", name: "Analysis", subs: [
+        { id: "insights", name: "Insights", info: "Turns the insight engine on. The read-out lives on the Insight page (View switch) and the unusual-day line in the tooltip; nothing is drawn under the grid. Polarity declares whether higher values are good or bad; Max caps how many findings the Insight page lists.", kind: "fields", width: 282, fields: [
+            { control: "switch", label: "Show insights", key: "insights.show" },
+            { control: "segText", label: "Higher is", key: "insights.polarity", options: [["good", "Good"], ["bad", "Bad"], ["neutral", "Neutral"]], visibleIf: g => Boolean(g("insights.show")) },
+            { control: "stepper", label: "Max insights", key: "insights.count", min: 1, max: 6, visibleIf: g => Boolean(g("insights.show")) },
+        ] },
+        { id: "nonWorking", name: "Weekends & holidays", info: "Mark non-working days on the grid. Weekends need no data. Holidays come from the optional Holiday field: bind a holiday name (a text column set to First, or a text measure) and those days are marked the same way and named in the tooltip.", kind: "fields", width: 282, fields: [
+            { control: "switch", label: "Mark weekends", key: "nonWorking.shadeWeekends" },
+            { control: "segText", label: "Weekend", key: "nonWorking.weekend",
+                options: [["satSun", "Sat + Sun"], ["friSat", "Fri + Sat"], ["sun", "Sun only"]],
+                visibleIf: g => Boolean(g("nonWorking.shadeWeekends")) },
+            { control: "switch", label: "Mark holidays", key: "nonWorking.showHolidays" },
+            { control: "segText", label: "Style", key: "nonWorking.style",
+                options: [["tint", "Tint"], ["hatch", "Hatch"], ["outline", "Outline"]],
+                visibleIf: g => Boolean(g("nonWorking.shadeWeekends")) || Boolean(g("nonWorking.showHolidays")) },
+        ] },
+        { id: "events", name: "Events", info: "Markers for the optional Event and Event type fields: what happened on a day, straight from your data, so every reader sees it. Separate from notes, which you write by hand. Several events on one day can be joined with ; or |. The Event type key sits beside the colour legend when Event type is bound.", kind: "fields", width: 282, fields: [
+            { control: "switch", label: "Show events", key: "events.show" },
+            { control: "segText", label: "Marker", key: "events.marker",
+                options: [["corner", "Flag"], ["dot", "Dot"], ["ring", "Ring"]],
+                visibleIf: g => Boolean(g("events.show")) },
+            { control: "switch", label: "Event type key", key: "events.showKey",
+                visibleIf: g => Boolean(g("events.show")) },
+        ] },
+        { id: "dayDetail", name: "Day detail", info: "Click a day to open a persistent detail panel showing its date, value, target variance, notes, and (on faceted reports) the top contributor.", kind: "fields", width: 282, fields: [
+            { control: "switch", label: "Show panel", key: "dayDetail.enabled" },
+            { control: "segText", label: "Position", key: "dayDetail.position", options: DAY_DETAIL_POSITION_OPTS, visibleIf: g => Boolean(g("dayDetail.enabled")) },
+            { control: "switch", label: "Top contributor (faceted)", key: "dayDetail.topContributor", visibleIf: g => Boolean(g("dayDetail.enabled")) },
+        ] },
     ] },
     { id: "access", name: "Accessibility", flat: true, subs: [
         { id: "a11y", name: "Accessibility", info: "Improve accessibility — show a keyboard focus ring, and optionally add a CVD-safe hatch to cells at or above a threshold. Turn on “Pattern on threshold” to reveal the threshold value and pattern-style controls.", kind: "fields", width: 282, fields: [

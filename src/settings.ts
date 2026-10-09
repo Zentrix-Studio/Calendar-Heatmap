@@ -87,7 +87,7 @@ class TextStyleCard extends Card {
 class DataDisplayCard extends Card {
     layout = new ItemDropdown({
         name: "layout", displayName: "Calendar layout",
-        items: [item("continuous", "Continuous"), item("month", "Month blocks")],
+        items: [item("continuous", "Continuous"), item("month", "Month blocks"), item("hours", "Hour \u00d7 weekday")],
         value: item("continuous", "Continuous"),
     });
     firstDayOfWeek = new ItemDropdown({
@@ -163,9 +163,25 @@ class LabelsCard extends Card {
     // MVP-A (research-backed): ISO-8601 week numbers along each year band's bottom
     // edge. Off by default so existing reports and sweep snapshots are unchanged.
     showWeekNumbers = new ToggleSwitch({ name: "showWeekNumbers", displayName: "Week numbers", value: false });
+    // Labels › Numbers (HM-V2-31) — the Sankey Pro's keys and item set, so a format
+    // ports between visuals. "Auto" keeps each surface's long-standing scale (see
+    // render/format.ts); decimals apply once a unit is chosen.
+    displayUnits = new ItemDropdown({
+        name: "displayUnits", displayName: "Display units",
+        items: [item("auto", "Auto"), item("none", "None"), item("thousands", "Thousands (K)"),
+            item("millions", "Millions (M)"), item("billions", "Billions (B)"),
+            item("lakhs", "Lakhs (L)"), item("crores", "Crores (Cr)")],
+        value: item("auto", "Auto"),
+    });
+    decimals = new NumUpDown({ name: "decimals", displayName: "Decimal places", value: 1 });
+    // Labels › Cell values (HM-V2-32) — the day's number inside its cell. Off by
+    // default: a published visual's look must not change under anyone.
+    showCellValues = new ToggleSwitch({ name: "showCellValues", displayName: "Values in cells", value: false });
+    cellValueSize = new NumUpDown({ name: "cellValueSize", displayName: "Value text size", value: 10 });
     name = "labels";
     displayName = "Labels";
-    slices = [this.showMonthLabels, this.showWeekdayLabels, this.showHeader, this.showWeekNumbers];
+    slices = [this.showMonthLabels, this.showWeekdayLabels, this.showHeader, this.showWeekNumbers,
+        this.displayUnits, this.decimals, this.showCellValues, this.cellValueSize];
 }
 
 // --- Colors -----------------------------------------------------------------
@@ -479,21 +495,131 @@ class AnnotationsCard extends Card {
     }
 }
 
-// --- Summary table ------------------------------------------------------------
-// An alternate full-screen VIEW, not a chrome band: when on, the visual shows a
-// summary table (per month, or per group when a Split-by is bound) INSTEAD of the
-// calendar grid — never both. A floating Visual/Table switch (bottom-right,
-// interaction/viewToggle.ts) lets authors AND readers flip between the two views;
-// the flip is session-local by design (it must work in Reading view, where
-// persistProperties would not survive).
+// --- View switch: Summary table + Insight page ---------------------------------
+// Two alternate full-screen VIEWS, not chrome bands: while one is shown the calendar
+// is not drawn at all (ledger ST-A). The floating Calendar / Table / Insight pill
+// (interaction/viewToggle.ts) lets authors AND readers flip between them; the flip is
+// session-local by design (it must work in Reading view, where persistProperties
+// would not survive — ST-B). Both views default ON, the family default (Network
+// Graph, Sankey Pro): the pill is there to be discovered.
+//
+// `summaryTable.show` offers the Table segment; it no longer decides the landing view
+// (HM-V2-01 — Gantt G-061's lesson: one switch doing both forced the table on every
+// refresh). `viewSwitch.defaultView` says only where a fresh load starts.
 class SummaryTableCard extends Card {
     show = new ToggleSwitch({
-        name: "show", displayName: "Show summary table", value: false,
-        description: "Replace the calendar with a summary table (by month, or by group when a Split-by field is bound). A Visual/Table switch appears at the bottom right to flip between the two views.",
+        name: "show", displayName: "Summary table", value: true,
+        description: "Offer a Table view in the Calendar / Table / Insight switch: the same days as sortable, searchable rows by month, weekday, day or group.",
     });
     name = "summaryTable";
     displayName = "Summary table";
     slices = [this.show];
+}
+
+// --- Weekends & holidays (HM-V2-10) -------------------------------------------
+// Non-working days marked ON the grid — weekends by pure calendar math, holidays from
+// the optional Holiday field. Off by default: a published visual's look does not
+// change under anyone's feet; an author opts in.
+class NonWorkingCard extends Card {
+    shadeWeekends = new ToggleSwitch({ name: "shadeWeekends", displayName: "Mark weekends", value: false });
+    weekend = new ItemDropdown({
+        name: "weekend", displayName: "Weekend",
+        items: [item("satSun", "Saturday + Sunday"), item("friSat", "Friday + Saturday"), item("sun", "Sunday only")],
+        value: item("satSun", "Saturday + Sunday"),
+    });
+    showHolidays = new ToggleSwitch({ name: "showHolidays", displayName: "Mark holidays", value: true });
+    style = new ItemDropdown({
+        name: "style", displayName: "Style",
+        items: [item("tint", "Tint"), item("hatch", "Hatch"), item("outline", "Outline")],
+        value: item("tint", "Tint"),
+    });
+    name = "nonWorking";
+    displayName = "Weekends & holidays";
+    slices = [this.shadeWeekends, this.weekend, this.showHolidays, this.style];
+}
+
+// --- Events from data (HM-V2-11) ----------------------------------------------
+// Markers for the optional Event / Event type fields. Separate from — and never a
+// replacement for — author-written notes (Z-152): these come from the data, so every
+// reader sees them without anyone clicking through the calendar.
+class EventsCard extends Card {
+    show = new ToggleSwitch({ name: "show", displayName: "Show events", value: true });
+    marker = new ItemDropdown({
+        name: "marker", displayName: "Marker",
+        items: [item("corner", "Corner flag"), item("dot", "Dot"), item("ring", "Ring")],
+        value: item("corner", "Corner flag"),
+    });
+    showKey = new ToggleSwitch({ name: "showKey", displayName: "Event type key", value: true });
+    name = "events";
+    displayName = "Events";
+    slices = [this.show, this.marker, this.showKey];
+}
+
+class ViewSwitchCard extends Card {
+    insight = new ToggleSwitch({
+        name: "insight", displayName: "Insight page", value: true,
+        description: "Offer an Insight view in the switch: a full page of plain-language findings about the calendar.",
+    });
+    defaultView = new ItemDropdown({
+        name: "defaultView", displayName: "Opens on",
+        items: [item("visual", "Calendar"), item("table", "Summary table"), item("insight", "Insight page")],
+        value: item("visual", "Calendar"),
+    });
+    name = "viewSwitch";
+    displayName = "View switch";
+    slices = [this.insight, this.defaultView];
+}
+
+// --- Family cross-cutting cards (HM-V2-20) --------------------------------------
+// Ported from the published family (Sankey Pro / Network Graph / Financial) under the
+// feature ratchet. Every default reproduces the pre-port behaviour exactly, so a saved
+// report looks the same until an author changes one of these.
+
+/** Overlays › Tooltip — `card / native / off`, the family's one tooltip vocabulary. */
+class TooltipCard extends Card {
+    type = new ItemDropdown({
+        name: "type", displayName: "Tooltip style",
+        items: [item("card", "Zentrix card"), item("report", "Native"), item("off", "Off")],
+        value: item("card", "Zentrix card"),
+    });
+    name = "tooltip";
+    displayName = "Tooltip";
+    slices = [this.type];
+}
+
+/** Colours › Canvas — where the surface (and so light/dark chrome) comes from. */
+class CanvasCard extends Card {
+    surfaceMode = new ItemDropdown({
+        name: "surfaceMode", displayName: "Canvas colours",
+        items: [item("theme", "Follow report theme"), item("light", "Zentrix light"), item("dark", "Zentrix dark"), item("custom", "Custom")],
+        value: item("theme", "Follow report theme"),
+    });
+    bgFill = new ColorPicker({ name: "bgFill", displayName: "Canvas colour", value: { value: "#FFFFFF" } });
+    name = "canvas";
+    displayName = "Canvas";
+    slices = [this.surfaceMode, this.bgFill];
+}
+
+/** Filter — keep the N highest / lowest days in colour; the rest fade to no-data. */
+class FilterCard extends Card {
+    mode = new ItemDropdown({
+        name: "mode", displayName: "Show",
+        items: [item("off", "All"), item("top", "Top N"), item("bottom", "Bottom N")],
+        value: item("off", "All"),
+    });
+    count = new NumUpDown({ name: "count", displayName: "How many (N)", value: 10 });
+    name = "filter";
+    displayName = "Filter";
+    slices = [this.mode, this.count];
+}
+
+/** Cells › Click & hover — how strongly a selection dims the other days. */
+class InteractionsCard extends Card {
+    dimUnselected = new ToggleSwitch({ name: "dimUnselected", displayName: "Dim other days", value: true });
+    dimStrength = new NumUpDown({ name: "dimStrength", displayName: "Dim strength (%)", value: 72 });
+    name = "interactions";
+    displayName = "Interactions";
+    slices = [this.dimUnselected, this.dimStrength];
 }
 
 // --- Day detail panel (Z-145) -----------------------------------------------
@@ -522,9 +648,12 @@ class ToolbarCard extends Card {
         value: item("auto", "Auto (avoid content)"),
     });
     closeOnClickAway = new ToggleSwitch({ name: "closeOnClickAway", displayName: "Close on click-away", value: true });
+    // The quick-action bar (HM-V2-30) — the family's `toolbar.actions` key (Sankey Pro,
+    // Gantt, Network Graph). Default on, as in every sibling: it carries Export.
+    actions = new ToggleSwitch({ name: "actions", displayName: "Quick actions (export)", value: true });
     name = "toolbar";
     displayName = "Toolbar";
-    slices = [this.show, this.position, this.closeOnClickAway];
+    slices = [this.show, this.position, this.closeOnClickAway, this.actions];
 }
 
 // --- Zentrix branding (ZENTRIX-BRAND) ---------------------------------------
@@ -560,6 +689,13 @@ export class VisualFormattingSettingsModel extends Model {
     annotations = new AnnotationsCard();
     insights = new InsightsCard();
     summaryTable = new SummaryTableCard();
+    viewSwitch = new ViewSwitchCard();
+    nonWorking = new NonWorkingCard();
+    events = new EventsCard();
+    tooltip = new TooltipCard();
+    canvas = new CanvasCard();
+    filter = new FilterCard();
+    interactions = new InteractionsCard();
     dayDetail = new DayDetailCard();
     toolbar = new ToolbarCard();
     accessibility = new AccessibilityCard();
@@ -568,7 +704,8 @@ export class VisualFormattingSettingsModel extends Model {
     cards = [
         this.dataDisplay, this.timeIntel, this.smallMultiples, this.cells, this.colors, this.labels, this.header,
         this.headline, this.statChips, this.monthRail, this.weekdayRail, this.yearTags, this.facetTitle,
-        this.legend, this.legendText, this.badges, this.annotations, this.insights, this.summaryTable, this.dayDetail, this.toolbar, this.accessibility,
+        this.legend, this.legendText, this.badges, this.annotations, this.insights, this.summaryTable, this.viewSwitch, this.nonWorking, this.events,
+        this.tooltip, this.canvas, this.filter, this.interactions, this.dayDetail, this.toolbar, this.accessibility,
         this.branding, // ZENTRIX-BRAND
     ];
 
@@ -576,18 +713,15 @@ export class VisualFormattingSettingsModel extends Model {
         super();
         // The in-visual floating gear is the primary settings surface. The native
         // Format pane keeps: Toolbar (controls the gear), Accessibility (host-level
-        // a11y for compliance), Zentrix branding — AND Colors.
+        // a11y for compliance) and Zentrix branding — nothing else.
         //
-        // Colors is here on purpose (persistence, not preference). Power BI only
-        // persists a `fill`/`text` property reliably when its card is part of the
-        // formatting model returned by getFormattingModel(); a hidden card is
-        // filtered OUT of that model (FormattingSettingsService.buildFormattingModel),
-        // so a custom colour edited only through the gear never survived a reload.
-        // Registering the card gives the host a descriptor for every colour slice,
-        // so the native pane's own persistence backs them. The gear's Custom Colors
-        // and this card share one model + one `colors` object, so an edit in either
-        // place shows in the other automatically (two-way synced by construction).
-        const PANE_CARDS = new Set(["toolbar", "accessibility", "branding", "colors"]);
+        // Colors was in this set from CB-persist2 until HM-V2-21 (CEO 2026-10-07: take
+        // it out of the pane). It was never what made a custom colour survive a reload:
+        // the ledger records "make the Colors card visible" as a FALSE TRAIL that did
+        // not help. What persists every gear colour is the `colorStore.data` JSON blob
+        // (Visual.syncColors / persistColors), which does not depend on the card being
+        // visible. Pinned by test/render/colorPersist.test.ts.
+        const PANE_CARDS = new Set(["toolbar", "accessibility", "branding"]);
         for (const c of this.cards) {
             (c as unknown as { name: string; visible?: boolean }).visible = PANE_CARDS.has(c.name);
         }

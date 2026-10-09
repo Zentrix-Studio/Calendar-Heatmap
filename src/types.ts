@@ -45,6 +45,12 @@ export interface DayCell {
     // come from a bound column; they are now AUTHOR-WRITTEN and live in the
     // persisted note store (notes/store.ts), keyed by ISO date rather than carried
     // on the cell. Look them up with `NoteStore.get(cell)`.
+    /** Holiday name from the optional Holiday field (HM-V2-10); undefined = not a holiday. */
+    holiday?: string;
+    /** Event names from the optional Event field (HM-V2-11), in data order; undefined = none. */
+    events?: string[];
+    /** Event type from the optional Event type field — colours the event marker. */
+    eventType?: string;
     /** Category value of the facet this cell belongs to (small multiples); undefined in single-grid mode. */
     facetKey?: string;
     /** Zero-based facet index, in render order. 0 for the single-grid case. */
@@ -89,6 +95,46 @@ export interface CalendarModel {
     hasHighlights?: boolean;
     /** Full (pre-cap) daily series for the insight engine; gaps as null. */
     series?: DailySeries;
+    /** Display names of the optional text fields, when bound AND usable. */
+    holidayName?: string;
+    eventName?: string;
+    eventTypeName?: string;
+    /** Distinct event types in first-seen order (drives marker colours + the key). */
+    eventTypes?: string[];
+    /** Plain-words problems with a bound field (e.g. a text field summarized as
+     *  "Count of"), surfaced honestly instead of silently ignored. */
+    fieldIssues?: string[];
+}
+
+/** One weekday × hour bucket of the Hours layout (HM-V2-12). */
+export interface HourCell {
+    /** 0 = Sunday … 6 = Saturday (Date.getDay). */
+    weekday: number;
+    /** 0 … 23, local time. */
+    hour: number;
+    /** Aggregated value (per the Aggregate setting) or null when no row fell here. */
+    value: number | null;
+    /** Rows that contributed (non-null values). */
+    rows: number;
+    /** Selection ids of every contributing row — a click cross-filters them all. */
+    selectionIds: ISelectionId[];
+    /** Grid position, by the week-start setting: row = weekday slot, col = hour. */
+    row: number;
+    col: number;
+    px?: number;
+    py?: number;
+    ps?: number;
+}
+
+export interface HourModel {
+    cells: HourCell[];
+    valueDomain: [number, number];
+    /** False when every timestamp sits at midnight — the Date field carries no time
+     *  of day, so an hour view would be one meaningless column. */
+    hasTime: boolean;
+    valueName: string;
+    aggMode: AggregationMode;
+    firstDayOfWeek: number;
 }
 
 /** One small-multiple panel: a category value and its own calendar model. */

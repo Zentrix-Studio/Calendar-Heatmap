@@ -51,6 +51,20 @@ export default [
             // stay on-brand in both themes, which only holds if the fallbacks are tokens.
             "src/render/annotations.ts",
             "src/interaction/noteEditor.ts",
+            // HM-V2 — the Calendar / Table / Insight views and their pill: new code,
+            // token-only from day one (the family's hex-ban discipline).
+            "src/interaction/viewToggle.ts",
+            "src/render/viewChrome.ts",
+            "src/render/summaryTable.ts",
+            "src/render/insightView.ts",
+            // HM-V2-10/11/12 — day marks and the Hours layout.
+            "src/render/marks.ts",
+            "src/render/hourGrid.ts",
+            // HM-V2-30..32 — quick-action bar, export, number format, cell values.
+            "src/interaction/actionBar.ts",
+            "src/interaction/exportData.ts",
+            "src/render/format.ts",
+            "src/render/cellLabels.ts",
         ],
         rules: {
             "no-restricted-syntax": [

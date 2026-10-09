@@ -6,7 +6,7 @@ import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
 import DataViewValueColumn = powerbi.DataViewValueColumn;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 
-import { CalendarModel, DayCell, MonthLabel, Facet, FacetedRender, AggregationMode } from "../types";
+import { CalendarModel, DayCell, MonthLabel, Facet, FacetedRender, AggregationMode, HourCell, HourModel } from "../types";
 import { enumerateDays, layout, monthLabels } from "./dateGrid";
 import { extractSeries } from "../insights/series";
 
@@ -91,6 +91,10 @@ interface ParsedRow {
      * supplied no highlight array (the normal, non-cross-highlighted render). */
     highlight: number;
     category?: string;    // Split-by value, if the role is bound
+    /** Optional text fields (HM-V2-10/11): trimmed, "" when blank or unbound. */
+    holiday: string;
+    event: string;
+    eventType: string;
     /** Index into the original DataView columns — for selection IDs & tooltip reads. */
     origIndex: number;
 }
@@ -103,6 +107,11 @@ interface ParsedDataView {
     targetColumn: DataViewValueColumn | null;
     tooltipColumns: DataViewValueColumn[];
     categoryColumn: DataViewCategoryColumn | null;
+    /** Optional text fields, null when unbound OR unusable (see `fieldIssues`). */
+    holidayColumn: DataViewValueColumn | null;
+    eventColumn: DataViewValueColumn | null;
+    eventTypeColumn: DataViewValueColumn | null;
+    fieldIssues: string[];
     /** True when the host supplied a `values[].highlights[]` array on the Value
      * column (external cross-highlight is active). When false, the render path is
      * identical to today — no dimming, no highlight model fields. */
@@ -111,6 +120,41 @@ interface ParsedDataView {
 
 function findCategory(dataView: DataView, role: string): DataViewCategoryColumn | null {
     return dataView.categorical?.categories?.find(c => c.source.roles?.[role]) ?? null;
+}
+
+/**
+ * An optional TEXT field (Holiday / Event / Event type). These are Measure roles on
+ * purpose: a Grouping role would add a column to the query's GROUP BY, which splits —
+ * or, when the text lives in a table with no filter path to the facts, REPEATS — each
+ * day's value, silently corrupting Sum and Count. As a measure the host evaluates the
+ * text per day, so the value is never touched. The catch: a raw text column dropped in
+ * a measure well may arrive summarized as "Count of …" (a number). That is detected
+ * from the column's type and reported in plain words rather than drawn as nonsense.
+ */
+function textColumn(dataView: DataView, role: string, issues: string[]): DataViewValueColumn | null {
+    const col = dataView.categorical?.values?.find(v => v.source.roles?.[role]) ?? null;
+    if (!col) return null;
+    const t = col.source.type;
+    // A column whose type the host reports as numeric has been summarized (Count /
+    // Count distinct). No type info at all (older hosts, test mocks) → trust it.
+    if (t && !t.text && (t.numeric || t.integer)) {
+        issues.push(`${col.source.displayName} arrived as a number, so it was ignored. In the field well set it to "First", or bind a text measure.`);
+        return null;
+    }
+    return col;
+}
+
+function textAt(col: DataViewValueColumn | null, i: number): string {
+    if (!col) return "";
+    const v = col.values[i];
+    return v == null ? "" : String(v).trim();
+}
+
+/** Split one Event value into names: a text measure can list several events per day
+ *  (e.g. CONCATENATEX with "; " or "|" or a line break). Commas are NOT separators —
+ *  event names contain them. */
+export function splitEvents(text: string): string[] {
+    return text.split(/\s*(?:;|\||\n| \u00B7 )\s*/).map(t => t.trim()).filter(Boolean);
 }
 
 /** Parse the DataView into flat rows (one per date×category tuple) + column refs. */
@@ -122,6 +166,10 @@ function parseDataView(dataView: DataView): ParsedDataView | null {
     const targetColumn = dataView.categorical?.values?.find(v => v.source.roles?.["target"]) ?? null;
     const tooltipColumns = (dataView.categorical?.values ?? []).filter(v => v.source.roles?.["tooltips"]);
     const categoryColumn = findCategory(dataView, "category");
+    const fieldIssues: string[] = [];
+    const holidayColumn = textColumn(dataView, "holiday", fieldIssues);
+    const eventColumn = textColumn(dataView, "event", fieldIssues);
+    const eventTypeColumn = textColumn(dataView, "eventType", fieldIssues);
 
     // capabilities.json declares supportsHighlight:true, so the host supplies a
     // parallel highlights[] on the Value column when another visual cross-highlights
@@ -144,14 +192,33 @@ function parseDataView(dataView: DataView): ParsedDataView | null {
             target: t == null ? NaN : Number(t),
             highlight: h == null ? NaN : Number(h),
             category: categoryColumn ? (cat == null ? "" : String(cat)) : undefined,
+            holiday: textAt(holidayColumn, i),
+            event: textAt(eventColumn, i),
+            eventType: textAt(eventTypeColumn, i),
             origIndex: i,
         });
     }
-    return { rows, dateCategory, valueColumn, targetColumn, tooltipColumns, categoryColumn, hasHighlights };
+    return {
+        rows, dateCategory, valueColumn, targetColumn, tooltipColumns, categoryColumn,
+        holidayColumn, eventColumn, eventTypeColumn, fieldIssues, hasHighlights,
+    };
 }
 
-/** Inclusive [min,max] day extent over a set of rows (assumes non-empty). */
-function dateExtent(rows: ParsedRow[]): [Date, Date] {
+/** A row that carries ONLY optional text (a holiday / event with no value or target
+ *  that day). Such rows decorate days but never define the calendar's range. */
+function textOnly(r: ParsedRow): boolean {
+    return isNaN(r.value) && isNaN(r.target) && !!(r.holiday || r.event || r.eventType);
+}
+
+/**
+ * Inclusive [min,max] day extent over a set of rows (assumes non-empty). Text-only
+ * rows are left out (HM-V2-10): a holiday measure over a 2020–2030 date table yields
+ * a row for every holiday of every year, which would otherwise stretch the calendar
+ * across a decade of empty days. Falls back to every row when nothing else is left.
+ */
+function dateExtent(all: ParsedRow[]): [Date, Date] {
+    const withData = all.filter(r => !textOnly(r));
+    const rows = withData.length ? withData : all;
     let min = rows[0].date, max = rows[0].date;
     for (const r of rows) { if (r.date < min) min = r.date; if (r.date > max) max = r.date; }
     return [min, max];
@@ -202,6 +269,26 @@ function assembleModel(a: AssembleParams): CalendarModel {
     // undefined and the render path is byte-identical to the no-highlight case.
     const highlightByDay = p.hasHighlights ? aggregateByDay(dates, rows.map(r => r.highlight), aggMode) : null;
 
+    // Optional text fields, per day. Collected from EVERY row — including rows whose
+    // value is blank — so a holiday or event on a day with no measure still shows.
+    const holidayByDay = new Map<number, string>();
+    const eventsByDay = new Map<number, string[]>();
+    const typeByDay = new Map<number, string>();
+    if (p.holidayColumn || p.eventColumn || p.eventTypeColumn) {
+        for (const r of rows) {
+            const k = r.date.getTime();
+            if (r.holiday && !holidayByDay.has(k)) holidayByDay.set(k, r.holiday);
+            if (r.event) {
+                const list = eventsByDay.get(k) ?? [];
+                for (const e of splitEvents(r.event)) if (!list.includes(e)) list.push(e);
+                eventsByDay.set(k, list);
+            }
+            if (r.eventType && !typeByDay.has(k)) typeByDay.set(k, r.eventType);
+        }
+    }
+    const eventTypes: string[] = [];
+    for (const t of typeByDay.values()) if (!eventTypes.includes(t)) eventTypes.push(t);
+
     const { rows: gridRows, cols, weeks } = layout(gridDays, firstDayOfWeek);
     const labels: MonthLabel[] = monthLabels(gridDays, cols);
 
@@ -237,6 +324,9 @@ function assembleModel(a: AssembleParams): CalendarModel {
             highlightValue, isHighlighted,
             facetKey: a.facetKey,
             facetIndex: a.facetIndex ?? 0,
+            holiday: holidayByDay.get(date.getTime()),
+            events: eventsByDay.get(date.getTime()),
+            eventType: eventsByDay.has(date.getTime()) ? typeByDay.get(date.getTime()) : undefined,
         };
     });
 
@@ -269,6 +359,11 @@ function assembleModel(a: AssembleParams): CalendarModel {
         totalDays,
         hasHighlights: p.hasHighlights,
         series,
+        holidayName: p.holidayColumn?.source.displayName,
+        eventName: p.eventColumn?.source.displayName,
+        eventTypeName: p.eventTypeColumn?.source.displayName,
+        eventTypes,
+        fieldIssues: p.fieldIssues.length ? p.fieldIssues : undefined,
     };
 }
 
@@ -360,3 +455,73 @@ export function buildFacetedModel(
         totalCategories,
     };
 }
+
+/**
+ * Hours layout (HM-V2-12): fold every row into a weekday × hour-of-day grid. Reads
+ * the time of day from the RAW Date value (the calendar path normalizes to midnight).
+ * The Aggregate setting applies across all rows in a bucket — Sum adds every Monday
+ * 9 AM, Average averages them. Built only when the Hours layout is on: it creates one
+ * selection id per row so a click can cross-filter everything in the bucket.
+ */
+export function buildHourModel(
+    dataView: DataView, host: IVisualHost, firstDayOfWeek: number, aggMode: AggregationMode,
+): HourModel | null {
+    const dateCategory = findCategory(dataView, "date");
+    const valueColumn = dataView.categorical?.values?.find(v => v.source.roles?.["value"]) ?? null;
+    if (!dateCategory || !valueColumn) return null;
+
+    const n = 7 * 24;
+    const sums = new Array<number>(n).fill(0), counts = new Array<number>(n).fill(0);
+    const mins = new Array<number>(n).fill(Infinity), maxs = new Array<number>(n).fill(-Infinity);
+    const ids: ISelectionIdLike[][] = Array.from({ length: n }, () => []);
+    let hasTime = false, any = false;
+    const raw = dateCategory.values;
+    for (let i = 0; i < raw.length; i++) {
+        const r = raw[i];
+        if (r == null) continue;
+        const d: Date = r instanceof Date ? r : new Date(r as string | number);
+        if (isNaN(d.getTime())) continue;
+        any = true;
+        if (d.getHours() || d.getMinutes() || d.getSeconds()) hasTime = true;
+        const v = valueColumn.values[i];
+        const num = v == null ? NaN : Number(v);
+        if (!Number.isFinite(num)) continue;
+        const k = d.getDay() * 24 + d.getHours();
+        sums[k] += num; counts[k]++;
+        if (num < mins[k]) mins[k] = num;
+        if (num > maxs[k]) maxs[k] = num;
+        ids[k].push(host.createSelectionIdBuilder().withCategory(dateCategory, i).createSelectionId());
+    }
+    if (!any) return null;
+
+    let vMin = Infinity, vMax = -Infinity;
+    const cells: HourCell[] = [];
+    for (let wd = 0; wd < 7; wd++) {
+        for (let h = 0; h < 24; h++) {
+            const k = wd * 24 + h, c = counts[k];
+            let value: number | null = null;
+            if (c) {
+                switch (aggMode) {
+                    case "avg": value = sums[k] / c; break;
+                    case "min": value = mins[k]; break;
+                    case "max": value = maxs[k]; break;
+                    case "count": value = c; break;
+                    default: value = sums[k];
+                }
+                vMin = Math.min(vMin, value); vMax = Math.max(vMax, value);
+            }
+            cells.push({
+                weekday: wd, hour: h, value, rows: c,
+                selectionIds: ids[k] as HourCell["selectionIds"],
+                row: (wd - firstDayOfWeek + 7) % 7, col: h,
+            });
+        }
+    }
+    return {
+        cells, hasTime,
+        valueDomain: [vMin === Infinity ? 0 : vMin, vMax === -Infinity ? 0 : vMax],
+        valueName: valueColumn.source.displayName, aggMode, firstDayOfWeek,
+    };
+}
+
+type ISelectionIdLike = powerbi.visuals.ISelectionId;

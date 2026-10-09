@@ -29,6 +29,27 @@
             "description": "Optional. One or more extra measures or fields to show in each cell's hover tooltip, alongside the date and value.",
             "name": "tooltips",
             "kind": "Measure"
+        },
+        {
+            "displayName": "Holiday",
+            "description": "Optional. A holiday name for the day, e.g. a text column set to First, or a text measure. Holiday days are marked on the grid, the same way as weekends, and named in the tooltip. Leave it blank on normal days.",
+            "name": "holiday",
+            "kind": "Measure",
+            "preferredTypes": [{ "text": true }]
+        },
+        {
+            "displayName": "Event",
+            "description": "Optional. What happened on the day (a launch, a campaign, an outage), from your data. The day gets an event marker and the event is listed in the tooltip. Several events on one day can be separated with ; or | (for example CONCATENATEX(Events, Events[Name], \"; \")).",
+            "name": "event",
+            "kind": "Measure",
+            "preferredTypes": [{ "text": true }]
+        },
+        {
+            "displayName": "Event type",
+            "description": "Optional. A category for the day's event (e.g. Release, Campaign, Incident). Each type gets its own marker colour and a key under the grid.",
+            "name": "eventType",
+            "kind": "Measure",
+            "preferredTypes": [{ "text": true }]
         }
     ],
     "dataViewMappings": [
@@ -45,6 +66,15 @@
                         "max": 1
                     },
                     "category": {
+                        "max": 1
+                    },
+                    "holiday": {
+                        "max": 1
+                    },
+                    "event": {
+                        "max": 1
+                    },
+                    "eventType": {
                         "max": 1
                     }
                 }
@@ -85,6 +115,21 @@
                             "for": {
                                 "in": "tooltips"
                             }
+                        },
+                        {
+                            "bind": {
+                                "to": "holiday"
+                            }
+                        },
+                        {
+                            "bind": {
+                                "to": "event"
+                            }
+                        },
+                        {
+                            "bind": {
+                                "to": "eventType"
+                            }
                         }
                     ]
                 }
@@ -104,6 +149,10 @@
                             {
                                 "value": "month",
                                 "displayName": "Month blocks"
+                            },
+                            {
+                                "value": "hours",
+                                "displayName": "Hour × weekday"
                             }
                         ]
                     }
@@ -271,6 +320,34 @@
                 "showWeekNumbers": {
                     "type": {
                         "bool": true
+                    }
+                },
+                "displayUnits": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "auto", "displayName": "Auto" },
+                            { "value": "none", "displayName": "None" },
+                            { "value": "thousands", "displayName": "Thousands (K)" },
+                            { "value": "millions", "displayName": "Millions (M)" },
+                            { "value": "billions", "displayName": "Billions (B)" },
+                            { "value": "lakhs", "displayName": "Lakhs (L)" },
+                            { "value": "crores", "displayName": "Crores (Cr)" }
+                        ]
+                    }
+                },
+                "decimals": {
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "showCellValues": {
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "cellValueSize": {
+                    "type": {
+                        "numeric": true
                     }
                 }
             }
@@ -1088,6 +1165,120 @@
                 }
             }
         },
+        "nonWorking": {
+            "properties": {
+                "shadeWeekends": { "type": { "bool": true } },
+                "weekend": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "satSun", "displayName": "Saturday + Sunday" },
+                            { "value": "friSat", "displayName": "Friday + Saturday" },
+                            { "value": "sun", "displayName": "Sunday only" }
+                        ]
+                    }
+                },
+                "showHolidays": { "type": { "bool": true } },
+                "style": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "tint", "displayName": "Tint" },
+                            { "value": "hatch", "displayName": "Hatch" },
+                            { "value": "outline", "displayName": "Outline" }
+                        ]
+                    }
+                }
+            }
+        },
+        "events": {
+            "properties": {
+                "show": { "type": { "bool": true } },
+                "marker": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "corner", "displayName": "Corner flag" },
+                            { "value": "dot", "displayName": "Dot" },
+                            { "value": "ring", "displayName": "Ring" }
+                        ]
+                    }
+                },
+                "showKey": { "type": { "bool": true } }
+            }
+        },
+        "viewSwitch": {
+            "properties": {
+                "insight": {
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "defaultView": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "visual", "displayName": "Calendar" },
+                            { "value": "table", "displayName": "Summary table" },
+                            { "value": "insight", "displayName": "Insight page" }
+                        ]
+                    }
+                }
+            }
+        },
+        "tooltip": {
+            "properties": {
+                "type": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "card", "displayName": "Zentrix card" },
+                            { "value": "report", "displayName": "Native" },
+                            { "value": "off", "displayName": "Off" }
+                        ]
+                    }
+                }
+            }
+        },
+        "canvas": {
+            "properties": {
+                "surfaceMode": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "theme", "displayName": "Follow report theme" },
+                            { "value": "light", "displayName": "Zentrix light" },
+                            { "value": "dark", "displayName": "Zentrix dark" },
+                            { "value": "custom", "displayName": "Custom" }
+                        ]
+                    }
+                },
+                "bgFill": { "type": { "fill": { "solid": { "color": true } } } }
+            }
+        },
+        "filter": {
+            "properties": {
+                "mode": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "off", "displayName": "All" },
+                            { "value": "top", "displayName": "Top N" },
+                            { "value": "bottom", "displayName": "Bottom N" }
+                        ]
+                    }
+                },
+                "count": { "type": { "numeric": true } }
+            }
+        },
+        "interactions": {
+            "properties": {
+                "dimUnselected": { "type": { "bool": true } },
+                "dimStrength": { "type": { "numeric": true } }
+            }
+        },
+        "tableState": {
+            "properties": {
+                "data": {
+                    "type": {
+                        "text": true
+                    }
+                }
+            }
+        },
         "dayDetail": {
             "properties": {
                 "enabled": {
@@ -1154,6 +1345,11 @@
                     }
                 },
                 "closeOnClickAway": {
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "actions": {
                     "type": {
                         "bool": true
                     }
@@ -1447,6 +1643,12 @@
             "tooltips"
         ]
     },
-    "privileges": [],
-    "supportsLandingPage": true
+    "privileges": [
+        {
+            "name": "ExportContent",
+            "essential": false
+        }
+    ],
+    "supportsLandingPage": true,
+    "supportsMultiVisualSelection": true
 }
