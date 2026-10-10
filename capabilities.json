@@ -1353,6 +1353,11 @@
                     "type": {
                         "bool": true
                     }
+                },
+                "autoHide": {
+                    "type": {
+                        "bool": true
+                    }
                 }
             }
         },

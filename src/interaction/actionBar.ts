@@ -282,6 +282,9 @@ export class ActionBar {
         }, 6000) as unknown as number;
     }
 
+    /** The export menu is open or an export is running — Auto disappear must not fade it. */
+    isEngaged(): boolean { return this.menuOpen || this.busy; }
+
     private toggleMenu(): void { if (this.menuOpen) this.closeMenu(); else this.openMenu(); }
 
     private openMenu(): void {

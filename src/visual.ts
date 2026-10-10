@@ -62,6 +62,7 @@ import { LandingPage } from "./interaction/landingPage";
 import { NoteEditor } from "./interaction/noteEditor";
 import { ViewToggle, ViewMode, PILL_STRIP } from "./interaction/viewToggle";
 import { ActionBar, ExportFormat, AB_STRIP, AB_TOP, AB_BELOW_GEAR } from "./interaction/actionBar";
+import { ChromeAutoHide } from "./interaction/chromeAutoHide";
 import { buildExportTables, toCsv, fileStem, ExportTable } from "./interaction/exportData";
 import { fmtNum } from "./render/viewChrome";
 import { buildWorkbookBase64, buildPdfBase64 } from "./interaction/exportFiles";
@@ -217,6 +218,7 @@ export class Visual implements IVisual {
     private panel: DayDetailPanel;
     private noteEditor: NoteEditor;
     private toolbar: SettingsOverlay;
+    private chromeAutoHide: ChromeAutoHide;
     private premium: PremiumGate;
     private landing: LandingPage;
     private viewToggle: ViewToggle;
@@ -355,8 +357,16 @@ export class Visual implements IVisual {
                 onExport: (format) => this.exportData(format),
                 onAvailabilityChange: () => this.rerenderFromSettings(),
             });
+        // Auto disappear (HM-V2-41): the gear, the pill and the action bar fade while the
+        // cursor is outside the visual — but never while the settings panel or the export
+        // menu is open.
+        this.chromeAutoHide = new ChromeAutoHide(options.element,
+            () => this.toolbar.isOpen() || this.actionBar.isEngaged());
         // The pill steps aside while the gear's bar is expanded over the same strip.
-        this.toolbar.onOpenChange((open) => this.viewToggle.setBarOpen(open));
+        this.toolbar.onOpenChange((open) => {
+            this.viewToggle.setBarOpen(open);
+            this.chromeAutoHide.sync();
+        });
         this.viewHost = document.createElement("div");
         this.viewHost.className = "zx-alt-view";
         // Above the SVG, below the pill (12), the gear (20) and every popover.
@@ -473,6 +483,10 @@ export class Visual implements IVisual {
             // so it only steps aside where it would be most of the tile.
             const tooSmallForGear = options.viewport.width < 160 || options.viewport.height < 110;
             this.toolbar.update(this.formattingSettings, dark, readingView || tooSmallForGear, boundRoleFlags(dataView));
+            this.chromeAutoHide.setEnabled(Boolean(this.formattingSettings.toolbar.autoHide.value));
+            // Re-check every update: the panel can close without a pointer event (leaving
+            // focus mode closes it from here, below), and the fade must follow.
+            this.chromeAutoHide.sync();
             // UAT-7 — tiles too small for the settings popover to make sense: the
             // gear click switches the report into FOCUS MODE instead. The visual
             // fills the canvas, update() re-runs with isInFocus, and the bar
@@ -492,7 +506,10 @@ export class Visual implements IVisual {
             } : null);
             // zentrix-qa#22 (QA-STANDARD §2, Sankey L-5): back from focus mode, an open
             // panel must not come back over the now-small calendar.
-            if (this.wasInFocus && !options.isInFocus && this.toolbar.isOpen()) this.toolbar.close();            this.wasInFocus = !!options.isInFocus;
+            if (this.wasInFocus && !options.isInFocus && this.toolbar.isOpen()) {
+                this.toolbar.close();
+                this.chromeAutoHide.sync();
+            }            this.wasInFocus = !!options.isInFocus;
             if (options.isInFocus && this.pendingFocusOpen) {
                 this.pendingFocusOpen = false;
                 this.toolbar.forceOpen();
@@ -710,6 +727,9 @@ export class Visual implements IVisual {
     }
 
     private rerenderFromSettings(): void {
+        // Before the lastRender guard: the gear's Auto disappear switch must apply even
+        // on a canvas with nothing painted yet.
+        this.chromeAutoHide.setEnabled(Boolean(this.formattingSettings?.toolbar.autoHide.value ?? true));
         const r = this.lastRender;
         if (!r) return;
         this.clearLayers();

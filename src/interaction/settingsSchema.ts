@@ -300,6 +300,7 @@ const KEYS: Record<string, Entry> = {
     "gear.closeOnAway": bool("toolbar", "closeOnClickAway", m => m.toolbar.closeOnClickAway),
     // The family's own key name for the quick-action bar (Sankey Pro / Gantt).
     "toolbar.actions": bool("toolbar", "actions", m => m.toolbar.actions),
+    "toolbar.autoHide": bool("toolbar", "autoHide", m => m.toolbar.autoHide),
     // Text groups
     ...typeEntries("headline", m => m.headline),
     ...typeEntries("statChips", m => m.statChips),
@@ -618,6 +619,8 @@ export const SB_CATS: SBCategory[] = [
             // Sankey Pro's ovGear row. The bar holds Export; it appears only where the
             // host can actually download (tenant switch on, Desktop or Service).
             { control: "switch", label: "Quick actions", key: "toolbar.actions" },
+            { control: "switch", label: "Auto disappear", key: "toolbar.autoHide",
+                info: "When on, the controls that sit on the calendar — this settings gear, the Calendar / Table / Insight switch and the Export bar — fade away as soon as the cursor moves out of the visual, and come back the moment it returns. They stay put while this settings panel is open or while you are using them with the keyboard, and on touch screens (no cursor) they never hide. Turn it off to keep them on screen all the time." },
         ] },
         { id: "legend", name: "Legend", info: "Configure the color legend — placement, alignment, title, swatch sizing, labels, and the no-data swatch.", kind: "fields", width: 282, fields: [
             { control: "segText", label: "Placement", key: "legendPlacement", options: [["off", "Off"], ["bottom", "Bottom"], ["top", "Top"]] },

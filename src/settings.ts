@@ -651,9 +651,12 @@ class ToolbarCard extends Card {
     // The quick-action bar (HM-V2-30) — the family's `toolbar.actions` key (Sankey Pro,
     // Gantt, Network Graph). Default on, as in every sibling: it carries Export.
     actions = new ToggleSwitch({ name: "actions", displayName: "Quick actions (export)", value: true });
+    // HM-V2-41 — fade the on-canvas chrome (gear, view switch, quick-action bar) while
+    // the cursor is outside the visual. Default on (CEO 2026-10-10).
+    autoHide = new ToggleSwitch({ name: "autoHide", displayName: "Auto disappear", value: true });
     name = "toolbar";
     displayName = "Toolbar";
-    slices = [this.show, this.position, this.closeOnClickAway, this.actions];
+    slices = [this.show, this.position, this.closeOnClickAway, this.actions, this.autoHide];
 }
 
 // --- Zentrix branding (ZENTRIX-BRAND) ---------------------------------------
