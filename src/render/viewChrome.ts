@@ -16,6 +16,7 @@ import {
     SurfaceTheme, HcColors, resolveSurface, surfaceElevatedLight, surfaceElevated, posSafe, negSafe,
 } from "../theme/zentrixTokens";
 import { formatWith, viewScale } from "./format";
+import { dateMedium } from "../model/dateLocale";
 
 export const SERIF = "Georgia, 'Times New Roman', serif";
 export const MONO = "'SF Mono', 'Cascadia Mono', Consolas, ui-monospace, monospace";
@@ -84,7 +85,7 @@ export function fmtPct(frac: number, signed = true): string {
 
 /** "Mar 4, 2025" — the calendar's short, unambiguous date. */
 export function fmtDate(d: Date): string {
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return dateMedium(d);   // zentrix-qa#19: the report's language
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg";

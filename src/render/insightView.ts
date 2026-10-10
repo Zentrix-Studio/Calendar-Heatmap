@@ -26,9 +26,10 @@ import {
     DEFAULT_INSIGHT_CONFIG, Polarity, Insight,
 } from "../insights";
 import {
-    viewChrome, ViewChrome, Tone, toneColor, SERIF, VIEW_END_GUTTER, WEEKDAY_LONG,
+    viewChrome, ViewChrome, Tone, toneColor, SERIF, VIEW_END_GUTTER,
     fmtNum, fmtPct, fmtDate, swallow,
 } from "./viewChrome";
+import { monthLong, weekdayLong } from "../model/dateLocale";
 
 /** What clicking a card's headline number does: flip to the calendar, open that day. */
 export interface InsightAction { kind: "focusDay"; time: number; }
@@ -178,12 +179,12 @@ export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): I
             sections.push({
                 title: "Weekly rhythm",
                 metric: {
-                    value: WEEKDAY_LONG[wk.strongest.weekday], label: "strongest weekday",
+                    value: weekdayLong(wk.strongest.weekday), label: "strongest weekday",
                     sub: `${fmtPct(wk.strongest.deltaPct)} vs the average day (${fmtNum(wk.strongest.mean)} vs ${fmtNum(wk.baseline)})`,
                     tone: "neutral",
                 },
                 lines: [
-                    { text: `Weakest: ${WEEKDAY_LONG[wk.weakest.weekday]}, ${fmtPct(wk.weakest.deltaPct)} vs average.`, tone: "neutral" },
+                    { text: `Weakest: ${weekdayLong(wk.weakest.weekday)}, ${fmtPct(wk.weakest.deltaPct)} vs average.`, tone: "neutral" },
                     ...(() => {
                         // zentrix-qa#6: an average over DAYS (sum ÷ count, what the Table's
                         // weekday rows add up to), under the Weekend the author set — it
@@ -286,7 +287,7 @@ export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): I
         const k = `${d.date.getFullYear()}-${d.date.getMonth()}`;
         let m = months.get(k);
         if (!m) {
-            const name = d.date.toLocaleDateString("en-US", { month: "long" });
+            const name = monthLong(d.date.getMonth());
             m = { label: multiYear ? `${name} ${d.date.getFullYear()}` : name, total: 0, n: 0 };
             months.set(k, m);
         }

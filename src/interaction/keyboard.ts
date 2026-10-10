@@ -2,12 +2,11 @@
 
 import { CellSel } from "../render/grid";
 import { CalendarModel, DayCell } from "../types";
+import { dateLong } from "../model/dateLocale";
 
 /** ARIA label for one cell — date + value (or "no data"). */
 export function ariaLabel(d: DayCell, valueName: string): string {
-    const date = d.date.toLocaleDateString(undefined, {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-    });
+    const date = dateLong(d.date);
     return d.noData || d.value == null ? `${date}: no data` : `${date}: ${valueName} ${d.value}`;
 }
 

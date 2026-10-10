@@ -4,6 +4,7 @@ import { GroupSel } from "./grid";
 import { CalendarModel } from "../types";
 import { TextStyle, applyText, defaultText } from "./text";
 import { formatWith, compactScale } from "./format";
+import { dateMedium } from "../model/dateLocale";
 
 export interface HeaderOptions {
     width: number;
@@ -68,7 +69,7 @@ export function renderHeader(group: GroupSel, model: CalendarModel, opts: Header
             // Include the year — across a multi-year range "15 Sept" alone is ambiguous.
             chips.push({
                 label: "Peak day",
-                value: `${compact(peak)} | ${peakDate.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}`,
+                value: `${compact(peak)} | ${dateMedium(peakDate)}`,
             });
         }
         const chipsRight = opts.align !== "right";

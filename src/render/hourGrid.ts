@@ -15,10 +15,10 @@ import { GroupSel, GridGeometry } from "./grid";
 import { ColorAccessor } from "./colors";
 import { HourModel, HourCell, DayCell } from "../types";
 import { applyText, defaultText, TextStyle } from "./text";
+import { weekdayShort } from "../model/dateLocale";
 
 export type HourCellSel = Selection<SVGRectElement, HourCell, SVGGElement, unknown>;
 
-const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const LABEL_LEFT = 36;
 const HEADER_H = 18;
 
@@ -85,7 +85,7 @@ export function renderHourGrid(group: GroupSel, model: HourModel, o: HourGridOpt
         const wd = (model.firstDayOfWeek + r) % 7;
         applyText(g.append("text").classed("weekday", true)
             .attr("x", left - 6).attr("y", top + r * stepY + size / 2 + wdStyle.size * 0.35)
-            .attr("text-anchor", "end").text(WEEKDAY_NAMES[wd]), wdStyle, o.labelColor);
+            .attr("text-anchor", "end").text(weekdayShort(wd)), wdStyle, o.labelColor);
     }
     const hStyle = o.monthStyle ?? defaultText(10);
     // Every third hour; every sixth when cells get too narrow for the labels.

@@ -3,7 +3,7 @@
 import { CalendarModel, DayCell, AggregationMode } from "../types";
 import { ColorAccessor } from "../render/colors";
 import { appendTooltipBrand } from "../branding/zentrixBrand"; // ZENTRIX-BRAND
-import { fontFamily, posSafe, negSafe, accent, resolveSurface } from "../theme/zentrixTokens";
+import { fontFamily, posSafe, negSafe, accent, resolveSurface, HcColors } from "../theme/zentrixTokens";
 import { buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, metricLabel, formatNum, clear, div, span, appendDayMarks, deltaText, tipText } from "./dayData";
 
 const FONT = fontFamily;
@@ -69,12 +69,20 @@ export class HeatmapTooltip {
     private eventColorOf?: (d: DayCell) => string;
     setEventColor(fn: ((d: DayCell) => string) | undefined): void { this.eventColorOf = fn; }
 
+    /** zentrix-qa#37 — host high-contrast roles; null = normal theme. In HC the card uses
+     *  the host background/foreground and up/down deltas drop the brand blue/orange (the
+     *  ▲ / ▼ glyph still carries the direction). */
+    private hc: HcColors | null = null;
+    setHighContrast(hc: HcColors | null): void { this.hc = hc; }
+    private get up(): string { return this.hc ? this.hc.foreground : UP; }
+    private get down(): string { return this.hc ? this.hc.foreground : DOWN; }
+
     /**
      * Plain lines for a non-day cell (the Hours layout, HM-V2-12): first line is the
      * muted eyebrow, the second the big value, the rest detail rows.
      */
     showLines(lines: string[], clientX: number, clientY: number): void {
-        const theme = resolveSurface(this.dark);
+        const theme = resolveSurface(this.dark, this.hc);
         this.el.style.background = theme.bg;
         this.el.style.color = theme.fg;
         clear(this.el);
@@ -94,7 +102,7 @@ export class HeatmapTooltip {
 
     show(d: DayCell, clientX: number, clientY: number): void {
         // Surface colors resolve from the token mirror (Z-148) — no raw hex.
-        const theme = resolveSurface(this.dark);
+        const theme = resolveSurface(this.dark, this.hc);
         this.el.style.background = theme.bg;
         this.el.style.color = theme.fg;
         const muted = theme.muted;
@@ -147,7 +155,7 @@ export class HeatmapTooltip {
             if (dod) {
                 const dt = deltaText(dod);
                 valueRow.appendChild(span(
-                    `margin-left:8px;font-size:12px;font-weight:600;color:${dt.dir === "flat" ? muted : dt.dir === "up" ? UP : DOWN}`,
+                    `margin-left:8px;font-size:12px;font-weight:600;color:${dt.dir === "flat" ? muted : dt.dir === "up" ? this.up : this.down}`,
                     dt.badge));
                 this.el.appendChild(valueRow);
                 this.el.appendChild(div(`margin-top:4px;font-size:11px;color:${muted}`, dt.line));
@@ -161,7 +169,7 @@ export class HeatmapTooltip {
             const variance = this.aggMode === "count" ? null : targetVariance(d);
             if (variance) {
                 const row = div(`margin-top:6px;font-size:11px;color:${muted}`, `vs ${this.targetName}: `);
-                row.appendChild(span(`color:${variance.over ? UP : DOWN};font-weight:600`,
+                row.appendChild(span(`color:${variance.over ? this.up : this.down};font-weight:600`,
                     `${variance.over ? "+" : ""}${formatNum(variance.diff)} (${variance.label})`));
                 this.el.appendChild(row);
             }
@@ -178,7 +186,7 @@ export class HeatmapTooltip {
                 let color = muted; // neutral polarity → no good/bad signal
                 if (this.polarity !== "neutral") {
                     const good = this.polarity === "good" ? up : !up;
-                    color = good ? UP : DOWN;
+                    color = good ? this.up : this.down;
                 }
                 this.el.appendChild(div(
                     `margin-top:6px;font-size:11px;font-weight:600;color:${color}`,

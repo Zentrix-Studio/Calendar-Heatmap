@@ -6,11 +6,11 @@ import { ColorAccessor } from "./colors";
 import { layout, monthLabels, MonthLabel, isoWeek, fiscalYearOf } from "../model/dateGrid";
 import { TextStyle, applyText, defaultText } from "./text";
 import { MIN_WEEKDAY_CELL, thinMonthLabels } from "./density";
+import { weekdayShort } from "../model/dateLocale";
 
 /** A d3 selection of the <g> the grid draws into (host-agnostic). */
 export type GroupSel = Selection<SVGGElement, unknown, any, any>;
 
-const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 /** Rows shown by default (GitHub convention): Mon / Wed / Fri. */
 const SHOWN_WEEKDAY_OFFSETS = [1, 3, 5];
 
@@ -270,7 +270,7 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
                 applyText(group.append("text").classed("weekday", true)
                     .attr("x", contentLeft - 6).attr("y", cellsTop + row * stepY + size / 2)
                     .attr("text-anchor", "end").attr("dominant-baseline", "middle")
-                    .text(WEEKDAY_NAMES[(row + opts.firstDayOfWeek) % 7]), weekdayStyle, opts.labelColor);
+                    .text(weekdayShort((row + opts.firstDayOfWeek) % 7)), weekdayStyle, opts.labelColor);
             }
         }
 

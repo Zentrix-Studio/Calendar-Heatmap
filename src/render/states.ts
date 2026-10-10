@@ -26,6 +26,16 @@ export const STATE = {
 
 export interface CellBox { x: number; y: number; size: number; }
 
+/**
+ * zentrix-qa#37 — high contrast uses ONLY the host's HC roles: hover / today / focus
+ * rings in `foreground`, the selection in `foregroundSelected`, and the no-data cell a
+ * dashed `foreground` outline so it can never read as the lowest value. Set once per
+ * render (module state is per visual instance: each one runs in its own iframe).
+ */
+let hcRing: { fg: string; selected: string } | null = null;
+export function setStateHighContrast(hc: { fg: string; selected: string } | null): void { hcRing = hc; }
+const ringColor = (): string => hcRing ? hcRing.fg : STATE.accent;
+
 /** Cross-highlight: dim cells not in the selection (to 28% by default — Cells ›
  *  Click & hover › Dim strength overrides it), full when none selected. */
 export function applyCrossHighlight(
@@ -65,30 +75,29 @@ function ring(overlay: GroupSel, box: CellBox, opts: {
 
 /** Hover: 1.5px inset accent ring (drawn just inside the cell edge). */
 export function drawHoverRing(overlay: GroupSel, box: CellBox): void {
-    ring(overlay, box, { grow: -0.75, stroke: STATE.accent, width: 1.5, radius: 2 });
+    ring(overlay, box, { grow: -0.75, stroke: ringColor(), width: 1.5, radius: 2 });
 }
 
 /** Selected: 2px accent stroke drawn OUTSIDE the cell so the fill area is unchanged. */
 export function drawSelectedRing(overlay: GroupSel, box: CellBox): void {
-    ring(overlay, box, { grow: 1.5, stroke: STATE.accent, width: 2, radius: 3 });
+    ring(overlay, box, { grow: 1.5, stroke: hcRing ? hcRing.selected : STATE.accent, width: 2, radius: 3 });
 }
 
 /** Keyboard focus: accent ring offset 1.5px + 1px gap, independent of value fill. */
 export function drawFocusRing(overlay: GroupSel, box: CellBox): void {
-    ring(overlay, box, { grow: 2.5, stroke: STATE.accent, width: 1.5, radius: 3, dash: "2 1.5" });
+    ring(overlay, box, { grow: 2.5, stroke: ringColor(), width: 1.5, radius: 3, dash: "2 1.5" });
 }
 
 /** Today: subtle accent ring, independent of fill (only when today ∈ range). */
 export function drawTodayRing(overlay: GroupSel, box: CellBox): void {
-    ring(overlay, box, { grow: 1, stroke: STATE.accent, width: 1.5, radius: 3 });
+    ring(overlay, box, { grow: 1, stroke: ringColor(), width: 1.5, radius: 3 });
 }
 
 /** No-data hairline: a 1px inset border so empty days never read as a low value. */
 export function drawNoDataHairline(overlay: GroupSel, box: CellBox, dark: boolean): void {
-    ring(overlay, box, {
-        grow: -0.5, width: 1, radius: 2,
-        stroke: dark ? STATE.hairlineDark : STATE.hairlineLight,
-    });
+    ring(overlay, box, hcRing
+        ? { grow: -0.5, width: 1, radius: 2, stroke: hcRing.fg, dash: "2 2" }
+        : { grow: -0.5, width: 1, radius: 2, stroke: dark ? STATE.hairlineDark : STATE.hairlineLight });
 }
 
 /** Threshold breach: a negative-toned 3px corner dot at the cell's top-right. */

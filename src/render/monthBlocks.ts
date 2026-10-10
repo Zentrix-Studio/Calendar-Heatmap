@@ -5,8 +5,8 @@ import { CalendarModel, DayCell } from "../types";
 import { weekdayRow } from "../model/dateGrid";
 import { applyText, defaultText } from "./text";
 import { MIN_MONTHLABEL_CELL } from "./density";
+import { monthShort } from "../model/dateLocale";
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const WEEKDAYS = 7;
 const MAX_WEEKS = 6; // a month spans at most 6 week-columns
 
@@ -79,7 +79,7 @@ export function groupByMonth(days: DayCell[]): MonthGroup[] {
             const y = d.date.getFullYear(), m = d.date.getMonth();
             // First month of a new year in a multi-year range carries the year.
             const stamp = multiYear && y !== stampedYear;
-            groups.push({ key, label: stamp ? `${MONTH_NAMES[m]} ${y}` : MONTH_NAMES[m], days: [] });
+            groups.push({ key, label: stamp ? `${monthShort(m)} ${y}` : monthShort(m), days: [] });
             if (stamp) stampedYear = y;
             last = key;
         }

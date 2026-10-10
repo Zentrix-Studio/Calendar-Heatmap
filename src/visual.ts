@@ -7,7 +7,7 @@
 
 import powerbi from "powerbi-visuals-api";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
-import { select, Selection } from "d3";
+import { interpolateRgb, select, Selection } from "d3";
 import "./../style/visual.less";
 
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
@@ -34,7 +34,7 @@ import { renderInsights } from "./render/insights";
 import { computeInsights, computeAnomalies, DEFAULT_INSIGHT_CONFIG, Polarity } from "./insights";
 import {
     cellBox, drawTodayRing, drawHoverRing, drawSelectedRing, drawFocusRing, drawBadge, drawNoDataHairline,
-    drawRuleOutline, applyHighlight,
+    drawRuleOutline, applyHighlight, setStateHighContrast,
 } from "./render/states";
 import { renderAnnotations, NoteAnchor } from "./render/annotations";
 import { renderSummaryTable, TableGrain } from "./render/summaryTable";
@@ -69,6 +69,7 @@ import { buildWorkbookBase64, buildPdfBase64 } from "./interaction/exportFiles";
 import { captureVisualSnapshot, renderTablePages, PrintTable } from "./interaction/exportSnapshot";
 import { NoteStore, cellNoteKey, isMarkerStyle } from "./notes/store";
 import type { AnnotationTheme, MarkerStyle, Note, NoteMode } from "./notes/core";
+import { setDateLocale } from "./model/dateLocale";
 
 /**
  * Which optional field wells are filled — the `@` data flags the gear's `dimIf` reads
@@ -357,11 +358,13 @@ export class Visual implements IVisual {
                 onExport: (format) => this.exportData(format),
                 onAvailabilityChange: () => this.rerenderFromSettings(),
             });
-        // Auto disappear (HM-V2-41): the gear, the pill and the action bar fade while the
-        // cursor is outside the visual — but never while the settings panel or the export
-        // menu is open.
-        this.chromeAutoHide = new ChromeAutoHide(options.element,
-            () => this.toolbar.isOpen() || this.actionBar.isEngaged());
+        // Auto disappear (HM-V2-41, QA-STANDARD §21): the gear, the pill and the action bar
+        // show only while the pointer is inside the visual. Leaving closes an open settings
+        // panel or export menu first (§21 step 2).
+        this.chromeAutoHide = new ChromeAutoHide(options.element, () => {
+            if (this.toolbar.isOpen()) this.toolbar.close();
+            this.actionBar.closeMenu();
+        });
         // The pill steps aside while the gear's bar is expanded over the same strip.
         this.toolbar.onOpenChange((open) => {
             this.viewToggle.setBarOpen(open);
@@ -429,9 +432,22 @@ export class Visual implements IVisual {
         // Callout dragging (Z-152). Bound ONCE at construction, on the window rather
         // than the callout: a drag must keep tracking after the pointer leaves the
         // box, and re-binding these per render would leak a listener per repaint.
+        // The window outlives any one Visual, so the listeners hold it only weakly: strong
+        // closures kept every constructed Visual alive, and the settings sweep (~380
+        // visuals on one jsdom window) ran out of heap once the NG-048 gear made each
+        // one heavier. A collected Visual removes its own listeners on the next event.
         if (typeof window !== "undefined") {
-            window.addEventListener("mousemove", (e: MouseEvent) => this.dragCallout(e));
-            window.addEventListener("mouseup", () => this.endCalloutDrag());
+            const self = new WeakRef(this);
+            const onMove = (e: MouseEvent): void => {
+                const me = self.deref();
+                if (me) me.dragCallout(e); else { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); }
+            };
+            const onUp = (): void => {
+                const me = self.deref();
+                if (me) me.endCalloutDrag(); else { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); }
+            };
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onUp);
         }
 
         // Show the onboarding carousel immediately. Power BI does NOT call update()
@@ -562,6 +578,7 @@ export class Visual implements IVisual {
             // zentrix-qa#19: every surface formats with the Value measure's own format
             // string and the report's locale, set once here before anything draws.
             setFormatLocale(this.host.locale);
+            setDateLocale(this.host.locale);   // zentrix-qa#19: dates too, not just numbers
             setValueFormat(dataView?.categorical?.values?.find(v => v.source.roles?.["value"])?.source.format);
             const firstDayOfWeek = parseInt(s.dataDisplay.firstDayOfWeek.value.value as string, 10) || 0;
             const aggMode = s.dataDisplay.aggregation.value.value as AggregationMode;
@@ -607,7 +624,10 @@ export class Visual implements IVisual {
         const it = this.formattingSettings.interactions;
         if (!it.dimUnselected.value) return 1;
         const pct = Math.min(95, Math.max(10, Number(it.dimStrength.value) || 0));
-        return Math.round((1 - pct / 100) * 100) / 100;
+        const dim = Math.round((1 - pct / 100) * 100) / 100;
+        // zentrix-qa#37: on a two-colour HC ramp a strong dim crushes every unselected
+        // day to one flat tone; keep at least half so their relative shading still reads.
+        return this.host.colorPalette.isHighContrast ? Math.max(dim, 0.5) : dim;
     }
 
     /** The resolved canvas surface for the current settings (see `resolveCanvas`). */
@@ -1005,6 +1025,11 @@ export class Visual implements IVisual {
         const drawnDays: DayCell[] = hoursMode ? [] : faceted ? input.facets.flatMap(f => f.model.days) : combined.days;
         const palette = this.host.colorPalette;
         const hc = palette.isHighContrast;
+        setStateHighContrast(hc ? {
+            fg: palette.foreground.value,
+            selected: palette.foregroundSelected?.value || palette.foreground.value,
+        } : null);
+        this.tooltip.setHighContrast(hc ? { background: palette.background.value, foreground: palette.foreground.value } : null);
         // Colours › Canvas: follow the report theme (auto-detect dark from its
         // background — the default), or pin a Zentrix light / dark / custom surface.
         const surface = this.canvas();
@@ -1012,8 +1037,11 @@ export class Visual implements IVisual {
         this.element.style.background = surface.bg ?? "";
         this.tips.setStyle(s.tooltip.type.value.value as TooltipStyle);
 
+        // zentrix-qa#37: the HC ramp starts a visible step ABOVE the background, which is
+        // reserved for no-data (drawn with a dashed outline) — the lowest value must never
+        // be the same colour as a missing day.
         const ramp = hc
-            ? [palette.background.value, palette.foreground.value]
+            ? [interpolateRgb(palette.background.value, palette.foreground.value)(0.3), palette.foreground.value]
             : resolvePalette({
                 mode: s.colors.paletteMode.value.value as PaletteMode,
                 preset: s.colors.ramp.value.value as RampPreset,
@@ -1229,7 +1257,7 @@ export class Visual implements IVisual {
             // (QA-02's original contract for the bare fiscalStart is preserved).
             fiscalStartMonth: s.timeIntel.fiscalDisplay.value ? fiscalStartMonth : 1,
             labelColor, strongColor,
-            cellStroke: hc ? palette.foreground.value : undefined,
+            cellStroke: undefined,   // #37: no full-strength outline on every cell in HC
             monthStyle: s.monthRail.toStyle(),
             weekdayStyle: s.weekdayRail.toStyle(),
             yearStyle: s.yearTags.toStyle(),
@@ -1254,7 +1282,7 @@ export class Visual implements IVisual {
             width, height: h, topOffset: top,
             cellSize: s.cells.cellSize.value, gapX: s.cells.cellGapX.value, gapY: s.cells.cellGapY.value,
             radius: s.cells.cornerRadius.value, colors, labelColor,
-            cellStroke: hc ? palette.foreground.value : undefined,
+            cellStroke: undefined,   // #37: no full-strength outline on every cell in HC
             weekdayStyle: s.weekdayRail.toStyle(), monthStyle: s.monthRail.toStyle(),
         });
         const predict = (top: number, bottom: number): number => {
@@ -1385,6 +1413,8 @@ export class Visual implements IVisual {
                 noDataSide: lg.noDataSide.value.value as NoDataSide,
                 title: lg.title.value,
                 textStyle: s.legendText.toStyle(),
+                // #37: in HC the no-data swatch gets the same dashed outline as the cells.
+                noDataDash: hc,
             };
             renderLegend(this.contentGroup, legendOpts);
             // Event-type key (HM-V2-11) shares the legend band, in the free width beside

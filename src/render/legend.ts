@@ -24,6 +24,9 @@ export interface LegendOptions {
     moreLabel: string;
     showNoData: boolean;
     noDataSide: NoDataSide;
+    /** zentrix-qa#37 — high contrast: draw the no-data swatch with a dashed full-strength
+     *  outline, matching the dashed no-data cells, so it is not the "Less" swatch twice. */
+    noDataDash?: boolean;
     title: string;
     textStyle?: TextStyle;
     /** Stable id suffix so multiple gradient defs don't collide. */
@@ -100,7 +103,9 @@ export function renderLegend(group: GroupSel, o: LegendOptions): number {
         return x + advance(str, size);
     };
     const noDataBlock = () => {
-        swatch(cursor, o.colors.noData); cursor += sw + 4;
+        const sq = swatch(cursor, o.colors.noData);
+        if (o.noDataDash) sq.attr("stroke-opacity", 1).attr("stroke-dasharray", "2 2");
+        cursor += sw + 4;
         cursor = label(cursor, "No data") + 12;
     };
 

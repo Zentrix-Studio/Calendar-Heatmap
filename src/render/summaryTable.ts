@@ -21,10 +21,10 @@
 import { DayCell, FacetedRender } from "../types";
 import { accent, fontFamily, HcColors, surfaceElevatedLight } from "../theme/zentrixTokens";
 import { computeStreaks, DEFAULT_INSIGHT_CONFIG } from "../insights";
-import { WEEKDAY } from "../interaction/dayData";
 import {
-    viewChrome, ViewChrome, SERIF, MONO, VIEW_END_GUTTER, WEEKDAY_LONG, fmtNum, fmtPct, fmtDate, icon, SEARCH_ICON, swallow,
+    viewChrome, ViewChrome, SERIF, MONO, VIEW_END_GUTTER, fmtNum, fmtPct, fmtDate, icon, SEARCH_ICON, swallow,
 } from "./viewChrome";
+import { monthShort, weekdayLong, weekdayShort } from "../model/dateLocale";
 
 export type TableGrain = "group" | "month" | "weekday" | "day";
 
@@ -93,7 +93,7 @@ export function aggregateRows(input: FacetedRender, grain: Exclude<TableGrain, "
         const rows: AggRow[] = [];
         for (let k = 0; k < 7; k++) {
             const wd = (firstDayOfWeek + k) % 7;
-            rows.push({ label: WEEKDAY_LONG[wd], order: k, days: days.filter(d => d.date.getDay() === wd) });
+            rows.push({ label: weekdayLong(wd), order: k, days: days.filter(d => d.date.getDay() === wd) });
         }
         return rows;
     }
@@ -104,7 +104,7 @@ export function aggregateRows(input: FacetedRender, grain: Exclude<TableGrain, "
         const key = `${d.date.getFullYear()}-${d.date.getMonth()}`;
         let row = byMonth.get(key);
         if (!row) {
-            const month = d.date.toLocaleDateString("en-US", { month: "short" });
+            const month = monthShort(d.date.getMonth());
             row = { label: multiYear ? `${month} ${d.date.getFullYear()}` : month, order: byMonth.size, days: [] };
             byMonth.set(key, row); // days are chronological → insertion order is row order
         }
@@ -297,10 +297,10 @@ export function renderSummaryTable(host: HTMLElement, input: FacetedRender, opts
             const hasTarget = !!combined.targetName;
             n = days.length;
             // Search also matches holiday and event names ("launch", "christmas").
-            labels = days.map(d => [fmtDate(d.date), WEEKDAY_LONG[d.date.getDay()], d.holiday ?? "", ...(d.events ?? [])].join(" ").toLowerCase());
+            labels = days.map(d => [fmtDate(d.date), weekdayLong(d.date.getDay()), d.holiday ?? "", ...(d.events ?? [])].join(" ").toLowerCase());
             columns = [
                 { label: "Date", numeric: false, strong: true, value: i => fmtDate(days[i].date), sortKey: i => days[i].date.getTime() },
-                { label: "Weekday", numeric: false, value: i => WEEKDAY[days[i].date.getDay()], sortKey: i => (days[i].date.getDay() - opts.firstDayOfWeek + 7) % 7 },
+                { label: "Weekday", numeric: false, value: i => weekdayShort(days[i].date.getDay()), sortKey: i => (days[i].date.getDay() - opts.firstDayOfWeek + 7) % 7 },
                 { label: combined.valueName, numeric: true, value: i => fmtNum(days[i].value), sortKey: i => days[i].value as number, bar: i => (days[i].value as number) / maxV },
                 { label: "vs average", numeric: true, value: i => (mean ? fmtPct((days[i].value as number) / mean - 1) : "–"), sortKey: i => (days[i].value as number) - mean },
             ];

@@ -1,5 +1,7 @@
 "use strict";
 
+import { monthShort } from "./dateLocale";
+
 /**
  * Pure calendar geometry — no Power BI dependencies, fully unit-testable.
  *
@@ -10,10 +12,6 @@
  * so DST transitions and leap days can't drift the grid.
  */
 
-const MONTH_NAMES = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
 
 /** Row index 0..6 for a date, given the first day of week (0=Sun..6=Sat). */
 export function weekdayRow(date: Date, firstDayOfWeek: number): number {
@@ -103,7 +101,7 @@ export function monthLabels(days: Date[], cols: number[]): MonthLabel[] {
     for (let i = 0; i < days.length; i++) {
         const key = `${days[i].getFullYear()}-${days[i].getMonth()}`;
         if (key !== lastKey) {
-            labels.push({ label: MONTH_NAMES[days[i].getMonth()], col: cols[i] });
+            labels.push({ label: monthShort(days[i].getMonth()), col: cols[i] });
             lastKey = key;
         }
     }

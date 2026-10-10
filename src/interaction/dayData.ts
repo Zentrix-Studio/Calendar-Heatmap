@@ -2,6 +2,7 @@
 
 import { CalendarModel, DayCell, AggregationMode } from "../types";
 import { formatWith, fullScale, formatDelta } from "../render/format";
+import { weekdayShort, dateMedium } from "../model/dateLocale";
 
 /**
  * dayData.ts — shared day-level derivations for the hover tooltip AND the
@@ -10,7 +11,6 @@ import { formatWith, fullScale, formatDelta } from "../render/format";
  * (no copy-paste of the value-map / variance / format code — see Z-145 §2).
  */
 
-export const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Stable key for a day within a facet, so panels/tooltips sharing a date don't collide. */
 export function dayKey(d: { facetKey?: string; date: Date }): string {
@@ -68,8 +68,7 @@ export function autoHeaderTitle(valueName: string, categoryName?: string): strin
 
 /** Uppercase date label, e.g. `WED · JUN 4, 2025`. */
 export function dateLabel(date: Date): string {
-    return `${WEEKDAY[date.getDay()]} · ${date.toLocaleDateString(undefined,
-        { month: "short", day: "numeric", year: "numeric" })}`.toUpperCase();
+    return `${weekdayShort(date.getDay())} · ${dateMedium(date)}`.toUpperCase();
 }
 
 export interface DeltaResult {
@@ -94,7 +93,7 @@ export function dayOverDay(d: DayCell, valueByDay: Map<string, number>): DeltaRe
         diff,
         up: diff >= 0,
         pct: Math.abs((diff / prevVal) * 100).toFixed(1),
-        prevWeekday: WEEKDAY[prev.getDay()],
+        prevWeekday: weekdayShort(prev.getDay()),
     };
 }
 

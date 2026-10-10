@@ -620,7 +620,7 @@ export const SB_CATS: SBCategory[] = [
             // host can actually download (tenant switch on, Desktop or Service).
             { control: "switch", label: "Quick actions", key: "toolbar.actions" },
             { control: "switch", label: "Auto disappear", key: "toolbar.autoHide",
-                info: "When on, the controls that sit on the calendar — this settings gear, the Calendar / Table / Insight switch and the Export bar — fade away as soon as the cursor moves out of the visual, and come back the moment it returns. They stay put while this settings panel is open or while you are using them with the keyboard, and on touch screens (no cursor) they never hide. Turn it off to keep them on screen all the time." },
+                info: "When on, the controls that sit on the calendar — this settings gear, the Calendar / Table / Insight switch and the Export bar — fade away as soon as the cursor moves out of the visual, and come back the moment it returns. Moving away also closes this panel or the Export menu; changes you already made are kept. Tabbing into the visual with the keyboard shows them too. On a touch screen, tap the visual to show them and tap elsewhere to hide them. Turn it off to keep them on screen all the time." },
         ] },
         { id: "legend", name: "Legend", info: "Configure the color legend — placement, alignment, title, swatch sizing, labels, and the no-data swatch.", kind: "fields", width: 282, fields: [
             { control: "segText", label: "Placement", key: "legendPlacement", options: [["off", "Off"], ["bottom", "Bottom"], ["top", "Top"]] },
