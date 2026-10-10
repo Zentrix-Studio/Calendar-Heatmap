@@ -72,6 +72,12 @@ export function statsOf(days: DayCell[]): AggStats {
     return n ? { total, avg: total / n, max, min, n, best } : { total: 0, avg: null, max: null, min: null, n: 0, best: null };
 }
 
+/** Every Split-by group with its days — all of them, not only the panels the calendar
+ *  had room for (zentrix-qa#23). Falls back to the panels for older inputs. */
+export function allGroups(input: FacetedRender): { key: string; days: DayCell[] }[] {
+    return input.groups ?? input.facets.map(f => ({ key: f.key, days: f.model.days }));
+}
+
 /** The grains this data can be read at. Group only exists with a Split-by bound. */
 export function grainsFor(input: FacetedRender): TableGrain[] {
     return input.facets.length > 1 ? ["group", "month", "weekday", "day"] : ["month", "weekday", "day"];
@@ -80,7 +86,7 @@ export function grainsFor(input: FacetedRender): TableGrain[] {
 /** Aggregate rows for a non-day grain. `order` is the natural (chronological) order. */
 export function aggregateRows(input: FacetedRender, grain: Exclude<TableGrain, "day">, firstDayOfWeek = 0): AggRow[] {
     if (grain === "group") {
-        return input.facets.map((f, i) => ({ label: f.key, order: i, days: f.model.days }));
+        return allGroups(input).map((g, i) => ({ label: g.key, order: i, days: g.days }));
     }
     const days = input.combined.days;
     if (grain === "weekday") {
@@ -150,15 +156,20 @@ export function renderSummaryTable(host: HTMLElement, input: FacetedRender, opts
     statCard("Best day", fmtNum(all.max), all.best ? fmtDate(all.best) : "no data");
     statCard("Days with data", String(all.n), totalDays ? `of ${totalDays} days (${fmtPct(all.n / totalDays, false)})` : "no days");
     if (combined.series) {
-        const st = computeStreaks(combined.series, DEFAULT_INSIGHT_CONFIG);
+        // Over the same days as the cards beside it (zentrix-qa#20): the full-range
+        // series gave a 3,653-day streak next to "2,200 days with data".
+        const st = computeStreaks({
+            ...combined.series,
+            data: combined.days.map(d => ({ date: d.date, value: d.noData ? null : d.value })),
+        }, DEFAULT_INSIGHT_CONFIG);
         const span = st.longestActive;
         statCard("Longest streak", `${span.length} ${span.length === 1 ? "day" : "days"}`,
             span.start && span.end ? `${fmtDate(span.start)} – ${fmtDate(span.end)}` : "no active days");
     }
     if (input.facets.length > 1) {
-        const sums = input.facets.map(f => ({ key: f.key, total: statsOf(f.model.days).total }));
+        const sums = allGroups(input).map(g => ({ key: g.key, total: statsOf(g.days).total }));
         const top = sums.reduce((a, b) => (b.total > a.total ? b : a), sums[0]);
-        statCard("Groups", String(input.facets.length), `largest: ${top.key}`);
+        statCard("Groups", String(sums.length), `largest: ${top.key}`);
     }
 
     // Minimise control (family parity): a slim chevron line collapses the cards.
@@ -181,7 +192,23 @@ export function renderSummaryTable(host: HTMLElement, input: FacetedRender, opts
     };
     applyStats();
     wrap.appendChild(statsToggle);
-    wrap.appendChild(cards);
+    // Say the basis when the calendar's day cap or a cross-highlight applies
+    // (zentrix-qa#20 / #12).
+    const notes: string[] = [];
+    if (combined.highlighted) notes.push("Showing only the data highlighted by another visual on this page.");
+    if (combined.totalDays > combined.days.length) {
+        notes.push(`These figures cover the last ${combined.days.length.toLocaleString("en-US")} days the calendar shows, of ${combined.totalDays.toLocaleString("en-US")} days in the data.`);
+    }
+    if (notes.length) {
+        const note = document.createElement("div");
+        note.className = "zx-sum-capnote";
+        note.textContent = notes.join(" ");
+        note.style.cssText = `font:12px ${fontFamily};color:${muted};margin:-8px 0 14px`;
+        wrap.appendChild(cards);
+        wrap.appendChild(note);
+    } else {
+        wrap.appendChild(cards);
+    }
 
     // --- toolbar strip: title · count · grain switch · search ---
     const strip = document.createElement("div");

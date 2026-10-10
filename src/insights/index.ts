@@ -14,6 +14,14 @@ import { computeComparisons } from "./comparisons";
 import { generateInsights } from "./narratives";
 import { rankInsights } from "./rank";
 
+/** Does the series run up to yesterday or later? Only then is a streak "current". */
+export function reachesToday(series: DailySeries, now: Date = new Date()): boolean {
+    const last = series.data[series.data.length - 1]?.date;
+    if (!last) return false;
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+    return new Date(last.getFullYear(), last.getMonth(), last.getDate()).getTime() >= yesterday;
+}
+
 export function computeInsights(
     series: DailySeries,
     config: InsightConfig = DEFAULT_INSIGHT_CONFIG,
@@ -31,6 +39,8 @@ export function computeInsights(
         comparison: computeComparisons(series, config.fiscalStartMonth) ?? undefined,
         polarity: config.polarity,
         multiYear,
+        formatNumber: config.formatNumber,
+        current: reachesToday(series, config.today),
     });
     return rankInsights(candidates, topN);
 }

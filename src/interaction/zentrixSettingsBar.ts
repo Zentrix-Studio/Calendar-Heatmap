@@ -270,6 +270,8 @@ export class ZentrixSettingsBar {
     /** True while the settings bar is expanded — the host suppresses competing
      *  hover tooltips/rings so the open menu isn't fighting a cursor card (issue #7). */
     isOpen(): boolean { return this.open; }
+    /** Close the bar from outside (the visual leaving focus mode — zentrix-qa#22). */
+    close(): void { if (this.open) this.collapse(); }
     /** Switch light/dark. High contrast (when active) takes precedence over both. */
     setTheme(dark: boolean): void { this.opts.dark = dark; this.applyTheme(); }
     /** Enter/leave Power BI high-contrast mode. When `on`, the bar themes itself
@@ -1105,6 +1107,8 @@ const CSS = `
 .zsb-bar .zsb-gear{ width:34px; height:34px; background:var(--tb-pill); border-color:var(--tb-border); color:var(--tb-text); box-shadow:none; }
 .zsb-bar .zsb-gear:hover{ color:var(--tb-text-strong); border-color:var(--tb-gear-hover-border); }
 .zsb-bar .zsb-gear.is-open{ background:var(--tb-pill-active); border-color:transparent; color:var(--tb-pill-active-fg); box-shadow:0 0 0 1px var(--tb-ring); }
+/* zentrix-qa#28: text floor raised to 11–12px (was 9–11.5) — at Desktop's Fit-to-page
+   zoom the gear read at ~7px beside the 12px Format pane. Port to every bar generation. */
 /* Gear spin uses CSS animations, NOT a transition: buildBar()/collapse() re-parent
    the gear between the anchor and the bar, and a re-parent cancels transitions — but
    an animation replays on (re)insertion, so the spin survives the move. forwards holds
@@ -1166,7 +1170,7 @@ const CSS = `
 .zsb-reset.zsb-reset--armed svg{ color:var(--tb-danger-fg); }
 .zsb-brand{ display:flex; align-items:center; gap:6px; padding:0 6px 0 2px; flex:none; }
 .zsb-brand-dot{ width:6px; height:6px; border-radius:50%; background:var(--tb-brand-dot); box-shadow:var(--tb-brand-glow); }
-.zsb-brand-name{ font:500 11px var(--font-mono); letter-spacing:.5px; color:var(--tb-brand-text); }
+.zsb-brand-name{ font:500 12px var(--font-mono); letter-spacing:.5px; color:var(--tb-brand-text); }
 .zsb-mwrap{ position:relative; display:flex; }
 .zsb-group{ display:flex; align-items:center; gap:6px; white-space:nowrap; padding:6px 13px; border:0; background:var(--tb-pill);
   cursor:pointer; border-radius:8px; font:500 12.5px var(--font-ui); color:var(--tb-text); transition:all .18s var(--ease-standard); }
@@ -1198,13 +1202,13 @@ const CSS = `
   border-bottom:1px solid var(--border-subtle); background:linear-gradient(180deg,var(--surface-card) 0%,transparent 100%); }
 .zsb-pop-head-l{ display:flex; flex-direction:column; gap:5px; min-width:0; }
 .zsb-pop-accent{ height:3px; width:22px; border-radius:2px; background:var(--accent-grad); box-shadow:0 1px 4px rgba(124,92,255,.4); }
-.zsb-pop-title{ font:600 10.5px var(--font-mono); letter-spacing:1.6px; text-transform:uppercase; color:var(--text-tertiary); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.zsb-pop-title{ font:600 11.5px var(--font-mono); letter-spacing:1.6px; text-transform:uppercase; color:var(--text-tertiary); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .zsb-info{ position:relative; flex:none; width:22px; height:22px; display:grid; place-items:center; padding:0; border:0; border-radius:6px;
   background:transparent; color:var(--text-tertiary); cursor:help; transition:color .14s, background .14s; }
 .zsb-info:hover, .zsb-info:focus-visible{ color:var(--accent); background:var(--accent-soft); outline:none; }
 .zsb-info-tip{ position:absolute; top:calc(100% + 8px); right:0; width:max-content; max-width:236px; box-sizing:border-box;
   padding:8px 11px; border-radius:9px; background:var(--surface-card); border:1px solid var(--border-default); box-shadow:var(--shadow-popover);
-  font:500 11.5px var(--font-ui); letter-spacing:normal; text-transform:none; line-height:1.45; color:var(--text-secondary); text-align:left; white-space:normal;
+  font:500 12px var(--font-ui); letter-spacing:normal; text-transform:none; line-height:1.45; color:var(--text-secondary); text-align:left; white-space:normal;
   opacity:0; transform:translateY(-4px); pointer-events:none; transition:opacity .14s var(--ease-standard), transform .14s var(--ease-standard); z-index:60; }
 .zsb-info:hover .zsb-info-tip, .zsb-info:focus-visible .zsb-info-tip{ opacity:1; transform:translateY(0); }
 .zsb-pop-body{ display:flex; gap:0; align-items:stretch; }
@@ -1217,10 +1221,10 @@ const CSS = `
 .zsb-rail-name-row{ display:flex; align-items:center; gap:6px; }
 .zsb-rail-name{ font:500 13px var(--font-ui); color:var(--text-primary); line-height:1.3; }
 .zsb-rail-row[data-active="true"] .zsb-rail-name{ color:var(--accent); font-weight:600; }
-.zsb-rail-desc{ font:400 11px var(--font-ui); color:var(--text-tertiary); margin-top:1.5px; line-height:1.3; white-space:normal; }
+.zsb-rail-desc{ font:400 12px var(--font-ui); color:var(--text-tertiary); margin-top:1.5px; line-height:1.3; white-space:normal; }
 .zsb-rail-row[data-active="true"] .zsb-rail-desc{ color:rgba(124,92,255,.62); }
-.zsb-rail-spark{ font-size:11px; line-height:1; }
-.zsb-rail-badge{ font:700 9px var(--font-ui); letter-spacing:.5px; text-transform:uppercase; padding:1px 5px; border-radius:4px;
+.zsb-rail-spark{ font-size:12px; line-height:1; }
+.zsb-rail-badge{ font:700 11px var(--font-ui); letter-spacing:.5px; text-transform:uppercase; padding:1px 5px; border-radius:4px;
   background:var(--accent-soft); color:var(--accent); white-space:nowrap; }
 .zsb-rail-row svg{ color:var(--text-faint); flex:none; margin-top:2px; }
 .zsb-rail-row[data-active="true"] svg{ color:var(--accent); }
@@ -1240,7 +1244,7 @@ const CSS = `
 .zsb-field{ padding:0; }
 .zsb-field-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:42px; padding:0 8px; border-radius:8px; transition:background .12s; }
 .zsb-field-top:hover{ background:var(--hover-overlay); }
-.zsb-field-head{ font:600 10px var(--font-mono); letter-spacing:1px; text-transform:uppercase; color:var(--text-tertiary); padding:10px 4px 3px; }
+.zsb-field-head{ font:600 11.5px var(--font-mono); letter-spacing:1px; text-transform:uppercase; color:var(--text-tertiary); padding:10px 4px 3px; }
 .zsb-label{ font:500 12.5px var(--font-ui); color:var(--text-secondary); white-space:nowrap; }
 .zsb-div-h{ height:1px; background:var(--border-subtle); margin:6px 4px; }
 .zsb-trigger{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:42px; border:0;
@@ -1266,14 +1270,14 @@ const CSS = `
 .zsb-step-btn:hover{ background:var(--accent-soft); color:var(--accent); }
 .zsb-step-in{ width:34px; text-align:center; border:0; background:transparent; height:100%; font:600 13px var(--font-mono); color:var(--text-primary); outline:none; padding:0; font-variant-numeric:tabular-nums; -moz-appearance:textfield; appearance:textfield; }
 .zsb-step-in::-webkit-outer-spin-button, .zsb-step-in::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
-.zsb-step-suffix{ font:500 11px var(--font-mono); color:var(--text-tertiary); padding:0 9px 0 2px; }
+.zsb-step-suffix{ font:500 12px var(--font-mono); color:var(--text-tertiary); padding:0 9px 0 2px; }
 
 .zsb-seg{ display:inline-flex; padding:3px; gap:2px; background:var(--surface-subtle); border:1px solid var(--border-default); border-radius:10px; }
 .zsb-seg-btn{ min-width:32px; height:26px; padding:0 4px; border:0; background:transparent; border-radius:7px; cursor:pointer; color:var(--text-secondary); display:grid; place-items:center; transition:.15s; }
 .zsb-seg-btn:hover{ color:var(--text-primary); }
 .zsb-seg-btn[data-active="true"]{ background:var(--accent-grad); color:#fff; box-shadow:var(--seg-glow); }
 .zsb-seg[data-multi="true"] .zsb-seg-btn[data-active="true"]{ background:var(--accent-grad); color:#fff; box-shadow:var(--seg-glow); }
-.zsb-seg-text .zsb-seg-btn{ padding:0 11px; font:600 11.5px var(--font-ui); }
+.zsb-seg-text .zsb-seg-btn{ padding:0 11px; font:600 12px var(--font-ui); }
 .zsb-seg-text .zsb-seg-btn[data-active="true"]{ font-weight:600; }
 /* wide segmented sets: stack under the label and let the buttons wrap full-width */
 .zsb-field-top.zsb-field-stack{ flex-direction:column; align-items:stretch; gap:7px; }
@@ -1290,7 +1294,7 @@ const CSS = `
 .zsb-switch[data-on="true"] i{ left:21px; }
 
 .zsb-color-chip{ width:22px; height:22px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1px rgba(13,14,26,.18), 0 2px 6px rgba(13,14,26,.18); }
-.zsb-mono{ font:500 11.5px var(--font-mono); color:var(--text-secondary); letter-spacing:.3px; }
+.zsb-mono{ font:500 12px var(--font-mono); color:var(--text-secondary); letter-spacing:.3px; }
 .zsb-swatch2{ width:100%; aspect-ratio:1; border-radius:7px; border:0; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(20,23,50,.16); transition:transform .12s; }
 .zsb-swatch2:hover{ transform:scale(1.12); }
 .zsb-swatch2[data-active="true"]{ box-shadow:0 0 0 2px var(--surface-elevated), 0 0 0 4px var(--accent); }

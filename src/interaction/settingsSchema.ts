@@ -402,7 +402,7 @@ const ruleFields = (n: 1 | 2 | 3, defaultName: string): SBField[] => {
         { control: "stepper", label: "and", key: `rule${n}.value2`, min: -1e9, max: 1e9, visibleIf: g => on(g) && String(g(`rule${n}.operator`)) === "between" },
         { control: "segText", label: "Compare", key: `rule${n}.compareTo`, options: RULE_COMPARE_OPTS, visibleIf: on },
         { control: "emoji", label: "Badge", key: `rule${n}.badge`, visibleIf: on },
-        { control: "color", label: "Color", key: `rule${n}.color`, visibleIf: on },
+        { control: "color", label: "Colour", key: `rule${n}.color`, visibleIf: on },
         { control: "switch", label: "CVD hatch", key: `rule${n}.pattern`, visibleIf: on },
         { control: "segText", label: "Pattern style", key: `rule${n}.patternStyle`, options: PATTERN_STYLE_OPTS, visibleIf: g => on(g) && Boolean(g(`rule${n}.pattern`)) },
     ];
@@ -413,7 +413,7 @@ const typeFields = (prefix: string) => ([
     { control: "font" as const, label: "Font", key: `${prefix}.fontFamily` },
     { control: "stepper" as const, label: "Size", key: `${prefix}.fontSize`, min: 8, max: 72, suffix: "px" },
     { control: "multiSeg" as const, label: "Style", keys: [`${prefix}.bold`, `${prefix}.italic`, `${prefix}.underline`], glyphs: ["B", "I", "U"] },
-    { control: "color" as const, label: "Color", key: `${prefix}.color` },
+    { control: "color" as const, label: "Colour", key: `${prefix}.color` },
 ]);
 
 export const SB_CATS: SBCategory[] = [
@@ -434,7 +434,7 @@ export const SB_CATS: SBCategory[] = [
         ] },
         { id: "facets", name: "Small multiples", info: "Applies when a Split-by category is bound: how many panel columns to lay out (0 = automatic), and whether every panel shares one color scale so colors compare across panels.", kind: "fields", width: 260, fields: [
             { control: "stepper", label: "Columns (0 = auto)", key: "facets.columns", min: 0, max: 8 },
-            { control: "switch", label: "Shared color scale", key: "facets.sharedScale" },
+            { control: "switch", label: "Shared colour scale", key: "facets.sharedScale" },
         ] },
     ] },
     { id: "cells", name: "Cells", subs: [
@@ -489,7 +489,7 @@ export const SB_CATS: SBCategory[] = [
         // they ride an abbreviated segText until the NG-048 engine lands (same
         // precedent as Gear icon › Position's arrow glyphs).
         { id: "numbers", name: "Numbers", info: "How every number in the visual is written — the tooltip, the day panel, the KPI chips, values in cells, the Table and the Insight page. Auto keeps each place's own scale: full numbers in the tooltip, K / M / B in the chips. Pick a unit to use it everywhere, with your decimals. Exports always carry the raw numbers.", kind: "fields", width: 300, fields: [
-            { control: "segText", label: "Units", key: "labels.displayUnits",
+            { control: "segText", label: "Display units", key: "labels.displayUnits",
                 options: [["auto", "Auto"], ["none", "None"], ["thousands", "K"], ["millions", "M"], ["billions", "B"], ["lakhs", "L"], ["crores", "Cr"]] },
             { control: "stepper", label: "Decimals", key: "labels.decimals", min: 0, max: 4, step: 1,
                 visibleIf: g => String(g("labels.displayUnits")) !== "auto" },
@@ -503,7 +503,7 @@ export const SB_CATS: SBCategory[] = [
             { control: "text", label: "Title", key: "header.title", placeholder: "(field name)" },
             { control: "segIcon", label: "Align", key: "header.align", iconOptions: [["left", "left"], ["center", "center"], ["right", "right"]] },
             { control: "switch", label: "Accent rule", key: "header.ruleShow" },
-            { control: "color", label: "Rule color", key: "header.ruleColor" },
+            { control: "color", label: "Rule colour", key: "header.ruleColor" },
             { control: "stepper", label: "Rule width", key: "header.ruleWidth", min: 1, max: 12, suffix: "px" },
         ] },
         { id: "headline", name: "Headline", info: "Font, size, style, and color of the headline text.", kind: "fields", width: 282, fields: typeFields("headline") },
@@ -562,7 +562,7 @@ export const SB_CATS: SBCategory[] = [
             { control: "switch", label: "Show annotations", key: "annotation.show" },
             { control: "segText", label: "Marker", key: "annotation.markerStyle", options: MARKER_STYLE_OPTS, visibleIf: g => Boolean(g("annotation.show")) },
             { control: "emoji", label: "Marker icon", key: "annotation.markerIcon", visibleIf: g => Boolean(g("annotation.show")) && String(g("annotation.markerStyle")) === "icon" },
-            { control: "color", label: "Marker color", key: "annotation.markerColor", visibleIf: g => Boolean(g("annotation.show")) && String(g("annotation.markerStyle")) !== "icon" },
+            { control: "color", label: "Marker colour", key: "annotation.markerColor", visibleIf: g => Boolean(g("annotation.show")) && String(g("annotation.markerStyle")) !== "icon" },
             { control: "segText", label: "New note shows", key: "annotation.defaultMode", options: NOTE_MODE_OPTS, visibleIf: g => Boolean(g("annotation.show")) },
         ] },
         // The in-visual chrome. Show gear stays pane-only: a switch that hides this panel
@@ -573,7 +573,7 @@ export const SB_CATS: SBCategory[] = [
             { control: "divider" },
             // Sankey Pro's ovGear row. The bar holds Export; it appears only where the
             // host can actually download (tenant switch on, Desktop or Service).
-            { control: "switch", label: "Quick-action bar", key: "toolbar.actions" },
+            { control: "switch", label: "Quick actions", key: "toolbar.actions" },
         ] },
         { id: "legend", name: "Legend", info: "Configure the color legend — placement, alignment, title, swatch sizing, labels, and the no-data swatch.", kind: "fields", width: 282, fields: [
             { control: "segText", label: "Placement", key: "legendPlacement", options: [["off", "Off"], ["bottom", "Bottom"], ["top", "Top"]] },

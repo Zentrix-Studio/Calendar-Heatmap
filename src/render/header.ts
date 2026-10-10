@@ -3,7 +3,7 @@
 import { GroupSel } from "./grid";
 import { CalendarModel } from "../types";
 import { TextStyle, applyText, defaultText } from "./text";
-import { formatWith } from "./format";
+import { formatWith, compactScale } from "./format";
 
 export interface HeaderOptions {
     width: number;
@@ -24,15 +24,18 @@ export interface HeaderOptions {
 /** Compact number formatting for KPI chips (1234 → 1.2K, 68400 → 68.4K). */
 function compact(n: number): string {
     // Labels › Numbers (HM-V2-31): the author's units win; "auto" keeps the chip scale.
-    return formatWith(n, chipScale);
+    return formatWith(n, compactScale);
 }
 
-function chipScale(n: number): string {
-    const abs = Math.abs(n);
-    if (abs >= 1e9) return (n / 1e9).toFixed(1) + "B";
-    if (abs >= 1e6) return (n / 1e6).toFixed(1) + "M";
-    if (abs >= 1e3) return (n / 1e3).toFixed(1) + "K";
-    return String(Math.round(n));
+/**
+ * A chip's width from its text and the Stats text size (0.6 em per glyph — estimated,
+ * never measured, like the rest of the render path). It was a flat 7px per character
+ * whatever the size, so raising Stats text pushed the right-hand chips past the edge
+ * and into the quick-action bar (zentrix-qa#30). At the default 14px it is unchanged.
+ */
+function chipWidth(c: { label: string; value: string }, statSize: number): number {
+    const valueW = c.value.length * Math.max(7, statSize * 0.5);
+    return Math.max(c.label.length * 7, valueW) + 16;
 }
 
 /**
@@ -74,7 +77,7 @@ export function renderHeader(group: GroupSel, model: CalendarModel, opts: Header
             let cx = opts.width - 2;
             for (let i = chips.length - 1; i >= 0; i--) {
                 const c = chips[i];
-                const w = Math.max(c.label.length, c.value.length) * 7 + 16;
+                const w = chipWidth(c, opts.stat.size);
                 cx -= w;
                 applyText(g.append("text").attr("x", cx).attr("y", 12).text(c.label), labelStyle, opts.mutedColor);
                 applyText(g.append("text").attr("x", cx).attr("y", 26).text(c.value), opts.stat, opts.textColor);
@@ -85,7 +88,7 @@ export function renderHeader(group: GroupSel, model: CalendarModel, opts: Header
             let cx = 2;
             for (let i = 0; i < chips.length; i++) {
                 const c = chips[i];
-                const w = Math.max(c.label.length, c.value.length) * 7 + 16;
+                const w = chipWidth(c, opts.stat.size);
                 applyText(g.append("text").attr("x", cx).attr("y", 12).text(c.label), labelStyle, opts.mutedColor);
                 applyText(g.append("text").attr("x", cx).attr("y", 26).text(c.value), opts.stat, opts.textColor);
                 cx += w + 12;

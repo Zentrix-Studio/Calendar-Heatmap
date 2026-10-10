@@ -55,9 +55,46 @@ export function bindBackgroundContextMenu(
     });
 }
 
-/** Re-derive selection state from the manager and apply the cross-highlight dim. */
-export function syncSelectionState(cells: CellSel, selectionManager: ISelectionManager, dimOpacity?: number): IsSelected {
-    const ids = selectionManager.getSelectionIds() as ISelectionId[];
+/**
+ * Power BI's own context menu on EVERY region the visual draws (zentrix-qa#13) — ported
+ * from the Pie·Donut·Sunburst's `bindCanvasContextMenu`. Certification policy 1180.2.5
+ * fails a visual that opens nothing on right-click (the Financial Chart was rejected for
+ * it). The day cells and the SVG background already had menus; the Table and Insight
+ * views, the view pill, the gear, the quick-action bar, the day panel and the landing
+ * page are HTML siblings of the SVG and had none.
+ *
+ * Bound on the visual ROOT so every region — including ones added later — is covered by
+ * construction. Two exemptions: `defaultPrevented` (a cell or the SVG already opened its
+ * own menu for this right-click), and text fields, which keep the browser's menu so paste
+ * still works in the Table search and the note editor.
+ * Ref: https://learn.microsoft.com/en-us/power-bi/developer/visuals/context-menu
+ */
+export function bindCanvasContextMenu(root: HTMLElement, manager: ISelectionManager): void {
+    root.addEventListener("contextmenu", (event: MouseEvent) => {
+        if (event.defaultPrevented || isEditable(event.target)) return;
+        event.preventDefault();
+        try {
+            manager.showContextMenu({} as ISelectionId, { x: event.clientX, y: event.clientY });
+        } catch { /* a menu failure must never break the visual */ }
+    });
+}
+
+function isEditable(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    if (!el || typeof el.closest !== "function") return false;
+    return el.closest("input, textarea, select, [contenteditable=''], [contenteditable='true']") != null;
+}
+
+/**
+ * Re-derive selection state and apply the cross-highlight dim. `restored` is the set a
+ * report bookmark handed back through `registerOnSelectCallback` (zentrix-qa#1): on a
+ * cold open the manager's own `getSelectionIds()` is empty, so a bookmark could never
+ * re-mark its day. It wins until the user's next selection gesture clears it.
+ */
+export function syncSelectionState(
+    cells: CellSel, selectionManager: ISelectionManager, dimOpacity?: number, restored?: ISelectionId[] | null,
+): IsSelected {
+    const ids = restored ?? (selectionManager.getSelectionIds() as ISelectionId[]);
     const anySelected = ids.length > 0;
     const isSelected: IsSelected = (d) =>
         !!d.selectionId && ids.some(id => id.equals(d.selectionId!));

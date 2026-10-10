@@ -38,7 +38,9 @@ export interface DayCell {
     py?: number;
     ps?: number;
     /** Extra Tooltips-role fields to surface, e.g. [{name:"SLA Breaches", value:"3"}]. */
-    tooltips?: { name: string; value: string }[];
+    /** `raw` + `format` let a numeric field go through the number formatter at display
+     *  time (its own format string, the author's units) — zentrix-qa#2/#19. */
+    tooltips?: { name: string; value: string; raw?: unknown; format?: string }[];
     /** Aggregated Target-role goal for this day, or null when none is bound/present. */
     target?: number | null;
     // NB (Z-152): there is deliberately no `annotation` field. Annotations used to
@@ -93,6 +95,9 @@ export interface CalendarModel {
      * cross-highlight active). Drives whether the render path dims un-highlighted
      * cells; false/undefined = normal render, identical to the no-highlight path. */
     hasHighlights?: boolean;
+    /** True on a model rebuilt from another visual's cross-highlight (zentrix-qa#12):
+     *  the Table and Insight views say so. */
+    highlighted?: boolean;
     /** Full (pre-cap) daily series for the insight engine; gaps as null. */
     series?: DailySeries;
     /** Display names of the optional text fields, when bound AND usable. */
@@ -161,10 +166,19 @@ export interface FacetedRender {
     categoryName?: string;
     /** Distinct category count before any facet cap was applied. */
     totalCategories: number;
+    /**
+     * EVERY Split-by group with its aggregated days over the calendar's window — not
+     * just the panels that fit (zentrix-qa#23). The Table's group grain and the Insight
+     * page's Groups card rank these, so "largest group" and "% of total" share the
+     * Total card's basis. Undefined without a Split-by.
+     */
+    groups?: { key: string; days: DayCell[] }[];
 }
 
 /** Why the visual could not render a grid (drives the empty/instructional state). */
 export type EmptyReason =
     | "noData"        // nothing bound
     | "missingDate"   // value but no date
-    | "missingValue"; // date but no value
+    | "missingValue"  // date but no value
+    | "noValues"      // both bound, but nothing to draw under the current filters
+    | "notADate";     // the Date well holds something that isn't a date

@@ -25,6 +25,7 @@
 
 import powerbi from "powerbi-visuals-api";
 import { SurfaceTheme } from "../theme/zentrixTokens";
+import { keyboardFocus } from "./viewToggle";
 
 export type ExportFormat = "csv" | "xlsx" | "pdf";
 
@@ -108,6 +109,7 @@ export class ActionBar {
     private menuOpen = false;
     private busy = false;
     private topPx = AB_TOP;
+    private focusRing = false;
 
     private outsideHandler = (ev: MouseEvent): void => {
         if (!this.root.contains(ev.target as Node)) this.closeMenu();
@@ -143,6 +145,9 @@ export class ActionBar {
             borderRadius: "9px", cursor: "pointer", lineHeight: "1", padding: "0",
         } as CSSStyleDeclaration);
         this.exportBtn.onclick = (ev): void => { ev.stopPropagation(); if (!this.busy) this.toggleMenu(); };
+        // Visible keyboard focus (zentrix-qa#27) — the same ring as the view pill.
+        this.exportBtn.addEventListener("focus", () => { this.focusRing = keyboardFocus(this.exportBtn); this.paint(); });
+        this.exportBtn.addEventListener("blur", () => { this.focusRing = false; this.paint(); });
         this.root.appendChild(this.exportBtn);
 
         this.menu = document.createElement("div");
@@ -179,8 +184,10 @@ export class ActionBar {
         this.flashEl.className = "zx-actionbar-flash";
         this.flashEl.setAttribute("role", "status");
         this.flashEl.setAttribute("aria-live", "polite");
+        // A real width (zentrix-qa#4): inside the 44px bar a shrink-to-fit box wrapped
+        // every word onto its own line.
         this.flashEl.style.cssText = "display:none;position:absolute;top:100%;right:0;margin-top:6px;"
-            + "max-width:260px;white-space:normal;border-radius:8px;padding:6px 10px;pointer-events:none;"
+            + "width:240px;box-sizing:border-box;white-space:normal;border-radius:8px;padding:6px 10px;pointer-events:none;"
             + "font:600 11px/1.3 'Segoe UI',system-ui,-apple-system,sans-serif";
         this.root.appendChild(this.flashEl);
         // Clicks on the bar never reach the calendar's "click empty canvas = clear".
@@ -308,6 +315,8 @@ export class ActionBar {
         this.exportBtn.style.opacity = this.busy ? "0.5" : "1";
         this.exportBtn.style.cursor = this.busy ? "default" : "pointer";
         this.exportBtn.title = this.busy ? "Preparing the file…" : BUTTON_TITLE;
+        this.exportBtn.style.outline = this.focusRing ? `2px solid ${this.hc ? this.surface.fg : this.accent}` : "none";
+        this.exportBtn.style.outlineOffset = "2px";
     }
 
     /**

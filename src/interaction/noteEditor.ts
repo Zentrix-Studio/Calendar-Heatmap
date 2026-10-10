@@ -73,6 +73,8 @@ export class NoteEditor {
     private theme: AnnotationTheme;
     /** True while the working copy is not yet in the store (a brand-new note). */
     private isNew = false;
+    /** The note as it was when the editor opened — what Cancel puts back. */
+    private original: Note | null = null;
 
     constructor(root: HTMLElement, theme: AnnotationTheme, cb: NoteEditorCallbacks) {
         this.root = root;
@@ -97,9 +99,11 @@ export class NoteEditor {
     isOpen(): boolean { return this.note != null; }
     openNoteId(): string | null { return this.note?.id ?? null; }
 
-    /** Open on a working copy. `isNew` → Delete acts as Cancel. */
+    /** Open on a working copy. Cancel discards it: a new note disappears, an existing
+     *  one goes back to how it was. */
     open(note: Note, title: string, isNew: boolean): void {
         this.note = { ...note, style: { ...note.style } };
+        this.original = { ...note, style: { ...note.style } };
         this.isNew = isNew;
         this.render(title);
         this.layout();
@@ -129,6 +133,38 @@ export class NoteEditor {
         if (this.note) this.cb.onCommit(this.note);
         this.close();
         this.cb.onClose();
+    }
+
+    /** Discard this session's edits. A new note was only ever a draft, so it goes; an
+     *  existing note is put back exactly as it was — nothing is persisted either way. */
+    private cancel(): void {
+        const n = this.note, orig = this.original;
+        this.close();
+        if (n && this.isNew) this.cb.onDelete(n);
+        else if (orig) this.cb.onChange(orig);
+        this.cb.onClose();
+    }
+
+    /** Two-step Delete: the first click arms it ("Delete note?", drawn inverted so the
+     *  armed state is unmistakable in any theme), the second deletes. Colours come from
+     *  the host theme like the rest of the editor — no literals, so it stays shareable. */
+    private deleteButton(): HTMLButtonElement {
+        const t = this.theme;
+        const b = this.textButton("Delete", () => {
+            if (b.getAttribute("data-armed") !== "true") {
+                b.setAttribute("data-armed", "true");
+                b.textContent = "Delete note?";
+                b.style.background = t.fg;
+                b.style.color = t.bg;
+                b.style.borderColor = t.fg;
+                return;
+            }
+            const n = this.note!;
+            this.close();
+            this.cb.onDelete(n);
+        });
+        b.setAttribute("aria-label", "Delete this note");
+        return b;
     }
 
     /** Push the working copy to the canvas without persisting. */
@@ -197,14 +233,16 @@ export class NoteEditor {
         colorRow.appendChild(this.colorField("Arrow", note.style.arrow, v => { note.style.arrow = v; this.touch(); }));
         this.el.appendChild(colorRow);
 
-        // Footer.
-        const footer = div("display:flex;align-items:center;justify-content:space-between;margin-top:12px");
-        footer.appendChild(this.textButton(this.isNew ? "Cancel" : "Delete", () => {
-            const n = this.note!;
-            this.close();
-            this.cb.onDelete(n);
-        }));
-        footer.appendChild(this.primaryButton("Done", () => this.commitAndClose()));
+        // Footer. Cancel always sits in the left slot and never destroys anything;
+        // Delete is its own red button and asks once before removing a saved note
+        // (Calendar Heatmap zentrix-qa#26: the left slot turned into an unconfirmed
+        // Delete for existing notes, and a QA pass deleted a customer note with it).
+        const footer = div("display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:8px");
+        footer.appendChild(this.textButton("Cancel", () => this.cancel()));
+        const right = div("display:flex;align-items:center;gap:8px");
+        if (!this.isNew) right.appendChild(this.deleteButton());
+        right.appendChild(this.primaryButton("Done", () => this.commitAndClose()));
+        footer.appendChild(right);
         this.el.appendChild(footer);
     }
 

@@ -64,7 +64,7 @@ function streakImportance(len: number): Level {
     return len >= 7 ? "high" : len >= 3 ? "medium" : "low";
 }
 
-export function narrateStreaks(s: StreakSummary, polarity: Polarity = "neutral", showYear = false): Insight[] {
+export function narrateStreaks(s: StreakSummary, polarity: Polarity = "neutral", showYear = false, current = true): Insight[] {
     const out: Insight[] = [];
     // An all-active series has a trivially long active streak — don't over-emphasise it.
     const trivialAllActive = s.activeDaysPct === 1;
@@ -90,14 +90,14 @@ export function narrateStreaks(s: StreakSummary, polarity: Polarity = "neutral",
     if (s.currentInactive >= 2) {
         out.push(make(
             "streak-current-inactive", "streak", "Current inactivity",
-            `No activity for ${s.currentInactive} straight days.`,
+            current ? `No activity for ${s.currentInactive} straight days.` : `The data ends with ${s.currentInactive} days without activity.`,
             streakImportance(s.currentInactive), "high", valence("down", polarity), s.currentInactive / 5,
             { length: s.currentInactive },
         ));
     } else if (s.currentActive >= 2 && !trivialAllActive) {
         out.push(make(
             "streak-current-active", "streak", "Current streak",
-            `Activity has continued for ${s.currentActive} straight days.`,
+            current ? `Activity has continued for ${s.currentActive} straight days.` : `The data ends on ${s.currentActive} straight active days.`,
             s.currentActive >= 7 ? "medium" : "low", "high", valence("up", polarity), s.currentActive / 5,
             { length: s.currentActive },
         ));
@@ -138,7 +138,10 @@ export function narrateWeekday(w: WeekdayPatterns): Insight[] {
     return out;
 }
 
-export function narrateAnomalies(a: AnomalySummary, polarity: Polarity = "neutral", showYear = false): Insight[] {
+export function narrateAnomalies(
+    a: AnomalySummary, polarity: Polarity = "neutral", showYear = false,
+    formatNumber: (n: number) => string = (n) => String(n),
+): Insight[] {
     const out: Insight[] = [];
     const top = a.strongest;
     if (top) {
@@ -148,7 +151,7 @@ export function narrateAnomalies(a: AnomalySummary, polarity: Polarity = "neutra
         const dirWord = top.direction === "high" ? "above" : "below";
         out.push(make(
             "anomaly-top", "anomaly", `${fmtDay(top.date, showYear)} stood out`,
-            `${fmtDay(top.date, showYear)} stood out at ${top.value} — ${mag}${dirWord} a typical day.`,
+            `${fmtDay(top.date, showYear)} stood out at ${formatNumber(top.value)} — ${mag}${dirWord} a typical day.`,
             top.severity === "strong" ? "high" : "medium",
             top.severity === "strong" ? "high" : "medium",
             valence(top.direction === "high" ? "up" : "down", polarity),
@@ -214,6 +217,11 @@ export interface InsightInputs {
     polarity?: Polarity;
     /** True when the series spans 2+ calendar years — stamps the year on dated insights. */
     multiYear?: boolean;
+    /** How a value is written in a sentence (see InsightConfig.formatNumber). */
+    formatNumber?: (n: number) => string;
+    /** False when the data stops before yesterday: a run at its end is not "current"
+     *  (zentrix-qa#18). Default true. */
+    current?: boolean;
 }
 
 /** Build all candidate insights (unranked) from whichever summaries are present. */
@@ -221,9 +229,9 @@ export function generateInsights(input: InsightInputs): Insight[] {
     const out: Insight[] = [];
     const polarity = input.polarity ?? "neutral";
     const showYear = input.multiYear ?? false;
-    if (input.streaks) out.push(...narrateStreaks(input.streaks, polarity, showYear));
+    if (input.streaks) out.push(...narrateStreaks(input.streaks, polarity, showYear, input.current ?? true));
     if (input.weekdays) out.push(...narrateWeekday(input.weekdays));
-    if (input.anomalies) out.push(...narrateAnomalies(input.anomalies, polarity, showYear));
+    if (input.anomalies) out.push(...narrateAnomalies(input.anomalies, polarity, showYear, input.formatNumber));
     if (input.comparison) out.push(...narrateComparison(input.comparison, input.valueName, polarity));
     return out;
 }

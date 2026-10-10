@@ -8,7 +8,7 @@ import {
 } from "../theme/zentrixTokens";
 import { MAX_NOTES } from "../notes/store";
 import {
-    buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, topContributor,
+    buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, topContributor, deltaText, tipText,
     metricLabel, formatNum, clear, div, span,
     appendDayMarks,
 } from "./dayData";
@@ -32,6 +32,9 @@ const UP = posSafe, DOWN = negSafe;
 const NARROW_W = 360;
 
 export interface PanelContext {
+    /** Px kept free at the right edge — the quick-action bar's strip, so the right-
+     *  docked panel never covers Export (zentrix-qa#7). */
+    rightInset?: number;
     /** HM-V2-11 — event marker colour, so the panel chip matches the grid. */
     eventColorOf?: (d: DayCell) => string;
     model: CalendarModel;
@@ -204,7 +207,7 @@ export class DayDetailPanel {
         // 9. Tooltips-role fields, verbatim.
         for (const tip of d.tooltips ?? []) {
             const row = div(`margin-top:4px;font-size:11px;color:${t.muted}`, `${tip.name}: `);
-            row.appendChild(span(`color:${t.strong}`, tip.value));
+            row.appendChild(span(`color:${t.strong}`, tipText(tip)));
             this.el.appendChild(row);
         }
 
@@ -229,12 +232,12 @@ export class DayDetailPanel {
         // 5. Day-over-day delta.
         const dod = dayOverDay(d, this.valueByDay);
         if (dod) {
+            const dt = deltaText(dod);
             valueRow.appendChild(span(
-                `margin-left:8px;font-size:12px;font-weight:600;color:${dod.up ? UP : DOWN}`,
-                `${dod.up ? "▲" : "▼"} ${dod.pct}%`));
+                `margin-left:8px;font-size:12px;font-weight:600;color:${dt.dir === "flat" ? t.muted : dt.dir === "up" ? UP : DOWN}`,
+                dt.badge));
             this.el.appendChild(valueRow);
-            this.el.appendChild(div(`margin-top:4px;font-size:11px;color:${t.muted}`,
-                `${dod.up ? "+" : ""}${dod.diff} vs ${dod.prevWeekday}`));
+            this.el.appendChild(div(`margin-top:4px;font-size:11px;color:${t.muted}`, dt.line));
         } else {
             this.el.appendChild(valueRow);
         }
@@ -311,7 +314,7 @@ export class DayDetailPanel {
         } else {
             // Right-edge dock, full available height, ~200–260px wide.
             const pw = Math.min(260, Math.max(200, Math.round(w * 0.34)));
-            this.el.style.right = "0";
+            this.el.style.right = `${Math.max(0, c.rightInset ?? 0)}px`;
             this.el.style.top = "0";
             this.el.style.width = pw + "px";
             this.el.style.maxHeight = h + "px";

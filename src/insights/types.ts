@@ -90,6 +90,13 @@ export interface InsightConfig {
     fiscalStartMonth: number;
     /** Good/bad direction of value — drives positive/negative tone. */
     polarity: Polarity;
+    /** How a value is written in a sentence. Optional so the engine stays pure: the
+     *  visual passes its formatter in, so a narrative says "1.00K" where the cards beside
+     *  it do (zentrix-qa#2). Default: the number as is. */
+    formatNumber?: (n: number) => string;
+    /** "Now", for deciding whether a streak at the end of the data is current. Optional
+     *  so tests stay deterministic; default: the real clock. */
+    today?: Date;
 }
 
 export const DEFAULT_INSIGHT_CONFIG: InsightConfig = {

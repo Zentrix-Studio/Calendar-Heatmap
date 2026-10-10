@@ -41,6 +41,13 @@ const GEAR_RIGHT = 18, GEAR_W = 36, GAP = 8;
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+/** Did this element just receive focus from the keyboard (not a mouse click)? A host
+ *  without :focus-visible treats every focus as keyboard focus — a ring too many beats
+ *  none (zentrix-qa#27). */
+export function keyboardFocus(el: HTMLElement): boolean {
+    try { return el.matches(":focus-visible"); } catch { return true; }
+}
+
 /** 14px stroked segment icon (inherits `currentColor`). Table + Insight glyphs are the
  *  family's; the calendar glyph is a small grid of day cells. */
 function segIcon(mode: ViewMode): SVGSVGElement {
@@ -113,6 +120,24 @@ export class ViewToggle {
 
     /** Build all three segments ONCE and show/hide them from then on — a rebuild per
      *  host update would drop keyboard focus mid-interaction (Sankey SP parity). */
+    /** Icons only (small tiles): the labels go, the tooltips and ARIA names stay. */
+    private compact = false;
+
+    setCompact(on: boolean): void {
+        if (on === this.compact) return;
+        this.compact = on;
+        for (const mode of ORDER) {
+            const b = this.segs[mode];
+            if (!b) continue;
+            const label = b.querySelector("span");
+            if (label) (label as HTMLElement).style.display = on ? "none" : "";
+            b.style.padding = on ? "0 9px" : "0 12px";
+        }
+    }
+
+    /** The segment holding KEYBOARD focus, if any — it gets the focus ring. */
+    private focused: ViewMode | null = null;
+
     private build(): void {
         for (const mode of ORDER) {
             const b = document.createElement("button");
@@ -129,6 +154,10 @@ export class ViewToggle {
             const t = document.createElement("span");
             t.textContent = LABELS[mode];
             b.appendChild(t);
+            // Keyboard focus must be visible (WCAG 2.4.7, zentrix-qa#27): the segments
+            // painted `outline: none`, so a Tab onto the pill showed nothing.
+            b.addEventListener("focus", () => { this.focused = keyboardFocus(b) ? mode : null; this.paint(); });
+            b.addEventListener("blur", () => { if (this.focused === mode) { this.focused = null; this.paint(); } });
             b.addEventListener("click", (e) => {
                 e.stopPropagation(); // never reach the canvas-click that clears selection
                 if (this.locked[mode]) { this.onLockedClick?.(); return; } // teaser, not a switch
@@ -168,8 +197,11 @@ export class ViewToggle {
             b.style.color = active && !isLocked ? (hc ? s.bg : surfaceElevatedLight) : s.fg;
             b.style.opacity = isLocked ? "0.45" : "1";
             b.style.cursor = isLocked ? "default" : "pointer";
-            // Colour alone must not carry the selected state in HC.
-            b.style.outline = hc && active ? `1px solid ${s.fg}` : "none";
+            // Keyboard focus ring wins; otherwise colour alone must not carry the
+            // selected state in HC.
+            const ring = this.focused === mode;
+            b.style.outline = ring ? `2px solid ${hc ? s.fg : accent}` : hc && active ? `1px solid ${s.fg}` : "none";
+            b.style.outlineOffset = ring ? "2px" : "0";
             if (isLocked) b.setAttribute("aria-disabled", "true"); else b.removeAttribute("aria-disabled");
             b.title = isLocked ? this.lockReason : HINTS[mode];
             b.setAttribute("aria-selected", String(active));

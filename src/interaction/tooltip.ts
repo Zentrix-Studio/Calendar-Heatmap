@@ -4,7 +4,7 @@ import { CalendarModel, DayCell, AggregationMode } from "../types";
 import { ColorAccessor } from "../render/colors";
 import { appendTooltipBrand } from "../branding/zentrixBrand"; // ZENTRIX-BRAND
 import { fontFamily, posSafe, negSafe, accent, resolveSurface } from "../theme/zentrixTokens";
-import { buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, metricLabel, formatNum, clear, div, span, appendDayMarks } from "./dayData";
+import { buildValueByDay, dayKey, dateLabel, dayOverDay, targetVariance, metricLabel, formatNum, clear, div, span, appendDayMarks, deltaText, tipText } from "./dayData";
 
 const FONT = fontFamily;
 // Up/over/gain vs down/under/loss — CVD-safe Okabe-Ito pair (Z-148, replaces the
@@ -145,12 +145,12 @@ export class HeatmapTooltip {
             valueRow.appendChild(span("", formatNum(d.value)));
             const dod = dayOverDay(d, this.valueByDay);
             if (dod) {
+                const dt = deltaText(dod);
                 valueRow.appendChild(span(
-                    `margin-left:8px;font-size:12px;font-weight:600;color:${dod.up ? UP : DOWN}`,
-                    `${dod.up ? "▲" : "▼"} ${dod.pct}%`));
+                    `margin-left:8px;font-size:12px;font-weight:600;color:${dt.dir === "flat" ? muted : dt.dir === "up" ? UP : DOWN}`,
+                    dt.badge));
                 this.el.appendChild(valueRow);
-                this.el.appendChild(div(`margin-top:4px;font-size:11px;color:${muted}`,
-                    `${dod.up ? "+" : ""}${dod.diff} vs ${dod.prevWeekday}`));
+                this.el.appendChild(div(`margin-top:4px;font-size:11px;color:${muted}`, dt.line));
             } else {
                 this.el.appendChild(valueRow);
             }
@@ -187,7 +187,7 @@ export class HeatmapTooltip {
 
             for (const t of d.tooltips ?? []) {
                 const row = div(`margin-top:3px;font-size:11px;color:${muted}`, `${t.name}: `);
-                row.appendChild(span(`color:${strong}`, t.value));
+                row.appendChild(span(`color:${strong}`, tipText(t)));
                 this.el.appendChild(row);
             }
         }

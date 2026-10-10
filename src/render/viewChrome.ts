@@ -15,7 +15,7 @@
 import {
     SurfaceTheme, HcColors, resolveSurface, surfaceElevatedLight, surfaceElevated, posSafe, negSafe,
 } from "../theme/zentrixTokens";
-import { formatWith } from "./format";
+import { formatWith, viewScale } from "./format";
 
 export const SERIF = "Georgia, 'Times New Roman', serif";
 export const MONO = "'SF Mono', 'Cascadia Mono', Consolas, ui-monospace, monospace";
@@ -72,15 +72,6 @@ export function fmtNum(n: number | null | undefined): string {
     if (n == null || !isFinite(n)) return "–";
     // Labels › Numbers (HM-V2-31): the author's units win; "auto" keeps this scale.
     return formatWith(n, viewScale);
-}
-
-function viewScale(n: number): string {
-    const abs = Math.abs(n);
-    if (abs >= 1e9) return (n / 1e9).toFixed(1) + "B";
-    if (abs >= 1e6) return (n / 1e6).toFixed(1) + "M";
-    const isInt = Math.abs(n - Math.round(n)) < 1e-9;
-    if (isInt) return Math.round(n).toLocaleString("en-US");
-    return n.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 /** Signed whole-percent, e.g. "+12%" / "−4%" (true minus sign). */

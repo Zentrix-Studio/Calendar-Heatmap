@@ -27,16 +27,31 @@ import { WEEKDAY_LONG } from "../render/viewChrome";
 export type ExportRow = (string | number | null)[];
 export interface ExportTable { name: string; rows: ExportRow[]; }
 
+/**
+ * Neutralise a text cell a spreadsheet would run as a formula (zentrix-qa#14, OWASP
+ * "CSV injection"): a leading = + - @ tab or CR gets a ' in front, which Excel and
+ * Sheets treat as "this is text". Quoting alone does not stop a leading "=". Numbers are
+ * written as numbers and never touched — a negative value stays a negative value.
+ */
+export function safeText(s: string): string {
+    return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+}
+
 /** Quote a CSV cell when needed (comma, quote, newline). */
 function cell(v: string | number | null | undefined): string {
     if (v == null) return "";
-    const s = String(v);
+    const s = typeof v === "number" ? String(v) : safeText(v);
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
+/** CSV text, with a UTF-8 byte-order mark so Excel opens हिन्दी, 日本語 and emoji as
+ *  written instead of guessing a legacy code page (zentrix-qa#14). */
 export function toCsv(rows: ExportRow[]): string {
-    return rows.map((row) => row.map(cell).join(",")).join("\r\n");
+    return "\uFEFF" + rows.map((row) => row.map(cell).join(",")).join("\r\n");
 }
+
+/** Round to two places for a file — averages printed 100.85714285714286 (zentrix-qa#5). */
+function round2(n: number | null): number | null { return n == null ? null : Math.round(n * 100) / 100; }
 
 function isoDate(d: Date): string {
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -78,7 +93,7 @@ function buildAggRows(input: FacetedRender, grain: "month" | "group", firstDayOf
     const rows: ExportRow[] = [[label, "Total", "Avg / day", "Best day", "Best day date", "Lowest", "Days with data", "% of total"]];
     groups.forEach((g, i) => {
         const s = stats[i];
-        rows.push([g.label, s.total, s.avg, s.max, s.best ? isoDate(s.best) : null, s.min, s.n, grand ? pct(s.total / grand) : null]);
+        rows.push([g.label, s.total, round2(s.avg), s.max, s.best ? isoDate(s.best) : null, s.min, s.n, grand ? pct(s.total / grand) : null]);
     });
     return rows;
 }

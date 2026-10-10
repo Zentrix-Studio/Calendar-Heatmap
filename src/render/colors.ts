@@ -116,6 +116,9 @@ export interface ColorAccessor {
     /** Stops for a continuous gradient legend. */
     gradientStops: GradientStop[];
     noData: string;
+    /** A plain-words note when the scale had to deviate from the setting (log on
+     *  values ≤ 0 → linear, zentrix-qa#34). The visual prints it with its other notes. */
+    note?: string;
 }
 
 const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
@@ -146,13 +149,39 @@ export function buildColorAccessor(model: CalendarModel, opts: ColorOptions): Co
         color,
     }));
 
+    // Log is undefined at or below zero. Rather than clamp every such day to one end
+    // (all-negative data painted every day the darkest; negatives merged with zero),
+    // fall back to linear and say so (zentrix-qa#34).
+    let mode = opts.mode;
+    let note: string | undefined;
+    if (mode === "log" && values.some(v => v <= 0)) {
+        mode = "linear";
+        note = "Log scale needs values above zero — showing a linear scale.";
+    }
+
+    // Every day the same value (all zero, a constant series): a quantile rank put them
+    // all at the top, painting "no activity" as peak activity (zentrix-qa#16). One
+    // value means no spread to encode — every day takes the low ("Less") end.
+    if (values.length > 0 && values.every(v => v === values[0])) {
+        const n = opts.buckets && opts.buckets >= 2 ? opts.buckets : 0;
+        const low = interp(0);
+        return {
+            of: (c) => (c.noData || c.value == null ? opts.noData : low),
+            buckets: n,
+            swatches: n ? Array.from({ length: n }, (_, i) => interp(n === 1 ? 0 : i / (n - 1))) : opts.ramp.slice(),
+            gradientStops,
+            noData: opts.noData,
+            note: values.length > 1 ? `All ${values.length} days have the same value.` : undefined,
+        };
+    }
+
     // ---- Continuous gradient ----------------------------------------------
     if (!opts.buckets || opts.buckets < 2 || values.length === 0) {
         let t: (v: number) => number;
-        if (opts.mode === "quantile") {
+        if (mode === "quantile") {
             const sorted = values.slice().sort((a, b) => a - b);
             t = (v: number) => empiricalCdf(sorted, v);
-        } else if (opts.mode === "log") {
+        } else if (mode === "log") {
             const floor = Math.max(1e-6, min > 0 ? min : minPositive(values));
             const lo = Math.log10(floor), hi = Math.log10(Math.max(floor, max));
             const lspan = hi - lo || 1;
@@ -166,6 +195,7 @@ export function buildColorAccessor(model: CalendarModel, opts: ColorOptions): Co
             swatches: opts.ramp.slice(),
             gradientStops,
             noData: opts.noData,
+            note,
         };
     }
 
@@ -175,10 +205,10 @@ export function buildColorAccessor(model: CalendarModel, opts: ColorOptions): Co
     const indices = Array.from({ length: n }, (_, i) => i);
     let bucketOf: (v: number) => number;
 
-    if (opts.mode === "quantile") {
+    if (mode === "quantile") {
         const q = scaleQuantile<number>().domain(values).range(indices);
         bucketOf = (v) => q(v);
-    } else if (opts.mode === "log") {
+    } else if (mode === "log") {
         const floor = Math.max(1e-6, min > 0 ? min : minPositive(values));
         const lo = Math.log10(floor), hi = Math.log10(Math.max(floor, max));
         const q = scaleQuantize<number>().domain([lo, hi]).range(indices);
@@ -194,6 +224,7 @@ export function buildColorAccessor(model: CalendarModel, opts: ColorOptions): Co
         swatches: bucketColors,
         gradientStops,
         noData: opts.noData,
+        note,
     };
 }
 

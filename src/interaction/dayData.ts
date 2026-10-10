@@ -1,7 +1,7 @@
 "use strict";
 
 import { CalendarModel, DayCell, AggregationMode } from "../types";
-import { formatWith } from "../render/format";
+import { formatWith, fullScale, formatDelta } from "../render/format";
 
 /**
  * dayData.ts — shared day-level derivations for the hover tooltip AND the
@@ -30,9 +30,16 @@ export function buildValueByDay(model: CalendarModel): Map<string, number> {
 }
 
 /** Number formatter shared by tooltip + panel (locale-aware, ≤2 fraction digits). */
-export function formatNum(n: number): string {
-    // Labels › Numbers (HM-V2-31): the author's units win; "auto" keeps the full number.
-    return formatWith(n, v => v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
+export function formatNum(n: number, format?: string | null): string {
+    // Labels › Numbers (HM-V2-31): the author's units win; "auto" keeps the full number,
+    // in the measure's format and the report's locale (zentrix-qa#19).
+    return formatWith(n, fullScale, format);
+}
+
+/** A Tooltips-well field as text: a number through the same formatter (its own format
+ *  string, the author's units), anything else as given (zentrix-qa#2). */
+export function tipText(t: { value: string; raw?: unknown; format?: string }): string {
+    return typeof t.raw === "number" && isFinite(t.raw) ? formatNum(t.raw, t.format ?? null) : t.value;
 }
 
 /** Strip a leading host aggregation prefix ("Sum of Tickets" → "Tickets") so a
@@ -45,7 +52,10 @@ export function baseFieldName(name: string): string {
  *  field's magnitude, so it gets count-appropriate copy ("Count of Tickets");
  *  every other mode shows the field name as-is. */
 export function metricLabel(valueName: string, aggMode: AggregationMode): string {
-    return aggMode === "count" ? `Count of ${baseFieldName(valueName)}` : valueName;
+    // zentrix-qa#11: Average / Min / Max kept the host's "Sum of …" — a max read as a sum.
+    const prefix: Partial<Record<AggregationMode, string>> = { count: "Count", avg: "Average", min: "Min", max: "Max" };
+    const p = prefix[aggMode];
+    return p ? `${p} of ${baseFieldName(valueName)}` : valueName;
 }
 
 /** Product-grade auto header title (issue #2) used when the author leaves the
@@ -86,6 +96,17 @@ export function dayOverDay(d: DayCell, valueByDay: Map<string, number>): DeltaRe
         pct: Math.abs((diff / prevVal) * 100).toFixed(1),
         prevWeekday: WEEKDAY[prev.getDay()],
     };
+}
+
+/**
+ * The day-over-day badge and line, as shown in the tooltip and the day panel. The diff
+ * goes through the number formatter (zentrix-qa#2/#11: it printed raw floats like
+ * "+4.549999999999997" and ignored the units); no change reads "± 0" with no arrow.
+ */
+export function deltaText(dod: DeltaResult): { dir: "up" | "down" | "flat"; badge: string; line: string } {
+    const dir = dod.diff === 0 || Number(dod.pct) === 0 ? "flat" : dod.up ? "up" : "down";
+    const badge = dir === "flat" ? "± 0%" : `${dir === "up" ? "▲" : "▼"} ${dod.pct}%`;
+    return { dir, badge, line: `${formatDelta(dod.diff)} vs ${dod.prevWeekday}` };
 }
 
 export interface VarianceResult {

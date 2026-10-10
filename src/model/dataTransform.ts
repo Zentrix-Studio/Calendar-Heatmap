@@ -26,6 +26,14 @@ interface DayAgg {
     firstIndex: number;
 }
 
+/** Is this grouping column a date — the Date column itself, or any date/time field? */
+function isDateColumn(col: DataViewCategoryColumn, dateCol: DataViewCategoryColumn | undefined): boolean {
+    if (dateCol && col.source.queryName && col.source.queryName === dateCol.source.queryName) return true;
+    if (col.source.type?.dateTime) return true;
+    const sample = col.values.find(v => v != null);
+    return sample instanceof Date;
+}
+
 /** Normalize a raw category value (Date | epoch ms | ISO string) to local midnight. */
 export function normalizeToLocalDay(raw: powerbi.PrimitiveValue): Date | null {
     if (raw == null) return null;
@@ -165,8 +173,16 @@ function parseDataView(dataView: DataView): ParsedDataView | null {
 
     const targetColumn = dataView.categorical?.values?.find(v => v.source.roles?.["target"]) ?? null;
     const tooltipColumns = (dataView.categorical?.values ?? []).filter(v => v.source.roles?.["tooltips"]);
-    const categoryColumn = findCategory(dataView, "category");
     const fieldIssues: string[] = [];
+    // A Split-by that is a date (the same Date column, or any date/time field) is never
+    // a group: converting a date-axis column chart drops the Date hierarchy into BOTH
+    // grouping wells, and the calendar drew one untitled panel per day (zentrix-qa#29).
+    // Ignore it and say so, the same honest-message pattern as the text fields.
+    let categoryColumn = findCategory(dataView, "category");
+    if (categoryColumn && isDateColumn(categoryColumn, dateCategory)) {
+        fieldIssues.push(`Split by holds a date (${categoryColumn.source.displayName}), so it was ignored — split by a category instead.`);
+        categoryColumn = null;
+    }
     const holidayColumn = textColumn(dataView, "holiday", fieldIssues);
     const eventColumn = textColumn(dataView, "event", fieldIssues);
     const eventTypeColumn = textColumn(dataView, "eventType", fieldIssues);
@@ -206,8 +222,14 @@ function parseDataView(dataView: DataView): ParsedDataView | null {
 
 /** A row that carries ONLY optional text (a holiday / event with no value or target
  *  that day). Such rows decorate days but never define the calendar's range. */
+/**
+ * A row with neither a value nor a target. It never sets the calendar's range — whatever
+ * its text columns hold. The first version also required text to be present, so a
+ * Holiday field the host summarised as "Count" (its text read back as empty) let
+ * 2030's holiday rows stretch the calendar five years (zentrix-qa#9).
+ */
 function textOnly(r: ParsedRow): boolean {
-    return isNaN(r.value) && isNaN(r.target) && !!(r.holiday || r.event || r.eventType);
+    return isNaN(r.value) && isNaN(r.target);
 }
 
 /**
@@ -306,6 +328,8 @@ function assembleModel(a: AssembleParams): CalendarModel {
         const tooltips = noData ? undefined : p.tooltipColumns.map(c => ({
             name: c.source.displayName,
             value: String(c.values[origIndex] ?? ""),
+            raw: c.values[origIndex],
+            format: c.source.format,
         }));
         const tAgg = targetByDay?.get(date.getTime());
         const target = noData || !tAgg ? null : tAgg.value;
@@ -428,7 +452,26 @@ export function buildFacetedModel(
         groups.get(k)!.push(r);
     }
     const totalCategories = groups.size;
-    const keys = [...groups.keys()].slice(0, MAX_FACETS);
+
+    // Every group's days over the calendar's window, aggregated like a panel (the
+    // Table / Insight group statistics — zentrix-qa#23). Lightweight: values only.
+    const [w0, w1] = [grid.gridDays[0].getTime(), grid.gridDays[grid.gridDays.length - 1].getTime()];
+    const groupDays = [...groups.entries()].map(([key, rows]) => {
+        const agg = aggregateByDay(rows.map(r => r.date), rows.map(r => r.value), aggMode);
+        const days: DayCell[] = [];
+        for (const [t, a] of agg) {
+            if (t < w0 || t > w1) continue;
+            days.push({ date: new Date(t), value: a.value, noData: false } as DayCell);
+        }
+        days.sort((x, y) => x.date.getTime() - y.date.getTime());
+        return { key, days, total: days.reduce((s, d) => s + (d.value as number), 0) };
+    });
+    // Which panels to draw: all of them up to the cap; past it, the largest groups by
+    // total — the first 24 in data order could drop the biggest one (zentrix-qa#23).
+    // Drawn panels keep data order either way.
+    const drawn = totalCategories <= MAX_FACETS ? new Set(groups.keys())
+        : new Set([...groupDays].sort((a, b) => b.total - a.total).slice(0, MAX_FACETS).map(g => g.key));
+    const keys = [...groups.keys()].filter(k => drawn.has(k));
 
     const facets: Facet[] = keys.map((key, idx) => ({
         key,
@@ -453,6 +496,7 @@ export function buildFacetedModel(
         sharedDomain,
         categoryName: parsed.categoryColumn.source.displayName,
         totalCategories,
+        groups: groupDays.map(g => ({ key: g.key, days: g.days })),
     };
 }
 

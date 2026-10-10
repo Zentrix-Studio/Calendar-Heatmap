@@ -43,6 +43,26 @@ export function legendBandHeight(swatchSize: number, textSize: number): number {
 }
 
 /**
+ * Where the legend will sit: [left, right] in px, computed exactly as renderLegend lays
+ * it out. The event-type key uses it to start after the legend's last item instead of
+ * guessing (zentrix-qa#32: "No data" printed on top of the first event type).
+ */
+export function legendExtent(o: LegendOptions): [number, number] {
+    const size = (o.textStyle ?? defaultText(10)).size;
+    const sw = o.swatchSize;
+    const bucketed = o.colors.buckets >= 2;
+    const rampW = bucketed ? o.colors.swatches.length * sw + (o.colors.swatches.length - 1) * GAP + 6 - GAP : o.gradientLength + 6;
+    const titleW = o.title ? advance(o.title, size) + 10 : 0;
+    const lessW = o.showLabels ? advance(o.lessLabel, size) + 6 : 0;
+    const moreW = o.showLabels ? advance(o.moreLabel, size) + 6 : 0;
+    const noDataW = o.showNoData ? sw + 4 + advance("No data", size) + 12 + (o.noDataSide === "right" ? 6 : 0) : 0;
+    const total = titleW + lessW + rampW + moreW + noDataW;
+    let start = o.x + (o.align === "center" ? (o.availableWidth - total) / 2 : o.align === "end" ? o.availableWidth - total : 0);
+    if (start < o.x) start = o.x;
+    return [start, start + total];
+}
+
+/**
  * Render a horizontal legend within [x, x+availableWidth], aligned start/center/end.
  * Layout (left→right): [title] [no-data?] [low] [ramp] [high] [no-data?] — the
  * no-data block sits on the configured side. Returns the band height consumed.

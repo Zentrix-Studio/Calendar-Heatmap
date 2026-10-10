@@ -13,10 +13,11 @@
  * the quarter boundaries. With the default (1) the fiscal ordinals equal calendar
  * ordinals, so calendar behaviour is unchanged.
  *
- * Pure: imports only ./types. No Power BI, no d3.
+ * Pure: imports ./types and the calendar's own fiscalYearOf. No Power BI, no d3.
  */
 
 import { DailySeries } from "./types";
+import { fiscalYearOf } from "../model/dateGrid";
 
 export interface QuarterDelta {
     /** Fiscal quarter number, 1..4. */
@@ -46,10 +47,9 @@ export interface ComparisonResult {
     byQuarter: QuarterDelta[];
 }
 
-/** Fiscal year a date belongs to: months before the start month roll into the prior year. */
-function fiscalYearOf(date: Date, startMonth: number): number {
-    return (date.getMonth() + 1) >= startMonth ? date.getFullYear() : date.getFullYear() - 1;
-}
+// Fiscal years are numbered by the year they END in (Apr 2023 – Mar 2024 = FY 2024),
+// using the calendar's own function. This file had a second, start-year version, so the
+// Insight page called the band the calendar labels "FY 2024" "FY2023" (zentrix-qa#24).
 
 /**
  * Fiscal-relative ordinal: (fiscalMonthIndex+1)*100 + day, where fiscalMonthIndex
@@ -120,10 +120,11 @@ export function computeComparisons(series: DailySeries, fiscalStartMonth = 1): C
 
     const c = accumulate(cur);
     const p = accumulate(prev);
-    if (p.activeCount === 0) return null; // nothing comparable in the prior year
+    // Nothing comparable in the prior year — or a prior total of zero, from which no
+    // percentage change exists (zentrix-qa#25: "+100%" was invented for it).
+    if (p.activeCount === 0 || p.total === 0) return null;
 
-    const pct = (now: number, before: number): number =>
-        before === 0 ? (now === 0 ? 0 : 1) : (now - before) / Math.abs(before);
+    const pct = (now: number, before: number): number => (now - before) / Math.abs(before);
 
     const curAvg = c.activeCount ? c.total / c.activeCount : 0;
     const prevAvg = p.activeCount ? p.total / p.activeCount : 0;
@@ -137,7 +138,9 @@ export function computeComparisons(series: DailySeries, fiscalStartMonth = 1): C
             rows.filter(r => quarterOf(r.o) === q && r.o >= qStart && r.o <= qEnd && !r.leap)
                 .reduce((s, r) => s + r.v, 0);
         const cQ = inQ(cur), pQ = inQ(prev);
-        if (pQ === 0 && cQ === 0) continue;
+        // A quarter with nothing the year before has no % change — leave it out rather
+        // than print "+100%" (zentrix-qa#25). The year-level line still covers it.
+        if (pQ === 0) continue;
         byQuarter.push({ q, deltaPct: pct(cQ, pQ) });
     }
 

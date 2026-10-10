@@ -271,10 +271,31 @@ const PAGES: PageDef[] = [
     ] },
 ];
 
+/** The one line every landing tier carries: what to bind (zentrix-qa#35 — the small
+ *  landing never said which fields to add; the family's does). */
+export const FIELD_HINT = "Add a Date field and a Value field to begin.";
+
+/**
+ * How much onboarding a tile can hold — the family's tiers (Pie·Donut·Sunburst, Sankey
+ * Pro). Under ~300×210 a carousel is broken, not small: the micro card says what to
+ * bind and nothing else. Unknown size (0×0, before the first update) → full.
+ */
+export function landingMicro(width: number, height: number): boolean {
+    return width > 0 && height > 0 && (width < 300 || height < 210);
+}
+
 export class LandingPage {
     private root: HTMLElement;
     private host?: HTMLElement;
     private page = 0;
+    private size = { w: 0, h: 0 };
+
+    /** The tile size from update(); switching tiers re-renders. */
+    setSize(w: number, h: number): void {
+        const was = landingMicro(this.size.w, this.size.h);
+        this.size = { w, h };
+        if (this.host && was !== landingMicro(w, h)) this.render();
+    }
     private dark = false;
     private cleanups: Cleanup[] = [];
 
@@ -329,6 +350,13 @@ export class LandingPage {
         if (!this.host) return;
         const host = this.host;
         while (host.firstChild) host.removeChild(host.firstChild);
+        if (landingMicro(this.size.w, this.size.h)) {
+            const micro = el("div", "zx-lp-micro");
+            micro.appendChild(textEl("div", "zx-lp-micro-name", "Zentrix Calendar Heatmap"));
+            micro.appendChild(textEl("div", "zx-lp-micro-hint", FIELD_HINT));
+            host.appendChild(micro);
+            return;
+        }
         const p = PAGES[this.page];
         const ctx: SceneCtx = { dark: this.dark, violet: this.dark ? VIOLET_RAMP_DARK : VIOLET_RAMP_LIGHT };
 
@@ -355,6 +383,7 @@ export class LandingPage {
 
         content.appendChild(textEl("div", "zx-lp-eyebrow", p.eyebrow));
         content.appendChild(textEl("h2", "zx-lp-title", p.title));
+        if (this.page !== 1) content.appendChild(textEl("p", "zx-lp-hint", FIELD_HINT));
 
         const body = el("div", "zx-lp-body");
         for (const line of p.lines) {
@@ -457,6 +486,11 @@ const LANDING_CSS = `
   padding:26px 30px 18px;box-sizing:border-box;overflow:hidden;}
 /* Narrow tiles: drop the art, give the copy the full width (still legible). */
 @media (max-width:560px){.zx-lp-art{display:none;}.zx-lp-content{flex:1 1 100%;}}
+.zx-lp-hint{margin:-8px 0 12px;font-size:12px;font-weight:600;color:var(--lp-fg);opacity:.8;}
+.zx-lp-micro{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:10px;box-sizing:border-box;gap:6px;}
+.zx-lp-micro-name{font-size:13px;font-weight:700;color:var(--lp-fg);}
+.zx-lp-micro-hint{font-size:12px;color:var(--lp-fg);opacity:.8;}
 .zx-lp-brand{display:flex;align-items:center;gap:7px;color:var(--lp-accent);margin-bottom:16px;}
 .zx-lp-brandname{font-size:11px;font-weight:700;letter-spacing:2.5px;}
 .zx-lp-ver{font-size:10px;font-weight:600;letter-spacing:.5px;opacity:.5;}

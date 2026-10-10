@@ -142,8 +142,17 @@ function gridFit(bandsLen: number, maxWeeks: number, opts: GridOptions, width: n
     const headerTotal = bandsLen * (headerH + footerH) + (bandsLen - 1) * bandGap;
     const fitW = (availW + gapX) / maxWeeks - gapX;
     const fitH = (availH - headerTotal + gapY) / totalRows - gapY;
-    const size = Math.max(3, Math.min(opts.cellSize, fitW, fitH));
-    return { size, stepX: size + gapX, stepY: size + gapY, marginLeft, headerH, footerH };
+    const size = Math.min(opts.cellSize, fitW, fitH);
+    if (size >= 3) return { size, stepX: size + gapX, stepY: size + gapY, marginLeft, headerH, footerH };
+    // Tight box (zentrix-qa#21): a 3px floor with full-size gaps made the grid WIDER
+    // than the tile, silently cropping Oct–Dec at 280px. Give the space to the cells
+    // first — each step keeps at most a fifth as gap — so the whole range still fits.
+    const stepX = Math.max(0, (availW + gapX) / maxWeeks);
+    const stepY = Math.max(0, (availH - headerTotal + gapY) / totalRows);
+    const step = Math.min(stepX, stepY, opts.cellSize + Math.min(gapX, gapY));
+    const gx = Math.min(gapX, step * 0.2), gy = Math.min(gapY, step * 0.2);
+    const s2 = Math.max(0, Math.min(stepX - gx, stepY - gy, opts.cellSize));
+    return { size: s2, stepX: s2 + gx, stepY: s2 + gy, marginLeft, headerH, footerH };
 }
 
 /** One retry pass shared by predict + render: when cells shrink past legibility,
@@ -174,7 +183,6 @@ export function predictGridSize(model: CalendarModel, opts: GridOptions, width: 
  * vertically. Pure: no Power BI host; rings are drawn as overlays elsewhere.
  */
 export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOptions): RenderResult {
-    const { gapX, gapY } = opts;
     const fiscalStart = opts.fiscalStartMonth ?? 1;
     const bands = buildBands(model, opts.firstDayOfWeek, fiscalStart);
     const multiYear = bands.length > 1;
@@ -187,6 +195,8 @@ export function renderGrid(group: GroupSel, model: CalendarModel, opts: GridOpti
     const showWeekday = fit.opts.showWeekdayLabels;
     const showWeekNums = !!fit.opts.showWeekNumbers;
     const { size, stepX, stepY, marginLeft, headerH, footerH } = fit.f;
+    // The gaps actually used — narrower than the setting when the box is tight (#21).
+    const gapX = stepX - size, gapY = stepY - size;
 
     const oX = opts.originX ?? 0, oY = opts.originY ?? 0;
     const top = opts.topOffset ?? 0;

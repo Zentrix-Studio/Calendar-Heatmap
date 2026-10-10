@@ -210,45 +210,30 @@ function streamObject(dictionary: string, data: Uint8Array): Uint8Array {
     ]);
 }
 
-function wrapLine(line: string, max = 96): string[] {
-    if (!line) return [""];
-    const out: string[] = [];
-    for (let at = 0; at < line.length; at += max) out.push((at ? "  " : "") + line.slice(at, at + max));
-    return out;
-}
-
-function dataPages(sections: PdfSection[]): { title: string; lines: string[] }[] {
-    const pages: { title: string; lines: string[] }[] = [];
-    for (const section of sections) {
-        const lines: string[] = [];
-        for (const source of section.csv.split(/\r?\n/)) {
-            lines.push(...wrapLine(source));
-        }
-        for (let at = 0; at < lines.length; at += 61) {
-            pages.push({
-                title: at ? `${section.title} (continued)` : section.title,
-                lines: lines.slice(at, at + 61),
-            });
-        }
-    }
-    return pages;
-}
-
-/** One CSV table printed after the snapshot, under its own heading. */
-export interface PdfSection { title: string; csv: string; }
+/** A full page drawn as an image (a table page from exportSnapshot.renderTablePages). */
+export interface PdfImagePage { jpegBase64: string; width: number; height: number; }
 
 export interface PdfExportInput {
     jpegBase64: string;
     imageWidth: number;
     imageHeight: number;
-    /** Cover-page heading (ASCII; anything else prints as "?"). */
+    /** Cover-page heading (ASCII; anything else prints as "?" — keep data out of it). */
     title: string;
-    /** Footnote under the snapshot. */
+    /** Footnote under the snapshot (ASCII). */
     footnote: string;
-    sections: PdfSection[];
+    /** The tables, already drawn as page images (zentrix-qa#5/#15). */
+    pages: PdfImagePage[];
 }
 
-/** Build a PDF: visual snapshot first, followed by the complete CSV data. */
+function imageObject(jpegBase64: string, w: number, h: number): Uint8Array {
+    return streamObject(
+        `/Type /XObject /Subtype /Image /Width ${Math.max(1, Math.round(w))} ` +
+        `/Height ${Math.max(1, Math.round(h))} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`,
+        base64ToBytes(jpegBase64),
+    );
+}
+
+/** Build a PDF: the calendar snapshot first, then one image page per table page. */
 export function buildPdfBase64(input: PdfExportInput): string {
     const objects: Uint8Array[] = [new Uint8Array(), new Uint8Array()]; // catalog + pages, filled last
     const add = (body: string | Uint8Array): number => {
@@ -256,13 +241,8 @@ export function buildPdfBase64(input: PdfExportInput): string {
         return objects.length;
     };
 
-    const jpeg = base64ToBytes(input.jpegBase64);
-    const imageRef = add(streamObject(
-        `/Type /XObject /Subtype /Image /Width ${Math.max(1, Math.round(input.imageWidth))} ` +
-        `/Height ${Math.max(1, Math.round(input.imageHeight))} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`,
-        jpeg,
-    ));
-    const bodyFontRef = add("<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>");
+    const imageRef = add(imageObject(input.jpegBase64, input.imageWidth, input.imageHeight));
+    const bodyFontRef = add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
     const titleFontRef = add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
     const pageRefs: number[] = [];
 
@@ -273,24 +253,19 @@ export function buildPdfBase64(input: PdfExportInput): string {
     const imageX = (pageW - drawW) / 2, imageY = pageH - 76 - drawH;
     const coverOps = `BT /F2 18 Tf ${margin} ${pageH - 42} Td (${pdfText(input.title)}) Tj ET\n` +
         `q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${imageX.toFixed(2)} ${Math.max(margin, imageY).toFixed(2)} cm /Im1 Do Q\n` +
-        `BT /F1 8 Tf ${margin} 20 Td (${pdfText(input.footnote)}) Tj ET`;
+        `BT /F1 9 Tf ${margin} 20 Td (${pdfText(input.footnote)}) Tj ET`;
     const coverContent = add(streamObject("", utf8Bytes(coverOps)));
-    const coverPage = add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
+    pageRefs.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
         `/Resources << /Font << /F1 ${bodyFontRef} 0 R /F2 ${titleFontRef} 0 R >> /XObject << /Im1 ${imageRef} 0 R >> >> ` +
-        `/Contents ${coverContent} 0 R >>`);
-    pageRefs.push(coverPage);
+        `/Contents ${coverContent} 0 R >>`));
 
-    for (const page of dataPages(input.sections)) {
-        const ops = [
-            `BT /F2 15 Tf ${margin} ${pageH - 42} Td (${pdfText(page.title)}) Tj ET`,
-            `BT /F1 8 Tf 10 TL ${margin} ${pageH - 64} Td`,
-            ...page.lines.map((line, i) => `${i ? "T* " : ""}(${pdfText(line)}) Tj`),
-            "ET",
-        ].join("\n");
+    for (const page of input.pages) {
+        const ref = add(imageObject(page.jpegBase64, page.width, page.height));
+        // The page image fills the sheet (it was drawn at the A4 aspect ratio).
+        const ops = `q ${pageW} 0 0 ${pageH} 0 0 cm /Im1 Do Q`;
         const contentRef = add(streamObject("", utf8Bytes(ops)));
-        const pageRef = add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
-            `/Resources << /Font << /F1 ${bodyFontRef} 0 R /F2 ${titleFontRef} 0 R >> >> /Contents ${contentRef} 0 R >>`);
-        pageRefs.push(pageRef);
+        pageRefs.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
+            `/Resources << /XObject << /Im1 ${ref} 0 R >> >> /Contents ${contentRef} 0 R >>`));
     }
 
     objects[0] = utf8Bytes("<< /Type /Catalog /Pages 2 0 R >>");

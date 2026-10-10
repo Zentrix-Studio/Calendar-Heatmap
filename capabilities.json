@@ -1,13 +1,13 @@
 {
     "dataRoles": [
         {
-            "displayName": "Date",
+            "displayName": "Date *",
             "description": "Required. A date or date/time column — one row per day. Each day becomes a cell in the calendar grid.",
             "name": "date",
             "kind": "Grouping"
         },
         {
-            "displayName": "Value",
+            "displayName": "Value *",
             "description": "Required. A numeric measure or column shown for each day; its magnitude sets the cell's color intensity. Multiple values on the same day are combined using the Aggregate setting (Sum, Average, Min, Max or Count).",
             "name": "value",
             "kind": "Measure"

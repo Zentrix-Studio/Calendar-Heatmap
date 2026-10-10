@@ -6,7 +6,7 @@ type VisualTooltipDataItem = powerbi.extensibility.VisualTooltipDataItem;
 type ISelectionId = powerbi.visuals.ISelectionId;
 
 import { DayCell } from "../types";
-import { dateLabel, formatNum } from "./dayData";
+import { dateLabel, formatNum, tipText } from "./dayData";
 
 /** Overlays › Tooltip style — the family's one vocabulary (SETTINGS-TAXONOMY.md). */
 export type TooltipStyle = "card" | "report" | "off";
@@ -83,6 +83,6 @@ export function dayTooltipItems(d: DayCell, metric: string, targetName?: string)
     if (d.target != null) items.push({ displayName: targetName || "Target", value: formatNum(d.target) });
     if (d.holiday) items.push({ displayName: "Holiday", value: d.holiday });
     if (d.events?.length) items.push({ displayName: d.events.length === 1 ? "Event" : "Events", value: d.events.join("; ") });
-    for (const t of d.tooltips ?? []) items.push({ displayName: t.name, value: t.value });
+    for (const t of d.tooltips ?? []) items.push({ displayName: t.name, value: tipText(t) });
     return items;
 }

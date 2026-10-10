@@ -17,6 +17,7 @@
 import { GroupSel } from "./grid";
 import { CellBox } from "./states";
 import { drawPattern } from "./patterns";
+import { parseColor } from "./cellLabels";
 import { DayCell } from "../types";
 
 export type NonWorkingStyle = "tint" | "hatch" | "outline";
@@ -28,6 +29,20 @@ const WEEKEND_DAYS: Record<WeekendSet, number[]> = { satSun: [0, 6], friSat: [5,
 /** Is `date` a weekend day under the chosen convention? */
 export function isWeekend(date: Date, set: WeekendSet): boolean {
     return (WEEKEND_DAYS[set] ?? WEEKEND_DAYS.satSun).includes(date.getDay());
+}
+
+/** The tint wash per theme: [r, g, b, alpha]. Lighter than the first cut (0.55 white),
+ *  which made a non-working day read as faded/no-data (zentrix-qa#8). */
+export const TINT_LIGHT: [number, number, number, number] = [255, 255, 255, 0.4];
+export const TINT_DARK: [number, number, number, number] = [10, 10, 15, 0.45];
+
+/** The colour a tinted cell actually shows — what a label on it must contrast with. */
+export function tintOver(fill: string, dark: boolean): string {
+    const c = parseColor(fill);
+    if (!c) return fill;
+    const [r, g, b, a] = dark ? TINT_DARK : TINT_LIGHT;
+    const mix = (x: number, y: number) => Math.round(x * (1 - a) + y * a);
+    return `rgb(${mix(c[0], r)}, ${mix(c[1], g)}, ${mix(c[2], b)})`;
 }
 
 /**
@@ -54,7 +69,7 @@ export function drawNonWorking(
     group.append("rect").classed("zx-nonworking", true)
         .attr("x", box.x).attr("y", box.y).attr("width", box.size).attr("height", box.size)
         .attr("rx", 2)
-        .attr("fill", dark ? "rgba(10,10,15,0.45)" : "rgba(255,255,255,0.55)")
+        .attr("fill", `rgba(${(dark ? TINT_DARK : TINT_LIGHT).join(",")})`)
         .attr("pointer-events", "none");
 }
 
@@ -109,6 +124,8 @@ const estWidth = (text: string, fontSize: number) => text.length * fontSize * 0.
 export function renderEventKey(group: GroupSel, o: {
     right: number; y: number; maxWidth: number; types: string[]; colorOf: (t: string) => string;
     labelColor: string; fontSize: number; font: string;
+    /** Legend text weight, so the key matches the legend beside it (zentrix-qa#32). */
+    bold?: boolean;
 }): number {
     if (!o.types.length || o.maxWidth < 40) return 0;
     const chip = 8, gap = 5, sep = 12;
@@ -132,13 +149,19 @@ export function renderEventKey(group: GroupSel, o: {
             .attr("fill", o.colorOf(it.t));
         g.append("text").attr("x", x + chip + gap).attr("y", o.y + o.fontSize * 0.35)
             .attr("fill", o.labelColor).attr("font-family", o.font).attr("font-size", `${o.fontSize}px`)
+            .attr("font-weight", o.bold ? "700" : null)
             .text(it.t);
         x += it.w;
     }
     if (more) {
-        g.append("text").attr("x", x + sep).attr("y", o.y + o.fontSize * 0.35)
+        // Name what "+N" hides — a type with a flag on the grid must be readable
+        // somewhere (zentrix-qa#10). A hover title is the one place that always fits.
+        const t = g.append("text").attr("x", x + sep).attr("y", o.y + o.fontSize * 0.35)
             .attr("fill", o.labelColor).attr("font-family", o.font).attr("font-size", `${o.fontSize}px`)
+            .attr("font-weight", o.bold ? "700" : null)
+            .style("cursor", "help")
             .text(`+${more}`);
+        t.append("title").text(items.slice(shown).map(i => i.t).join(", "));
     }
     return shown;
 }

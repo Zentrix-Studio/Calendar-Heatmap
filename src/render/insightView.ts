@@ -17,10 +17,12 @@
  * createElement + textContent only — never innerHTML.
  */
 
+import { isWeekend, WeekendSet } from "./marks";
+import { allGroups } from "./summaryTable";
 import { DayCell, FacetedRender } from "../types";
 import { accent, fontFamily, HcColors } from "../theme/zentrixTokens";
 import {
-    computeInsights, computeStreaks, computeWeekdayPatterns, computeAnomalies, computeComparisons,
+    computeInsights, computeStreaks, computeWeekdayPatterns, computeAnomalies, computeComparisons, reachesToday,
     DEFAULT_INSIGHT_CONFIG, Polarity, Insight,
 } from "../insights";
 import {
@@ -41,6 +43,8 @@ export interface InsightPageOptions {
     fiscalStartMonth: number;
     /** How many engine findings the "Key findings" card lists. */
     findings: number;
+    /** Analysis › Weekends & holidays › Weekend — which days the weekend line means. */
+    weekend?: WeekendSet;
 }
 
 /** Tone for a change, honouring the author's "higher is good / bad" declaration. A
@@ -55,6 +59,7 @@ function engineTone(i: Insight): Tone { return i.tone; }
 
 const dayTime = (d: Date): number => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 
+
 /** Build the page from the model. Pure (no DOM) so it is unit-testable. */
 export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): InsightPage {
     const combined = input.combined;
@@ -63,10 +68,16 @@ export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): I
     const total = days.reduce((a, d) => a + d.value, 0);
     const avg = days.length ? total / days.length : 0;
     const r0 = combined.range[0], r1 = combined.range[1];
-    const subhead = `${combined.days.length} days · ${fmtDate(r0)} – ${fmtDate(r1)} · ${fmtNum(total)} total · ${fmtNum(avg)} per day with data`;
+    const capped = combined.totalDays > combined.days.length;
+    const subhead = `${combined.days.length} days · ${fmtDate(r0)} – ${fmtDate(r1)} · ${fmtNum(total)} total · ${fmtNum(avg)} per day with data`
+        // zentrix-qa#20: the cards cover the calendar's window; the findings read every day.
+        + (capped && !combined.highlighted ? ` · findings use all ${combined.totalDays} days in the data` : "")
+        + (combined.highlighted ? " · highlighted data only" : "");
 
-    const config = { ...DEFAULT_INSIGHT_CONFIG, polarity: o.polarity, fiscalStartMonth: o.fiscalStartMonth };
-    const findings = series ? computeInsights(series, config, Math.max(1, o.findings)) : [];
+    const config = { ...DEFAULT_INSIGHT_CONFIG, polarity: o.polarity, fiscalStartMonth: o.fiscalStartMonth, formatNumber: fmtNum };
+    // 0 = Analysis › Insights › Show insights is off: no engine findings on the page
+    // (the cards below are plain statistics and stay). zentrix-qa#33.
+    const findings = series && o.findings > 0 ? computeInsights(series, config, o.findings) : [];
     const headline = findings.length
         ? findings[0].body
         : days.length ? `${fmtNum(total)} ${combined.valueName} across ${days.length} days with data.` : "No days with data in view.";
@@ -102,20 +113,35 @@ export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): I
         });
     }
 
-    // Peaks — the best and the quietest day on the calendar.
-    if (days.length) {
-        const ranked = [...days].sort((a, b) => b.value - a.value);
-        const best = ranked[0], low = ranked[ranked.length - 1];
+    // Peaks — the best and the quietest day on the calendar. zentrix-qa#18: never name a
+    // "best" or "quietest" day out of a tie — say how many share the value instead.
+    if (days.length && days.every(d => d.value === days[0].value)) {
         sections.push({
             title: "Peaks",
             metric: {
-                value: fmtNum(best.value), label: `best day · ${fmtDate(best.date)}`,
+                value: fmtNum(days[0].value), label: `every day with data (${days.length} day${days.length === 1 ? "" : "s"})`,
+                sub: "All days have the same value, so there is no best or quietest day.", tone: "neutral",
+            },
+            lines: [],
+        });
+    } else if (days.length) {
+        const ranked = [...days].sort((a, b) => b.value - a.value);
+        const best = ranked[0], low = ranked[ranked.length - 1];
+        const bestTies = ranked.filter(d => d.value === best.value).length;
+        const lowTies = ranked.filter(d => d.value === low.value).length;
+        sections.push({
+            title: "Peaks",
+            metric: {
+                value: fmtNum(best.value),
+                label: bestTies > 1 ? `best day · ${bestTies} days tied, first ${fmtDate(best.date)}` : `best day · ${fmtDate(best.date)}`,
                 sub: avg ? `${fmtPct(best.value / avg - 1)} vs the daily average` : undefined,
                 tone: directional(1, o.polarity), action: { kind: "focusDay", time: dayTime(best.date) },
             },
             lines: [
-                ...ranked.slice(1, 3).map(d => ({ text: `${fmtDate(d.date)}: ${fmtNum(d.value)}`, tone: "neutral" as Tone })),
-                ...(ranked.length > 1 ? [{ text: `Quietest day: ${fmtDate(low.date)} at ${fmtNum(low.value)}.`, tone: "neutral" as Tone }] : []),
+                ...ranked.slice(bestTies, bestTies + 2).map(d => ({ text: `${fmtDate(d.date)}: ${fmtNum(d.value)}`, tone: "neutral" as Tone })),
+                lowTies > 1
+                    ? { text: `Quietest: ${lowTies} days tied at ${fmtNum(low.value)}.`, tone: "neutral" as Tone }
+                    : { text: `Quietest day: ${fmtDate(low.date)} at ${fmtNum(low.value)}.`, tone: "neutral" as Tone },
             ],
         });
     }
@@ -135,7 +161,10 @@ export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): I
                 },
                 lines: [
                     { text: `Active on ${fmtPct(st.activeDaysPct, false)} of days (${st.activeDays} of ${st.activeDays + st.inactiveDays}).`, tone: "neutral" },
-                    ...(st.currentActive > 0 ? [{ text: `Current run: ${st.currentActive} active day${st.currentActive === 1 ? "" : "s"} and counting.`, tone: "positive" as Tone }] : []),
+                    // "and counting" only when the data reaches today (zentrix-qa#18).
+                    ...(st.currentActive > 0 ? [reachesToday(series)
+                        ? { text: `Current run: ${st.currentActive} active day${st.currentActive === 1 ? "" : "s"} and counting.`, tone: "positive" as Tone }
+                        : { text: `The data ends on a run of ${st.currentActive} active day${st.currentActive === 1 ? "" : "s"}.`, tone: "neutral" as Tone }] : []),
                     ...(st.longestInactive.length > 0 && st.longestInactive.start
                         ? [{ text: `Longest quiet stretch: ${st.longestInactive.length} day${st.longestInactive.length === 1 ? "" : "s"} from ${fmtDate(st.longestInactive.start)}.`, tone: "neutral" as Tone }]
                         : []),
@@ -156,11 +185,17 @@ export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): I
                 lines: [
                     { text: `Weakest: ${WEEKDAY_LONG[wk.weakest.weekday]}, ${fmtPct(wk.weakest.deltaPct)} vs average.`, tone: "neutral" },
                     ...(() => {
-                        const weekend = wk.byWeekday.filter(m => m.weekday === 0 || m.weekday === 6);
-                        const weekday = wk.byWeekday.filter(m => m.weekday > 0 && m.weekday < 6);
-                        if (!weekend.length || !weekday.length) return [];
-                        const we = weekend.reduce((a, m) => a + m.mean, 0) / weekend.length;
-                        const wd = weekday.reduce((a, m) => a + m.mean, 0) / weekday.length;
+                        // zentrix-qa#6: an average over DAYS (sum ÷ count, what the Table's
+                        // weekday rows add up to), under the Weekend the author set — it
+                        // was a mean of per-weekday means, always Sat + Sun.
+                        const set = o.weekend ?? "satSun";
+                        let weSum = 0, weN = 0, wdSum = 0, wdN = 0;
+                        for (const p of series.data) {
+                            if (p.value == null) continue;
+                            if (isWeekend(p.date, set)) { weSum += p.value; weN++; } else { wdSum += p.value; wdN++; }
+                        }
+                        if (!weN || !wdN) return [];
+                        const we = weSum / weN, wd = wdSum / wdN;
                         if (!wd) return [];
                         return [{ text: `Weekends average ${fmtNum(we)}, weekdays ${fmtNum(wd)} (${fmtPct(we / wd - 1)}).`, tone: "neutral" as Tone }];
                     })(),
@@ -280,9 +315,11 @@ export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): I
 
     // Groups — only with a Split-by bound.
     if (input.facets.length > 1) {
-        const groups = input.facets.map(f => ({
-            key: f.key,
-            total: f.model.days.reduce((a, d) => a + (d.noData || d.value == null ? 0 : d.value), 0),
+        // Every group, not just the panels drawn (zentrix-qa#23) — the same basis as
+        // the page's total, so "largest" and "% of the total" are true.
+        const groups = allGroups(input).map(g => ({
+            key: g.key,
+            total: g.days.reduce((a, d) => a + (d.noData || d.value == null ? 0 : d.value), 0),
         })).sort((a, b) => b.total - a.total);
         const all = groups.reduce((a, g) => a + g.total, 0);
         sections.push({
@@ -294,7 +331,7 @@ export function buildInsightPage(input: FacetedRender, o: InsightPageOptions): I
             lines: [
                 ...groups.slice(1, 4).map(g => ({ text: `${g.key}: ${fmtNum(g.total)}${all ? ` (${fmtPct(g.total / all, false)})` : ""}`, tone: "neutral" as Tone })),
                 ...(input.totalCategories > input.facets.length
-                    ? [{ text: `${input.totalCategories - input.facets.length} more group(s) not drawn.`, tone: "neutral" as Tone }]
+                    ? [{ text: `The calendar draws the ${input.facets.length} largest of ${input.totalCategories} groups; these figures cover all of them.`, tone: "neutral" as Tone }]
                     : []),
             ],
         });

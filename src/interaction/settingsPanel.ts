@@ -218,6 +218,9 @@ export class SettingsOverlay {
     }
 
     /** True while the in-visual settings bar is open (issue #7 — suppress hover cards). */
+    /** Close the open bar (back from focus mode — zentrix-qa#22). */
+    close(): void { this.bar.close(); }
+
     isOpen(): boolean {
         return this.bar.isOpen();
     }

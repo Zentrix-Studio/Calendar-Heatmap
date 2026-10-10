@@ -29,7 +29,7 @@ import { renderMonthBlocks, predictMonthBlocksSize } from "./render/monthBlocks"
 import { renderFacets, predictFacetSize } from "./render/facets";
 import { renderHeader } from "./render/header";
 import { planChrome } from "./render/responsive";
-import { renderLegend, LegendAlign, NoDataSide } from "./render/legend";
+import { renderLegend, legendExtent, LegendAlign, NoDataSide } from "./render/legend";
 import { renderInsights } from "./render/insights";
 import { computeInsights, computeAnomalies, DEFAULT_INSIGHT_CONFIG, Polarity } from "./insights";
 import {
@@ -40,17 +40,17 @@ import { renderAnnotations, NoteAnchor } from "./render/annotations";
 import { renderSummaryTable, TableGrain } from "./render/summaryTable";
 import { renderInsightView, InsightAction } from "./render/insightView";
 import { renderHourGrid, predictHourGridSize, asColorCell, hourLabel, HourGridOptions, HourCellSel } from "./render/hourGrid";
-import { drawNonWorking, drawEventMarker, renderEventKey, isWeekend, NonWorkingStyle, EventMarker, WeekendSet } from "./render/marks";
+import { drawNonWorking, drawEventMarker, renderEventKey, isWeekend, tintOver, NonWorkingStyle, EventMarker, WeekendSet } from "./render/marks";
 import { drawPattern, PatternStyle } from "./render/patterns";
 import { rankedDays, filterColors, DayFilterMode } from "./render/dayFilter";
-import { setNumberFormat, chosenFormat, formatValue } from "./render/format";
+import { setNumberFormat, setFormatLocale, setValueFormat, formatWith, compactScale } from "./render/format";
 import { drawCellLabels } from "./render/cellLabels";
 import { evaluateRules, Rule } from "./render/rules";
 import {
     accent as ACCENT_TOKEN, fontFamily as FONT_FAMILY, resolveSurface, HcColors,
-    surfaceElevatedLight, textPrimary, textPrimaryLight,
+    surfaceElevatedLight, surfaceBase, textPrimary, textPrimaryLight,
 } from "./theme/zentrixTokens";
-import { bindSelection, syncSelectionState, bindBackgroundContextMenu } from "./interaction/selection";
+import { bindSelection, syncSelectionState, bindBackgroundContextMenu, bindCanvasContextMenu } from "./interaction/selection";
 import { HeatmapTooltip } from "./interaction/tooltip";
 import { TooltipRouter, TooltipStyle, HoverContent, dayTooltipItems } from "./interaction/tooltipRouter";
 import { autoHeaderTitle, dateLabel, dayKey, formatNum as formatNumber, metricLabel } from "./interaction/dayData";
@@ -62,9 +62,10 @@ import { LandingPage } from "./interaction/landingPage";
 import { NoteEditor } from "./interaction/noteEditor";
 import { ViewToggle, ViewMode, PILL_STRIP } from "./interaction/viewToggle";
 import { ActionBar, ExportFormat, AB_STRIP, AB_TOP, AB_BELOW_GEAR } from "./interaction/actionBar";
-import { buildExportTables, toCsv, fileStem } from "./interaction/exportData";
+import { buildExportTables, toCsv, fileStem, ExportTable } from "./interaction/exportData";
+import { fmtNum } from "./render/viewChrome";
 import { buildWorkbookBase64, buildPdfBase64 } from "./interaction/exportFiles";
-import { captureVisualSnapshot } from "./interaction/exportSnapshot";
+import { captureVisualSnapshot, renderTablePages, PrintTable } from "./interaction/exportSnapshot";
 import { NoteStore, cellNoteKey, isMarkerStyle } from "./notes/store";
 import type { AnnotationTheme, MarkerStyle, Note, NoteMode } from "./notes/core";
 
@@ -120,6 +121,57 @@ export function resolveCanvas(
 }
 
 type Group = Selection<SVGGElement, unknown, null, undefined>;
+
+/** The colour-palette key the "Theme" palette asks for. The host hands out the theme's
+ *  data colours in the order keys are first requested, and the ramp asks first. */
+const THEME_ACCENT_KEY = "zentrix-theme-accent";
+
+/**
+ * A table as the PDF prints it (zentrix-qa#5): numbers in the Table view's format,
+ * percentage columns with their sign, dates as written. Text cells are not escaped —
+ * this is a picture, not a spreadsheet.
+ */
+function printTable(t: ExportTable): PrintTable {
+    const head = t.rows[0].map(c => String(c ?? ""));
+    const body = t.rows.slice(1);
+    const numeric = head.map((_, i) => body.some(r => typeof r[i] === "number"));
+    const pct = head.map(h => /%/.test(h));
+    return {
+        title: t.name, head, numeric,
+        rows: body.map(r => r.map((c, i) => (c == null ? "" : typeof c === "number"
+            ? (pct[i] ? `${c > 0 ? "+" : ""}${c}%` : fmtNum(c)) : String(c)))),
+    };
+}
+
+/**
+ * The data a cross-highlight leaves (zentrix-qa#12). Another visual highlighting this
+ * one — Power BI's default interaction for a visual declaring supportsHighlight — dims
+ * the calendar to the highlighted part, but the Table and Insight views kept showing
+ * every group's totals. This rebuilds the input from each day's highlight value (a day
+ * outside the highlight has no data), so every view answers the same question.
+ */
+export function highlightedView(input: FacetedRender): FacetedRender {
+    const pick = (days: DayCell[]): DayCell[] => days.map(d => {
+        const on = !!d.isHighlighted && d.highlightValue != null;
+        return { ...d, value: on ? d.highlightValue! : null, noData: !on };
+    });
+    const combinedDays = pick(input.combined.days);
+    const facets = input.facets.map(f => ({ key: f.key, model: { ...f.model, days: pick(f.model.days) } }));
+    const combined = {
+        ...input.combined,
+        days: combinedDays,
+        highlighted: true,
+        series: input.combined.series && {
+            ...input.combined.series,
+            data: combinedDays.map(d => ({ date: d.date, value: d.noData ? null : d.value })),
+        },
+    };
+    return {
+        ...input, combined, facets,
+        // Group statistics come from the panels' own highlight values.
+        groups: input.facets.length > 1 ? facets.map(f => ({ key: f.key, days: f.model.days })) : undefined,
+    };
+}
 
 /** The host download service, typed loosely enough for a host that predates
  *  `exportStatus` (API 4.6) or `exportVisualsContentExtended` (API 5.3). */
@@ -187,6 +239,9 @@ export class Visual implements IVisual {
     private hourCache: { dv: DataView; key: string; model: HourModel | null } | null = null;
     /** Hour buckets the reader has cross-filtered (Hours layout). */
     private hourSelected = new Set<HourCell>();
+    /** The selection a report bookmark restored (zentrix-qa#1), or null once the user
+     *  selects or clears by hand. See `syncSelectionState`. */
+    private restoredSelection: powerbi.visuals.ISelectionId[] | null = null;
     /** Every cell the last calendar render drew — resolves an Insight card's day. */
     private lastDrawnDays: DayCell[] = [];
     /** Cell element that opened the detail panel — focus returns here on Esc/close. */
@@ -194,6 +249,8 @@ export class Visual implements IVisual {
     /** UAT-7 — a small-tile gear click switched us into focus mode; open the bar
      *  on the first in-focus update so the click still lands in settings. */
     private pendingFocusOpen = false;
+    /** Was the last update in focus mode? Leaving it closes an open settings panel. */
+    private wasInFocus = false;
 
     /** Author-written annotations (Z-152), hydrated from the persisted blob each update(). */
     private notes = new NoteStore();
@@ -319,6 +376,7 @@ export class Visual implements IVisual {
         // it away here would read as data loss.
         this.svg.on("click", () => {
             this.noteEditor.commit();
+            this.restoredSelection = null;
             this.selectionManager.clear();
             this.panel.close();
             this.selectedGroup.selectAll("*").remove();
@@ -329,6 +387,20 @@ export class Visual implements IVisual {
 
         // Native right-click menu on the empty canvas (empty-selection context menu).
         bindBackgroundContextMenu(this.svg, this.selectionManager);
+        // …and on every HTML region beside the SVG: Table, Insight, pill, gear, bar,
+        // day panel, landing page (zentrix-qa#13, cert 1180.2.5).
+        bindCanvasContextMenu(options.element, this.selectionManager);
+        // Bookmarks (zentrix-qa#1): the host hands a bookmark's selection back here, not
+        // through update(). Keep it and repaint; the host already holds the selection,
+        // so this only redraws — it never calls select().
+        // https://learn.microsoft.com/en-us/power-bi/developer/visuals/bookmarks-support
+        try {
+            this.selectionManager.registerOnSelectCallback((ids: powerbi.extensibility.ISelectionId[]) => {
+                this.restoredSelection = ids as unknown as powerbi.visuals.ISelectionId[];
+                this.restoreHourSelection();
+                this.rerenderFromSettings();
+            });
+        } catch { /* a host without bookmark support still renders */ }
 
         // Callout dragging (Z-152). Bound ONCE at construction, on the window rather
         // than the callout: a drag must keep tracking after the pointer leaves the
@@ -381,7 +453,11 @@ export class Visual implements IVisual {
             this.authoring = !readingView;
             // QA-04: on tiles smaller than the bar's own popover (282px wide) the gear
             // can only overlap the grid, so hide it — resize the tile to author.
-            const tooSmallForGear = options.viewport.width < 300 || options.viewport.height < 180;
+            // zentrix-qa#35 (family drift): the gear hid under 300×180 — Desktop's default
+            // insert size — so a new visual could not be configured without resizing.
+            // A small-tile gear click already opens settings in FOCUS MODE (UAT-7, below),
+            // so it only steps aside where it would be most of the tile.
+            const tooSmallForGear = options.viewport.width < 160 || options.viewport.height < 110;
             this.toolbar.update(this.formattingSettings, dark, readingView || tooSmallForGear);
             // UAT-7 — tiles too small for the settings popover to make sense: the
             // gear click switches the report into FOCUS MODE instead. The visual
@@ -400,6 +476,10 @@ export class Visual implements IVisual {
                 this.pendingFocusOpen = true;
                 return true;
             } : null);
+            // zentrix-qa#22 (QA-STANDARD §2, Sankey L-5): back from focus mode, an open
+            // panel must not come back over the now-small calendar.
+            if (this.wasInFocus && !options.isInFocus && this.toolbar.isOpen()) this.toolbar.close();
+            this.wasInFocus = !!options.isInFocus;
             if (options.isInFocus && this.pendingFocusOpen) {
                 this.pendingFocusOpen = false;
                 this.toolbar.forceOpen();
@@ -430,7 +510,11 @@ export class Visual implements IVisual {
                     // top. Guarded so a landing-page error can't blank the visual.
                     try {
                         this.landing.setTheme(dark);
+                        this.landing.setSize(viewport.width, viewport.height);
                         this.landing.show();
+                        // Family parity (zentrix-qa#35): no gear over the landing page —
+                        // there is nothing to configure until a field is bound.
+                        this.toolbar.update(this.formattingSettings, dark, true);
                     } catch {
                         // Guard: a landing-page error must not blank the visual.
                     }
@@ -445,13 +529,18 @@ export class Visual implements IVisual {
             this.landing.hide();
 
             const s = this.formattingSettings;
+            // zentrix-qa#19: every surface formats with the Value measure's own format
+            // string and the report's locale, set once here before anything draws.
+            setFormatLocale(this.host.locale);
+            setValueFormat(dataView?.categorical?.values?.find(v => v.source.roles?.["value"])?.source.format);
             const firstDayOfWeek = parseInt(s.dataDisplay.firstDayOfWeek.value.value as string, 10) || 0;
             const aggMode = s.dataDisplay.aggregation.value.value as AggregationMode;
             const render = buildFacetedModel(dataView!, this.host, firstDayOfWeek, aggMode);
             if (!render) {
                 this.exitAltView();
                 this.forgetRender();
-                this.renderEmptyState("noData", viewport.width, viewport.height);
+                this.lastDateColumn = dataView?.categorical?.categories?.find(c => c.source.roles?.["date"]);
+                this.renderEmptyState(this.dateIsNotDates() ? "notADate" : "noValues", viewport.width, viewport.height);
                 this.events.renderingFinished(options);
                 return;
             }
@@ -552,10 +641,14 @@ export class Visual implements IVisual {
 
     /**
      * Export the calendar's data as CSV (one file per table), an Excel workbook (one
-     * sheet per table) or a PDF (a snapshot of the calendar, then the tables). Every
-     * outcome — done, refused, or a build error — is reported in the bar's status line.
-     * Files and types follow learn.microsoft.com/power-bi/developer/visuals/file-download-api
-     * (csv as text; pdf / xlsx as "base64").
+     * sheet per table) or a PDF (a snapshot of the calendar, then the tables drawn as
+     * pages). Files and types follow learn.microsoft.com/power-bi/developer/visuals/
+     * file-download-api (csv as text; pdf / xlsx as "base64").
+     *
+     * Outcomes (zentrix-qa#4): the host's pre-check already ruled out an admin block,
+     * so a download that comes back false after it is the user pressing Cancel on Power
+     * BI's save prompt. That stops the export — no second prompt for the next file — and
+     * says "cancelled", never "refused by your tenant". A throw is a real failure.
      */
     private async exportData(format: ExportFormat): Promise<void> {
         const dl = this.downloadService();
@@ -566,35 +659,40 @@ export class Visual implements IVisual {
         const input = r.render;
         const tables = buildExportTables(input, r.firstDayOfWeek, input.categoryName);
         const stem = fileStem(input.combined.valueName);
-        const refused = "The download was refused by Power BI. Check your tenant's custom-visual download setting.";
+        const cancelled = "Export cancelled — no file was saved.";
         try {
             if (format === "csv") {
-                let ok = true;
+                let saved = 0;
                 for (const t of tables) {
-                    ok = (await this.sendFile(dl, toCsv(t.rows), `${stem}-${t.name.toLowerCase()}.csv`, "csv", `${t.name} table`)) && ok;
+                    const ok = await this.sendFile(dl, toCsv(t.rows), `${stem}-${t.name.toLowerCase()}.csv`, "csv", `${t.name} table`);
+                    if (!ok) { this.actionBar.flash(saved ? `Export stopped after ${saved} of ${tables.length} files.` : cancelled); return; }
+                    saved++;
                 }
-                this.actionBar.flash(ok ? `Downloaded ${tables.length} CSV files.` : refused);
+                this.actionBar.flash(`Downloaded ${tables.length} CSV files.`);
                 return;
             }
             if (format === "xlsx") {
                 const ok = await this.sendFile(dl, buildWorkbookBase64(tables), `${stem}.xlsx`, "base64", "Calendar data");
-                this.actionBar.flash(ok ? `Downloaded ${stem}.xlsx.` : refused);
+                this.actionBar.flash(ok ? `Downloaded ${stem}.xlsx.` : cancelled);
                 return;
             }
             const surface = this.canvas();
-            const snapshot = await captureVisualSnapshot(this.svg.node() as SVGSVGElement, r.width, r.height,
-                surface.bg ?? resolveSurface(surface.dark).bg);
+            const bg = surface.bg ?? resolveSurface(surface.dark).bg;
+            const snapshot = await captureVisualSnapshot(this.svg.node() as SVGSVGElement, r.width, r.height, bg);
+            const light = resolveSurface(false);
+            const pages = renderTablePages(tables.map(printTable), {
+                bg: light.bg, fg: light.fg, muted: light.muted, rule: light.muted, font: FONT_FAMILY,
+            });
             const pdf = buildPdfBase64({
                 jpegBase64: snapshot.jpegBase64, imageWidth: snapshot.width, imageHeight: snapshot.height,
-                title: `Calendar heatmap: ${input.combined.valueName || "value"}`,
+                title: "Calendar heatmap",
                 footnote: "The day and month tables follow this snapshot.",
-                sections: tables.map(t => ({ title: `${t.name} CSV`, csv: toCsv(t.rows) })),
+                pages,
             });
             const ok = await this.sendFile(dl, pdf, `${stem}.pdf`, "base64", "Calendar snapshot and data");
-            this.actionBar.flash(ok ? `Downloaded ${stem}.pdf.` : refused);
+            this.actionBar.flash(ok ? `Downloaded ${stem}.pdf.` : cancelled);
         } catch {
-            // Host or tenant refused, or the snapshot couldn't be built — say so.
-            this.actionBar.flash(refused);
+            this.actionBar.flash("The file couldn't be created in this Power BI host, so nothing was downloaded.");
         }
     }
 
@@ -891,7 +989,11 @@ export class Visual implements IVisual {
                 splitLow: s.colors.splitLow.value.value,
                 splitMid: s.colors.splitMid.value.value,
                 splitHigh: s.colors.splitHigh.value.value,
-                themeAccent: (palette.foreground && palette.foreground.value) || "#7C5CFF",
+                // zentrix-qa#31: the theme's first data colour — `foreground` is its TEXT
+                // colour, so "Theme" painted grey on every theme. Asked for before any
+                // event type, so this key always takes the theme's first colour.
+                themeAccent: (typeof palette.getColor === "function" && palette.getColor(THEME_ACCENT_KEY).value)
+                    || (palette.foreground && palette.foreground.value) || "#7C5CFF",
                 dark,
             });
         const labelColor = hc ? palette.foreground.value : (dark ? "#8A8A99" : "#70707F");
@@ -909,8 +1011,10 @@ export class Visual implements IVisual {
         // Same gate as the insight band (fail-open PremiumGate). Locked = a visible,
         // greyed teaser whose click raises the upgrade banner (NG-274 parity).
         const insightLocked = insightWanted && !this.premium.active;
-        // On a tile too small for the gear the pill is pure occlusion; drop it.
-        const tiny = canvasW < 300 || canvasH < 180;
+        // On a tile too small for the gear the pill is pure occlusion; drop it. Between
+        // that and a roomy tile it goes icons-only — the family's compact pill (#35).
+        const tiny = canvasW < 160 || canvasH < 110;
+        this.viewToggle.setCompact(canvasW < 420);
         if (!this.viewSeeded) {
             const want = s.viewSwitch.defaultView.value.value as ViewMode;
             this.viewMode = want === "table" && tableOn ? "table"
@@ -928,6 +1032,9 @@ export class Visual implements IVisual {
         const gearAuto = (s.toolbar.position.value.value as string) === "auto";
 
         if (this.viewMode !== "visual") {
+            // A cross-highlight from another visual narrows these views too (zentrix-qa#12).
+            const highlighting = !!combined.hasHighlights && combined.days.some(d => d.isHighlighted !== undefined);
+            if (highlighting) input = highlightedView(input);
             // Cell-anchored surfaces can't survive without cells.
             this.panel.close();
             this.tips.hide();
@@ -950,7 +1057,10 @@ export class Visual implements IVisual {
                 renderInsightView(this.viewHost, input, {
                     dark, hc: hcColorsForOverlay, polarity,
                     fiscalStartMonth: parseInt(s.timeIntel.fiscalStart.value.value as string, 10) || 1,
-                    findings: Math.max(5, Math.round(s.insights.count.value)),
+                    // zentrix-qa#33: Max insights is the real cap (it was floored at 5, so
+                    // 1–4 did nothing) and Show insights off means no findings at all.
+                    findings: s.insights.show.value ? Math.min(6, Math.max(1, Math.round(s.insights.count.value))) : 0,
+                    weekend: s.nonWorking.weekend.value.value as WeekendSet,
                     onAction: (a) => this.applyInsightAction(a),
                 });
             }
@@ -973,7 +1083,7 @@ export class Visual implements IVisual {
         // While the pill is up the calendar leaves the bottom strip free for it (and
         // the gear beside it), so neither ever sits on a day cell. Layout below reads
         // `height`; only the gear corner and the annotation clamp use the full canvas.
-        const height = canvasH - (pillShown ? PILL_STRIP : 0);
+        let height = canvasH - (pillShown ? PILL_STRIP : 0);
         const hourModel = hoursMode ? this.getHourModel(firstDayOfWeek) : null;
         if (hoursMode && (!hourModel || !hourModel.hasTime)) {
             // Honest empty state rather than one meaningless midnight column.
@@ -1023,6 +1133,26 @@ export class Visual implements IVisual {
             ? input.facets.map(f => filterColors(buildColorAccessor(f.model, colorOpts), keepDays))
             : [];
         const colorsFor = (i: number): ColorAccessor => (sharedScale ? colors : facetColors[i]);
+
+        // Honest notes (spec §8 — never silently truncate): render-day cap, facet cap,
+        // field issues, a scale fallback. They get their OWN rows at the bottom of the
+        // layout — drawn under the grid they overprinted the legend / event key and hid
+        // behind the view pill (zentrix-qa#10, #20, #21).
+        const notes: string[] = [];
+        if (combined.totalDays > combined.days.length) {
+            notes.push(`Showing the last ${combined.days.length} of ${combined.totalDays} days — enlarge or filter to see the rest`);
+        }
+        if (hoursMode && input.facets.length > 1) {
+            notes.push(`Hours layout: all ${input.categoryName ?? "groups"} combined`);
+        }
+        for (const issue of combined.fieldIssues ?? []) notes.push(issue);
+        if (colors.note) notes.push(colors.note); // log → linear fallback, all-equal values
+        if (faceted && input.totalCategories > input.facets.length) {
+            notes.push(`Showing the ${input.facets.length} largest of ${input.totalCategories} groups`);
+        }
+        const NOTE_ROW = 13;
+        const notesH = notes.length ? notes.length * NOTE_ROW + 4 : 0;
+        height -= notesH;
 
         // Legend band reservation (top or bottom). Left/Right (vertical) is a
         // follow-up — it needs the grid to reserve side-width.
@@ -1172,13 +1302,40 @@ export class Visual implements IVisual {
             geo = res.geo; cells = res.cells;
         }
 
+        // zentrix-qa#21 — never crop silently. Cells under 1.5px are not a calendar any
+        // more: say so instead. Otherwise, if any day still lands outside the box (a
+        // layout that can't shrink further), label the visual as cut off.
+        if (!hourModel && drawnDays.length) {
+            const smallest = drawnDays.reduce((m, d) => Math.min(m, d.ps ?? 0), Infinity);
+            if (smallest < 1.5) {
+                this.contentGroup.selectAll("*").remove();
+                this.panel.close();
+                this.lastDrawnDays = [];
+                this.renderMessage("Too small to show this calendar — enlarge the visual or filter to fewer days.",
+                    width, height, labelColor);
+                this.toolbar.setCorner(pillShown && gearAuto ? "br" : pickCorner(canvasW, canvasH, barShown ? [this.barRect(canvasW)] : []));
+                this.viewToggle.setGearAtBr(this.toolbar.isVisible() && this.toolbar.corner() === "br");
+                this.syncBarTop();
+                return;
+            }
+            const cut = drawnDays.some(d => (d.px ?? 0) + (d.ps ?? 0) > width + 0.5 || (d.py ?? 0) + (d.ps ?? 0) > height + 0.5);
+            if (cut) {
+                const t = this.contentGroup.append("text").classed("zx-cut-note", true)
+                    .attr("x", 4).attr("y", Math.max(12, height - 4))
+                    .attr("fill", labelColor).attr("font-family", FONT_FAMILY).attr("font-size", "10px")
+                    .attr("font-weight", "600")
+                    .text("Some days don't fit — enlarge the visual to see them all");
+                t.attr("paint-order", "stroke").attr("stroke", dark ? surfaceBase : surfaceElevatedLight).attr("stroke-width", 3);
+            }
+        }
+
         if (legendShown) {
             // Hug the grid content edge (not the canvas edge) so the legend stays
             // attached to the chart even when the grid is shorter than the viewport.
             const legendY = legendPos === "bottom"
                 ? geo.marginTop + geo.gridHeight + 8
                 : Math.max(headerH + 2, geo.marginTop - legendBandH - 2);
-            renderLegend(this.contentGroup, {
+            const legendOpts = {
                 x: geo.marginLeft,
                 y: legendY,
                 availableWidth: geo.gridWidth,
@@ -1195,19 +1352,24 @@ export class Visual implements IVisual {
                 noDataSide: lg.noDataSide.value.value as NoDataSide,
                 title: lg.title.value,
                 textStyle: s.legendText.toStyle(),
-            });
-            // Event-type key (HM-V2-11) shares the legend band, on the side the legend
-            // doesn't use, capped so the two can never meet.
+            };
+            renderLegend(this.contentGroup, legendOpts);
+            // Event-type key (HM-V2-11) shares the legend band, in the free width beside
+            // the legend's REAL extent — it used a fixed share of the grid width, so a
+            // longer gradient or larger text ran "No data" into it and a third type
+            // collapsed to "+1" with space to spare (zentrix-qa#10/#32).
             const types = combined.eventTypes ?? [];
             if (!hourModel && s.events.show.value && s.events.showKey.value && types.length) {
                 const align = lg.align.value.value as LegendAlign;
                 const ts = s.legendText.toStyle();
-                const cap = geo.gridWidth * (align === "center" ? 0.22 : 0.42);
+                const [l0, l1] = legendExtent(legendOpts);
+                const onLeft = align === "end";
+                const right = onLeft ? l0 - 16 : width - 4;
+                const maxWidth = onLeft ? l0 - 16 - 2 : width - 4 - (l1 + 16);
                 renderEventKey(this.contentGroup, {
-                    right: align === "end" ? geo.marginLeft + cap : geo.marginLeft + geo.gridWidth,
-                    y: legendY + legendBandH / 2 - 2, maxWidth: cap, types,
+                    right, y: legendY + legendBandH / 2 - 2, maxWidth, types,
                     colorOf: (t) => eventColorOf({ eventType: t }),
-                    labelColor, fontSize: Math.max(9, ts.size - 1), font: FONT_FAMILY,
+                    labelColor, fontSize: Math.max(9, ts.size - 1), font: ts.family || FONT_FAMILY, bold: ts.bold,
                 });
             }
         }
@@ -1224,10 +1386,18 @@ export class Visual implements IVisual {
         const wkSet = nw.weekend.value.value as WeekendSet;
         const nwStyle = nw.style.value.value as NonWorkingStyle;
         const nwInk = hc ? palette.foreground.value : labelColor;
+        // Days that end up under the tint wash — the cell labels pick their ink against
+        // the washed colour, not the raw one (zentrix-qa#8).
+        const tinted = new Set<DayCell>();
         if (nw.shadeWeekends.value || nw.showHolidays.value) {
             for (const d of drawnDays) {
                 const off = (nw.shadeWeekends.value && isWeekend(d.date, wkSet)) || (nw.showHolidays.value && !!d.holiday);
-                if (off) drawNonWorking(this.defs, this.badgeGroup, cellBox(d), nwStyle, dark, nwInk, hc);
+                if (!off) continue;
+                // A day the Filter KEPT never gets the wash — it would read as one of the
+                // faded days. It takes the outline mark instead (zentrix-qa#8).
+                const style: NonWorkingStyle = nwStyle === "tint" && keepDays?.has(d) ? "outline" : nwStyle;
+                drawNonWorking(this.defs, this.badgeGroup, cellBox(d), style, dark, nwInk, hc);
+                if (style === "tint" && !hc) tinted.add(d);
             }
         }
 
@@ -1289,14 +1459,13 @@ export class Visual implements IVisual {
         // badge (both sit at the centre). A day the Filter faded to no-data has no
         // number to show. Ink is chosen per cell against that cell's own fill.
         if (s.labels.showCellValues.value) {
-            const fmt = chosenFormat();
             const labelOpts = {
                 fontSize: Math.min(24, Math.max(6, Number(s.labels.cellValueSize.value) || 10)),
                 fontFamily: FONT_FAMILY,
                 inkA: hc ? palette.foreground.value : textPrimaryLight,
                 inkB: hc ? palette.background.value : textPrimary,
-                // Auto = compact (1.2K), the only scale that fits a day cell.
-                format: (n: number) => (fmt ? formatValue(n, fmt.units, fmt.decimals) : formatValue(n, "auto", 1)),
+                // Auto = the KPI chips' compact scale (1.2K) — the only one that fits a cell.
+                format: (n: number) => formatWith(n, compactScale),
             };
             if (hourModel) {
                 drawCellLabels(this.badgeGroup, hourModel.cells, {
@@ -1306,7 +1475,10 @@ export class Visual implements IVisual {
                 const facetIndex = new Map(input.facets.map((f, i) => [f.key, i] as [string, number]));
                 drawCellLabels(this.badgeGroup, drawnDays, {
                     ...labelOpts,
-                    fillOf: d => colorsFor(faceted && !sharedScale ? (facetIndex.get(d.facetKey ?? "") ?? 0) : 0).of(d),
+                    fillOf: d => {
+                        const fill = colorsFor(faceted && !sharedScale ? (facetIndex.get(d.facetKey ?? "") ?? 0) : 0).of(d);
+                        return tinted.has(d) ? tintOver(fill, dark) : fill;
+                    },
                     skip: d => d.noData || badgeByDay.has(d) || (keepDays != null && !keepDays.has(d)),
                 });
             }
@@ -1378,22 +1550,11 @@ export class Visual implements IVisual {
             ? { background: palette.background.value, foreground: palette.foreground.value }
             : null));
 
-        // Honest notes (spec §8 — never silently truncate): render-day cap, then facet cap.
-        const notes: string[] = [];
-        if (combined.totalDays > combined.days.length) {
-            notes.push(`Showing last ${combined.days.length} of ${combined.totalDays} days`);
-        }
-        if (hoursMode && input.facets.length > 1) {
-            notes.push(`Hours layout: all ${input.categoryName ?? "groups"} combined`);
-        }
-        for (const issue of combined.fieldIssues ?? []) notes.push(issue);
-        if (faceted && input.totalCategories > input.facets.length) {
-            notes.push(`Showing ${input.facets.length} of ${input.totalCategories} groups`);
-        }
         notes.forEach((text, i) => {
             this.contentGroup.append("text")
+                .classed("zx-note", true)
                 .attr("x", width - 4)
-                .attr("y", geo.marginTop + geo.gridHeight + 16 + i * 13)
+                .attr("y", height + 2 + (i + 1) * NOTE_ROW - 3)
                 .attr("text-anchor", "end")
                 .attr("fill", labelColor)
                 .attr("font-family", "Segoe UI, -apple-system, sans-serif")
@@ -1477,6 +1638,7 @@ export class Visual implements IVisual {
             noteByDay: noteTextByDay,            // Z-152
             canAnnotate: this.authoring && ann.show.value,
             notesFull: this.notes.isFull(),
+            rightInset: barShown ? AB_STRIP : 0,
         });
         // If the panel is disabled, close it; otherwise re-resolve the open day so it
         // survives this re-render (format edits / resize) — spec §4.1.
@@ -1497,6 +1659,19 @@ export class Visual implements IVisual {
         }
     }
 
+    /** Re-mark the Hours buckets a bookmark restored: a bucket is selected when every
+     *  row it stands for is in the restored set (its click selects all of them). */
+    private restoreHourSelection(): void {
+        this.hourSelected.clear();
+        const ids = this.restoredSelection;
+        const model = this.hourCache?.model;
+        if (!ids || !ids.length || !model) return;
+        const has = (id: powerbi.visuals.ISelectionId) => ids.some(x => { try { return x.equals(id); } catch { return false; } });
+        for (const c of model.cells) {
+            if (c.selectionIds.length && c.selectionIds.every(has)) this.hourSelected.add(c);
+        }
+    }
+
     /** The Hours model for the current DataView, built once per (data, week start,
      *  aggregate) — it makes a selection id per row, so it is not rebuilt per repaint. */
     private getHourModel(firstDayOfWeek: number): HourModel | null {
@@ -1508,6 +1683,7 @@ export class Visual implements IVisual {
         const model = buildHourModel(dv, this.host, firstDayOfWeek, agg);
         this.hourCache = { dv, key, model };
         this.hourSelected.clear();
+        if (this.restoredSelection) this.restoreHourSelection(); // a bookmark that arrived first
         return model;
     }
 
@@ -1558,6 +1734,7 @@ export class Visual implements IVisual {
                 } else if (this.hourSelected.has(c)) this.hourSelected.delete(c);
                 else this.hourSelected.add(c);
                 const ids = [...this.hourSelected].flatMap(h => h.selectionIds);
+                this.restoredSelection = null;
                 (ids.length ? this.selectionManager.select(ids, false) : this.selectionManager.clear()).then(paint, paint);
                 paint();
             })
@@ -1579,6 +1756,7 @@ export class Visual implements IVisual {
     /** Close the detail panel, clear the unified selection (DD-2), restore cell focus. */
     private closeDetailPanel(): void {
         this.panel.close();
+        this.restoredSelection = null;
         this.selectionManager.clear();
         this.selectedGroup.selectAll("*").remove();
         this.contentGroup.selectAll<SVGRectElement, DayCell>("rect.cell").attr("fill-opacity", 1);
@@ -1623,13 +1801,17 @@ export class Visual implements IVisual {
         // treatment, so host highlight ⊃ idle state (capabilities supportsHighlight).
         const applyState = () => {
             const dim = this.dimOpacity();
-            const isSelected = syncSelectionState(cells, this.selectionManager, dim);
-            if (model.hasHighlights && !this.selectionManager.hasSelection()) applyHighlight(cells, dim);
+            const restored = this.restoredSelection;
+            const isSelected = syncSelectionState(cells, this.selectionManager, dim, restored);
+            const anySelected = restored ? restored.length > 0 : this.selectionManager.hasSelection();
+            if (model.hasHighlights && !anySelected) applyHighlight(cells, dim);
             this.selectedGroup.selectAll("*").remove();
             cells.each((d) => { if (isSelected(d)) drawSelectedRing(this.selectedGroup, box(d)); });
         };
 
-        bindSelection(cells, this.selectionManager, applyState);
+        // A user gesture replaces whatever a bookmark restored.
+        const userChange = () => { this.restoredSelection = null; applyState(); };
+        bindSelection(cells, this.selectionManager, userChange);
         applyState(); // restore persisted selection on re-render
 
         // Day detail panel — open/toggle on click (DD-2: unified with the selection
@@ -1683,10 +1865,10 @@ export class Visual implements IVisual {
                 // is the active element at activation; remember it for focus-restore.
                 const origin = (typeof document !== "undefined"
                     && document.activeElement instanceof SVGElement) ? document.activeElement : null;
-                if (d.selectionId) this.selectionManager.select(d.selectionId, multi).then(applyState);
+                if (d.selectionId) this.selectionManager.select(d.selectionId, multi).then(userChange);
                 if (panelEnabled && !multi) this.toggleDetailPanel(d, origin, true);
             },
-            onClear: () => this.selectionManager.clear().then(applyState),
+            onClear: () => this.selectionManager.clear().then(userChange),
             onContextMenu: (d, node) => {
                 // Same host menu as right-click, anchored at the focused cell so the
                 // menu opens where the keyboard user is (rect.left / rect.bottom).
@@ -1716,11 +1898,29 @@ export class Visual implements IVisual {
         return null;
     }
 
+    /** The Date-well column of the last empty update (for the empty-state wording). */
+    private lastDateColumn?: powerbi.DataViewCategoryColumn;
+
+    private dateFieldName(): string { return this.lastDateColumn?.source.displayName ?? ""; }
+
+    /** True when the Date well has values but none of them is a date (a text column
+     *  dropped into it) — a different message from "no rows under this filter". */
+    private dateIsNotDates(): boolean {
+        const vals = this.lastDateColumn?.values ?? [];
+        const present = vals.filter(v => v != null && v !== "");
+        if (!present.length) return false;
+        return present.every(v => !(v instanceof Date) && (typeof v !== "number") && isNaN(new Date(String(v)).getTime()));
+    }
+
     private renderEmptyState(reason: EmptyReason, w: number, h: number): void {
         const messages: Record<EmptyReason, string> = {
             noData: "Add a Date field and a Value field to build the calendar",
             missingDate: "Add a Date field — it sets the day axis",
-            missingValue: "Add a Value field — it drives the color intensity",
+            missingValue: "Add a Value field — it drives the colour intensity",
+            // zentrix-qa#17: both fields bound is a reader's situation, not an author's —
+            // never tell them to add fields that are already there.
+            noValues: "No values for the current filters",
+            notADate: `${this.dateFieldName() || "The Date field"} isn't a date — bind a date or date/time column`,
         };
         this.renderMessage(messages[reason], w, h, "#70707F");
     }
