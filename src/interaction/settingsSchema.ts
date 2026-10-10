@@ -345,27 +345,51 @@ export function readLocal(m: Model, key: string): unknown { return KEYS[key]?.ge
 export function makeCfg(
     getModel: () => Model, persist: PersistBatch,
     onChange?: (key: string, value: unknown) => void, reset?: () => void,
+    getFlags?: () => Record<string, unknown>,
 ): SBCfg {
+    const set = (key: string, value: unknown): void => {
+        const e = KEYS[key]; if (!e) return;
+        e.setLocal(getModel(), value);   // optimistic: edit shows up now, not after the host round-trip
+        // Buffer every property this edit persists and flush as ONE call. An
+        // entry may write >1 property (a custom colour also sets paletteMode);
+        // firing them as separate persistProperties calls lets the host's
+        // last-write-wins coalescing drop all but the last, so the colour
+        // reverted to default on refresh. One merge keeps them atomic.
+        const writes: PersistWrite[] = [];
+        e.set((object, prop, v) => writes.push({ object, prop, value: v }), value);
+        if (writes.length) persist(writes);   // durable: survives reloads / report save
+        onChange?.(key, value);
+    };
     return {
-        get(key: string): unknown { const e = KEYS[key]; return e ? e.get(getModel()) : undefined; },
-        set(key: string, value: unknown): void {
-            const e = KEYS[key]; if (!e) return;
-            e.setLocal(getModel(), value);   // optimistic: edit shows up now, not after the host round-trip
-            // Buffer every property this edit persists and flush as ONE call. An
-            // entry may write >1 property (a custom colour also sets paletteMode);
-            // firing them as separate persistProperties calls lets the host's
-            // last-write-wins coalescing drop all but the last, so the colour
-            // reverted to default on refresh. One merge keeps them atomic.
-            const writes: PersistWrite[] = [];
-            e.set((object, prop, v) => writes.push({ object, prop, value: v }), value);
-            if (writes.length) persist(writes);   // durable: survives reloads / report save
-            onChange?.(key, value);
+        get(key: string): unknown {
+            if (key.charCodeAt(0) === 64) return getFlags?.()[key.slice(1)]; // `@`-prefixed data flags
+            const e = KEYS[key]; return e ? e.get(getModel()) : undefined;
+        },
+        set,
+        // The card header's reset icon (NG-048): put just this card's keys back to the
+        // model defaults, through the same optimistic + persist path as an edit.
+        resetKeys(keys: string[]): void {
+            const fresh = new VisualFormattingSettingsModel();
+            // Custom colours first: writing `col.*` also flips paletteMode (colorMode /
+            // startColorEntry), so the card's own `paletteMode` default must land last.
+            const ordered = [...keys.filter(k => k.startsWith("col.")), ...keys.filter(k => !k.startsWith("col."))];
+            for (const key of ordered) { const e = KEYS[key]; if (e) set(key, e.get(fresh)); }
         },
         reset,
     };
 }
 
 /* ───────────── the category / sub / field schema ───────────── */
+
+/* Optional field wells (`@` flags from visual.ts `boundRoleFlags`). A setting that reads
+ * an empty well DIMS and names the well, rather than offering a control that does nothing
+ * (SETTINGS-TAXONOMY "Control conventions"). Lock only on an explicit false, so a host that
+ * never sent flags fails open. */
+const noSplit = (g: (k: string) => unknown) => g("@hasSplit") === false;
+const noEvent = (g: (k: string) => unknown) => g("@hasEvent") === false;
+const NEEDS_SPLIT = "Bind a field to Split by — small multiples draw one calendar per value.";
+const NEEDS_EVENT = "Bind a field to the Event well to mark what happened on a day.";
+const NEEDS_TARGET = "Bind a measure to the Target well to compare against it.";
 
 /** One rules-engine slot (Z-146) as detail-pane fields — mirrors the native
  *  `RuleSlot` slices 1:1, with the same visibleIf gating as `DayBadgesCard.onPreProcess`:
@@ -397,21 +421,24 @@ const ruleFields = (n: 1 | 2 | 3, defaultName: string): SBField[] => {
     return [
         { control: "switch", label: `Rule ${n}`, key: `rule${n}.on`, labelFn: g => ruleSummaryLabel(n, g, defaultName) },
         { control: "text", label: "Name", key: `rule${n}.name`, placeholder: defaultName, visibleIf: on },
-        { control: "segText", label: "Operator", key: `rule${n}.operator`, options: RULE_OPERATOR_OPTS, visibleIf: on },
+        { control: "select", label: "Operator", key: `rule${n}.operator`, options: RULE_OPERATOR_OPTS, visibleIf: on },
         { control: "stepper", label: "Value", key: `rule${n}.value`, min: -1e9, max: 1e9, visibleIf: on },
         { control: "stepper", label: "and", key: `rule${n}.value2`, min: -1e9, max: 1e9, visibleIf: g => on(g) && String(g(`rule${n}.operator`)) === "between" },
-        { control: "segText", label: "Compare", key: `rule${n}.compareTo`, options: RULE_COMPARE_OPTS, visibleIf: on },
+        { control: "segText", label: "Compare", key: `rule${n}.compareTo`, visibleIf: on, options: [
+            RULE_COMPARE_OPTS[0],
+            { value: RULE_COMPARE_OPTS[1][0], label: RULE_COMPARE_OPTS[1][1], disabledIf: g => g("@hasTarget") === false, disabledReason: NEEDS_TARGET },
+        ] },
         { control: "emoji", label: "Badge", key: `rule${n}.badge`, visibleIf: on },
         { control: "color", label: "Colour", key: `rule${n}.color`, visibleIf: on },
         { control: "switch", label: "CVD hatch", key: `rule${n}.pattern`, visibleIf: on },
-        { control: "segText", label: "Pattern style", key: `rule${n}.patternStyle`, options: PATTERN_STYLE_OPTS, visibleIf: g => on(g) && Boolean(g(`rule${n}.pattern`)) },
+        { control: "select", label: "Pattern style", key: `rule${n}.patternStyle`, options: PATTERN_STYLE_OPTS, visibleIf: g => on(g) && Boolean(g(`rule${n}.pattern`)) },
     ];
 };
 
 /** A type-style detail pane (Font · Size · B/I/U · Color) for a text group. */
 const typeFields = (prefix: string) => ([
     { control: "font" as const, label: "Font", key: `${prefix}.fontFamily` },
-    { control: "stepper" as const, label: "Size", key: `${prefix}.fontSize`, min: 8, max: 72, suffix: "px" },
+    { control: "slider" as const, label: "Text size", key: `${prefix}.fontSize`, min: 8, max: 72, step: 1, suffix: "px" },
     { control: "multiSeg" as const, label: "Style", keys: [`${prefix}.bold`, `${prefix}.italic`, `${prefix}.underline`], glyphs: ["B", "I", "U"] },
     { control: "color" as const, label: "Colour", key: `${prefix}.color` },
 ]);
@@ -425,44 +452,63 @@ export const SB_CATS: SBCategory[] = [
     // UI labels moved. Category ids "data" / "color" / "cells" / "text" / "access" are
     // kept for the tabs they became.
     { id: "data", name: "Layout", subs: [
-        { id: "layout", name: "Calendar", info: "Arrange the calendar as one continuous year grid, as separate month blocks, or as an hour × weekday grid (needs a Date field with times of day).", kind: "menu", key: "layout", options: [["continuous", "Year"], ["month", "Months"], ["hours", "Hours"]] },
-        { id: "aggregate", name: "Aggregate", info: "Choose how multiple values that fall on the same day are combined into a single number.", kind: "menu", key: "aggregate", options: [["sum", "Sum"], ["avg", "Average"], ["min", "Min"], ["max", "Max"], ["count", "Count"]] },
-        { id: "week", name: "Week start", info: "Set which weekday each column starts on — Sunday or Monday.", kind: "menu", key: "weekStart", options: [["0", "Sun"], ["1", "Mon"]] },
-        { id: "fiscal", name: "Fiscal year", info: "Month the fiscal year starts on. Shifts the year-over-year insight, and — with Fiscal layout on — also starts the calendar's year bands on this month.", kind: "menu", key: "fiscalStart", options: [["1", "Jan"], ["2", "Feb"], ["3", "Mar"], ["4", "Apr"], ["5", "May"], ["6", "Jun"], ["7", "Jul"], ["8", "Aug"], ["9", "Sep"], ["10", "Oct"], ["11", "Nov"], ["12", "Dec"]] },
+        { id: "layout", name: "Calendar", info: "Arrange the calendar as one continuous year grid, as separate month blocks, or as an hour × weekday grid (needs a Date field with times of day).", kind: "fields", fields: [
+            { control: "segText", label: "Calendar", key: "layout", options: [["continuous", "Year"], ["month", "Months"], ["hours", "Hours"]],
+                note: "Hours needs a Date field that carries times of day." },
+        ] },
+        { id: "aggregate", name: "Aggregate", info: "Choose how multiple values that fall on the same day are combined into a single number.", kind: "fields", fields: [
+            { control: "select", label: "Combine values by", key: "aggregate", options: [["sum", "Sum"], ["avg", "Average"], ["min", "Minimum"], ["max", "Maximum"], ["count", "Count"]] },
+        ] },
+        { id: "week", name: "Week start", info: "Set which weekday each column starts on — Sunday or Monday.", kind: "fields", fields: [
+            { control: "segText", label: "Week starts on", key: "weekStart", options: [["0", "Sunday"], ["1", "Monday"]] },
+        ] },
+        { id: "fiscal", name: "Fiscal year", info: "Month the fiscal year starts on. Shifts the year-over-year insight, and — with Fiscal layout on — also starts the calendar's year bands on this month.", kind: "fields", fields: [
+            { control: "select", label: "Fiscal year starts in", key: "fiscalStart", options: [["1", "January"], ["2", "February"], ["3", "March"], ["4", "April"], ["5", "May"], ["6", "June"], ["7", "July"], ["8", "August"], ["9", "September"], ["10", "October"], ["11", "November"], ["12", "December"]] },
+        ] },
         { id: "fiscallayout", name: "Fiscal layout", info: "Lay the calendar out by fiscal year: year bands start on the fiscal start month and are labeled FY (numbered by the year the fiscal year ends in). Applies to the continuous layout.", kind: "fields", width: 250, fields: [
             { control: "switch", label: "Fiscal year layout", key: "fiscalDisplay" },
         ] },
         { id: "facets", name: "Small multiples", info: "Applies when a Split-by category is bound: how many panel columns to lay out (0 = automatic), and whether every panel shares one color scale so colors compare across panels.", kind: "fields", width: 260, fields: [
-            { control: "stepper", label: "Columns (0 = auto)", key: "facets.columns", min: 0, max: 8 },
-            { control: "switch", label: "Shared colour scale", key: "facets.sharedScale" },
+            { control: "stepper", label: "Columns (0 = auto)", key: "facets.columns", min: 0, max: 8, dimIf: noSplit, disabledReason: NEEDS_SPLIT },
+            { control: "switch", label: "Shared colour scale", key: "facets.sharedScale", dimIf: noSplit, disabledReason: NEEDS_SPLIT },
         ] },
     ] },
     { id: "cells", name: "Cells", subs: [
-        { id: "density", name: "Density", info: "Set how large each day cell is drawn.", kind: "menu", key: "density", options: [[10, "Compact"], [16, "Cozy"], [22, "Roomy"]] },
+        { id: "density", name: "Density", info: "Set how large each day cell is drawn.", kind: "fields", fields: [
+            { control: "slider", label: "Max cell size", key: "density", min: 6, max: 40, step: 1, suffix: "px",
+                note: "Cells shrink below this when the tile is too small to fit the year." },
+        ] },
         { id: "gaps", name: "Gaps", info: "Set the spacing between day cells — independently for rows (vertical) and columns (horizontal).", kind: "fields", width: 240, fields: [
-            { control: "stepper", label: "Row gap", key: "cellGapY", min: 0, max: 12, suffix: "px" },
-            { control: "stepper", label: "Column gap", key: "cellGapX", min: 0, max: 12, suffix: "px" },
+            { control: "slider", label: "Row gap", key: "cellGapY", min: 0, max: 12, step: 1, suffix: "px" },
+            { control: "slider", label: "Column gap", key: "cellGapX", min: 0, max: 12, step: 1, suffix: "px" },
         ] },
         { id: "radius", name: "Corner radius", info: "Round the corners of each day cell, from sharp squares to soft rounded tiles.", kind: "fields", width: 240, fields: [
-            { control: "stepper", label: "Corner radius", key: "cornerRadius", min: 0, max: 12, suffix: "px" },
+            { control: "slider", label: "Corner radius", key: "cornerRadius", min: 0, max: 12, step: 1, suffix: "px" },
         ] },
         // Family "Click & drag" sub (Sankey Nodes › Click & drag) — the calendar has no
         // drag, so only the click half: how hard a selection dims the rest of the year.
         { id: "clicks", name: "Click & hover", info: "What happens to the other days when you click one (or another visual cross-highlights this one). Dimming makes the selected days stand out; turn it off to mark the selection with its outline only.", kind: "fields", width: 282, fields: [
             { control: "switch", label: "Dim other days", key: "interactions.dimUnselected" },
-            { control: "stepper", label: "Dim strength", key: "interactions.dimStrength", min: 10, max: 95, step: 5, suffix: "%", visibleIf: g => Boolean(g("interactions.dimUnselected")) },
+            { control: "slider", label: "Dim strength", key: "interactions.dimStrength", min: 10, max: 95, step: 5, suffix: "%", visibleIf: g => Boolean(g("interactions.dimUnselected")) },
         ] },
     ] },
     { id: "color", name: "Colours", subs: [
-        { id: "palette", name: "Palette", info: "Pick a built-in color scheme for the heatmap cells.", kind: "swatch", key: "ramp", swatches: [...PRESET_IDS] },
-        { id: "scale", name: "Scale", info: "Control how values map to colors: quantile spreads colors by rank, linear by value, log compresses large ranges.", kind: "menu", key: "scale", options: [["quantile", "Quantile"], ["linear", "Linear"], ["log", "Log"]] },
-        { id: "buckets", name: "Buckets", info: "Group values into a fixed number of discrete color steps, or keep a continuous gradient.", kind: "menu", key: "buckets", options: [["0", "Continuous"], ["3", "3"], ["5", "5"], ["7", "7"]] },
+        { id: "palette", name: "Palette", info: "Pick a built-in color scheme for the heatmap cells.", kind: "fields", fields: [
+            { control: "paletteList", label: "Palette", key: "ramp", options: [...PRESET_IDS],
+                note: "Picking a palette switches the colours back from any custom edits." },
+        ] },
+        { id: "scale", name: "Scale", info: "Control how values map to colors: quantile spreads colors by rank, linear by value, log compresses large ranges.", kind: "fields", fields: [
+            { control: "segText", label: "Scale", key: "scale", options: [["quantile", "Quantile"], ["linear", "Linear"], ["log", "Log"]] },
+        ] },
+        { id: "buckets", name: "Buckets", info: "Group values into a fixed number of discrete color steps, or keep a continuous gradient.", kind: "fields", fields: [
+            { control: "segText", label: "Colour steps", key: "buckets", options: [["0", "Smooth"], ["3", "3"], ["5", "5"], ["7", "7"]] },
+        ] },
         { id: "custom", name: "Custom colours", info: "Override individual colors to build your own duotone (Start/End) or diverging split (low/mid/high) palette. Editing any of these switches the palette to your custom colors. Mode picks how cell colors are produced — Mono tints a single hue, Theme tints the report theme's accent. Plus the no-data color.", kind: "fields", width: 282, fields: [
             { control: "heading", label: "Edits here build your own palette" },
             // QA-D4 — the explicit mode row is what makes mono/theme reachable at all;
             // the implicit switches (edit Start/End → duotone, edit Split → split,
             // pick a Palette swatch → ramp) still work exactly as before.
-            { control: "segText", label: "Mode", key: "paletteMode", options: [["ramp", "Ramp"], ["mono", "Mono"], ["duotone", "Duo"], ["split", "Split"], ["theme", "Theme"]] },
+            { control: "select", label: "Mode", key: "paletteMode", options: [["ramp", "Ramp"], ["mono", "Mono"], ["duotone", "Duotone"], ["split", "Split"], ["theme", "Report theme"]] },
             { control: "color", label: "Start / hue", key: "col.start" },
             { control: "color", label: "End", key: "col.end" },
             { control: "color", label: "Split low", key: "col.splitLow" },
@@ -485,18 +531,16 @@ export const SB_CATS: SBCategory[] = [
             { control: "switch", label: "Week numbers", key: "showWeekNums" },
         ] },
         // Numbers — one home for the format that governs every surface (Sankey Pro's
-        // labelsNumbers). Seven units need a select; this gear generation has none, so
-        // they ride an abbreviated segText until the NG-048 engine lands (same
-        // precedent as Gear icon › Position's arrow glyphs).
+        // labelsNumbers), same unit list and labels.
         { id: "numbers", name: "Numbers", info: "How every number in the visual is written — the tooltip, the day panel, the KPI chips, values in cells, the Table and the Insight page. Auto keeps each place's own scale: full numbers in the tooltip, K / M / B in the chips. Pick a unit to use it everywhere, with your decimals. Exports always carry the raw numbers.", kind: "fields", width: 300, fields: [
-            { control: "segText", label: "Display units", key: "labels.displayUnits",
-                options: [["auto", "Auto"], ["none", "None"], ["thousands", "K"], ["millions", "M"], ["billions", "B"], ["lakhs", "L"], ["crores", "Cr"]] },
+            { control: "select", label: "Display units", key: "labels.displayUnits",
+                options: [["auto", "Auto"], ["none", "None"], ["thousands", "Thousands"], ["millions", "Millions"], ["billions", "Billions"], ["lakhs", "Lakhs"], ["crores", "Crores"]] },
             { control: "stepper", label: "Decimals", key: "labels.decimals", min: 0, max: 4, step: 1,
                 visibleIf: g => String(g("labels.displayUnits")) !== "auto" },
         ] },
         { id: "cellValues", name: "Cell values", info: "Print each day's number inside its cell. A cell too small for its number keeps its colour and drops the label, so on a full year this mostly shows on larger cells — the Months layout, or a roomier cell size. The text colour switches between dark and light to stay readable on every shade. A cell with a badge keeps the badge.", kind: "fields", width: 282, fields: [
             { control: "switch", label: "Values in cells", key: "labels.showCellValues" },
-            { control: "stepper", label: "Text size", key: "labels.cellValueSize", min: 6, max: 24, step: 1, suffix: "px",
+            { control: "slider", label: "Text size", key: "labels.cellValueSize", min: 6, max: 24, step: 1, suffix: "px",
                 visibleIf: g => Boolean(g("labels.showCellValues")) },
         ] },
         { id: "header", name: "Header", info: "Configure the header title text, its alignment, and the accent rule drawn beneath it.", kind: "fields", width: 282, fields: [
@@ -504,14 +548,14 @@ export const SB_CATS: SBCategory[] = [
             { control: "segIcon", label: "Align", key: "header.align", iconOptions: [["left", "left"], ["center", "center"], ["right", "right"]] },
             { control: "switch", label: "Accent rule", key: "header.ruleShow" },
             { control: "color", label: "Rule colour", key: "header.ruleColor" },
-            { control: "stepper", label: "Rule width", key: "header.ruleWidth", min: 1, max: 12, suffix: "px" },
+            { control: "slider", label: "Rule width", key: "header.ruleWidth", min: 1, max: 12, step: 1, suffix: "px" },
         ] },
         { id: "headline", name: "Headline", info: "Font, size, style, and color of the headline text.", kind: "fields", width: 282, fields: typeFields("headline") },
         { id: "stats", name: "Stats", info: "Font, size, style, and color of the stat chips.", kind: "fields", width: 282, fields: typeFields("statChips") },
         { id: "months", name: "Months", info: "Font, size, style, and color of the month labels.", kind: "fields", width: 282, fields: typeFields("monthRail") },
         { id: "weekdays", name: "Weekdays", info: "Font, size, style, and color of the weekday labels.", kind: "fields", width: 282, fields: typeFields("weekdayRail") },
         { id: "years", name: "Years", info: "Font, size, style, and color of the year tags.", kind: "fields", width: 282, fields: typeFields("yearTags") },
-        { id: "facettitle", name: "Facet titles", info: "Font, size, style, and color of the small-multiple panel titles (shown when a Split-by category is bound).", kind: "fields", width: 282, fields: typeFields("facetTitle") },
+        { id: "facettitle", name: "Facet titles", info: "Font, size, style, and color of the small-multiple panel titles (shown when a Split-by category is bound).", kind: "fields", width: 282, fields: typeFields("facetTitle").map(f => ({ ...f, dimIf: noSplit, disabledReason: NEEDS_SPLIT })) },
     ] },
     { id: "filter", name: "Filter", flat: true, subs: [
         { id: "filter", name: "Filter", info: "Keep only the highest or lowest days in colour. Every other day fades to the no-data colour but stays in place, keeps its tooltip and can still be clicked — a calendar can't drop a date the way a bar chart drops a bar. The legend, Table and Insight page still read every day. Applies to the Year and Months layouts.", kind: "fields", width: 282, fields: [
@@ -546,7 +590,7 @@ export const SB_CATS: SBCategory[] = [
     // Gear icon · Legend (Sankey Pro order).
     { id: "overlays", name: "Overlays", subs: [
         { id: "tooltip", name: "Tooltip", info: "What appears when you hover a day. Zentrix card is the branded hover card with the day-over-day change. Native uses Power BI's own tooltip, which follows the report theme and supports report-page tooltips. Off shows nothing — the hover outline still marks the day.", kind: "fields", width: 282, fields: [
-            { control: "segText", label: "Tooltip style", key: "tooltip.type", options: [["card", "Zentrix card"], ["report", "Native"], ["off", "Off"]] },
+            { control: "select", label: "Tooltip style", key: "tooltip.type", options: [["card", "Zentrix card"], ["report", "Native"], ["off", "Off"]] },
         ] },
         { id: "summaryTable", name: "View switch", info: "Which alternate views the floating Calendar / Table / Insight switch offers. Session-only, so a reader can use them in Reading view without edit rights. Summary table: the same days as sortable, searchable rows by month, weekday, day or group. Insight page: a full page of plain-language findings about the calendar.", kind: "fields", width: 282, fields: [
             { control: "switch", label: "Summary table", key: "summaryTable.show" },
@@ -568,7 +612,7 @@ export const SB_CATS: SBCategory[] = [
         // The in-visual chrome. Show gear stays pane-only: a switch that hides this panel
         // cannot live inside it (Sankey Pro's ovGear note, same reason).
         { id: "gear", name: "Gear icon", info: "Where this settings gear sits and how it closes, and the quick-action bar in the top-right corner (Export: CSV, Excel or PDF — shown only where Power BI allows downloads). Auto keeps it away from whichever corner the calendar is crowding. To hide the gear itself, use Toolbar › Show gear in the Format pane — a switch that hides this panel can't live inside it.", kind: "fields", width: 282, fields: [
-            { control: "segText", label: "Position", key: "gear.position", options: [["auto", "Auto"], ["tl", "↖"], ["tr", "↗"], ["bl", "↙"], ["br", "↘"]] },
+            { control: "select", label: "Position", key: "gear.position", options: [["auto", "Automatic"], ["tl", "Top left"], ["tr", "Top right"], ["bl", "Bottom left"], ["br", "Bottom right"]] },
             { control: "switch", label: "Close when you click away", key: "gear.closeOnAway" },
             { control: "divider" },
             // Sankey Pro's ovGear row. The bar holds Export; it appears only where the
@@ -579,8 +623,8 @@ export const SB_CATS: SBCategory[] = [
             { control: "segText", label: "Placement", key: "legendPlacement", options: [["off", "Off"], ["bottom", "Bottom"], ["top", "Top"]] },
             { control: "segIcon", label: "Align", key: "legendAlign", iconOptions: [["start", "left"], ["center", "center"], ["end", "right"]] },
             { control: "text", label: "Title", key: "legendTitle", placeholder: "(none)" },
-            { control: "stepper", label: "Swatch size", key: "legendSwatch", min: 6, max: 30, suffix: "px", visibleIf: g => String(g("buckets")) !== "0" },
-            { control: "stepper", label: "Gradient length", key: "legendGradient", min: 40, max: 320, step: 10, suffix: "px", visibleIf: g => String(g("buckets")) === "0" },
+            { control: "slider", label: "Swatch size", key: "legendSwatch", min: 6, max: 30, step: 1, suffix: "px", visibleIf: g => String(g("buckets")) !== "0" },
+            { control: "slider", label: "Gradient length", key: "legendGradient", min: 40, max: 320, step: 10, suffix: "px", visibleIf: g => String(g("buckets")) === "0" },
             { control: "divider" },
             { control: "switch", label: "Low / high labels", key: "legendLabels" },
             { control: "text", label: "Low label", key: "legendLow", placeholder: "Less" },
@@ -601,23 +645,24 @@ export const SB_CATS: SBCategory[] = [
             { control: "segText", label: "Weekend", key: "nonWorking.weekend",
                 options: [["satSun", "Sat + Sun"], ["friSat", "Fri + Sat"], ["sun", "Sun only"]],
                 visibleIf: g => Boolean(g("nonWorking.shadeWeekends")) },
-            { control: "switch", label: "Mark holidays", key: "nonWorking.showHolidays" },
+            { control: "switch", label: "Mark holidays", key: "nonWorking.showHolidays", dimIf: g => g("@hasHoliday") === false, disabledReason: "Bind a holiday name to the Holiday field well." },
             { control: "segText", label: "Style", key: "nonWorking.style",
                 options: [["tint", "Tint"], ["hatch", "Hatch"], ["outline", "Outline"]],
                 visibleIf: g => Boolean(g("nonWorking.shadeWeekends")) || Boolean(g("nonWorking.showHolidays")) },
         ] },
         { id: "events", name: "Events", info: "Markers for the optional Event and Event type fields: what happened on a day, straight from your data, so every reader sees it. Separate from notes, which you write by hand. Several events on one day can be joined with ; or |. The Event type key sits beside the colour legend when Event type is bound.", kind: "fields", width: 282, fields: [
-            { control: "switch", label: "Show events", key: "events.show" },
+            { control: "switch", label: "Show events", key: "events.show", dimIf: noEvent, disabledReason: NEEDS_EVENT },
             { control: "segText", label: "Marker", key: "events.marker",
                 options: [["corner", "Flag"], ["dot", "Dot"], ["ring", "Ring"]],
-                visibleIf: g => Boolean(g("events.show")) },
+                visibleIf: g => Boolean(g("events.show")), dimIf: noEvent, disabledReason: NEEDS_EVENT },
             { control: "switch", label: "Event type key", key: "events.showKey",
-                visibleIf: g => Boolean(g("events.show")) },
+                visibleIf: g => Boolean(g("events.show")),
+                dimIf: g => g("@hasEventType") === false, disabledReason: "Bind a field to the Event type well to colour events by type." },
         ] },
         { id: "dayDetail", name: "Day detail", info: "Click a day to open a persistent detail panel showing its date, value, target variance, notes, and (on faceted reports) the top contributor.", kind: "fields", width: 282, fields: [
             { control: "switch", label: "Show panel", key: "dayDetail.enabled" },
             { control: "segText", label: "Position", key: "dayDetail.position", options: DAY_DETAIL_POSITION_OPTS, visibleIf: g => Boolean(g("dayDetail.enabled")) },
-            { control: "switch", label: "Top contributor (faceted)", key: "dayDetail.topContributor", visibleIf: g => Boolean(g("dayDetail.enabled")) },
+            { control: "switch", label: "Top contributor", key: "dayDetail.topContributor", visibleIf: g => Boolean(g("dayDetail.enabled")), dimIf: noSplit, disabledReason: NEEDS_SPLIT },
         ] },
     ] },
     { id: "access", name: "Accessibility", flat: true, subs: [
@@ -625,7 +670,7 @@ export const SB_CATS: SBCategory[] = [
             { control: "switch", label: "Focus ring", key: "a11y.focusRing" },
             { control: "switch", label: "Pattern on threshold", key: "a11y.pattern" },
             { control: "stepper", label: "Pattern threshold ≥", key: "a11y.patternThreshold", min: 0, max: 10000, step: 1, visibleIf: g => Boolean(g("a11y.pattern")) },
-            { control: "segText", label: "Pattern style", key: "a11y.patternStyle", options: PATTERN_STYLE_OPTS, visibleIf: g => Boolean(g("a11y.pattern")) },
+            { control: "select", label: "Pattern style", key: "a11y.patternStyle", options: PATTERN_STYLE_OPTS, visibleIf: g => Boolean(g("a11y.pattern")) },
             { control: "divider" },
             // QA-10: the ONLY user-reachable build stamp besides the landing page. QA and
             // support need to confirm which build is actually running inside the host

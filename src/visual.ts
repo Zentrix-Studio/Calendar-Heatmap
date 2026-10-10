@@ -69,6 +69,20 @@ import { captureVisualSnapshot, renderTablePages, PrintTable } from "./interacti
 import { NoteStore, cellNoteKey, isMarkerStyle } from "./notes/store";
 import type { AnnotationTheme, MarkerStyle, Note, NoteMode } from "./notes/core";
 
+/**
+ * Which optional field wells are filled — the `@` data flags the gear's `dimIf` reads
+ * (SETTINGS-TAXONOMY "Control conventions"). Read from `metadata.columns`, not from the
+ * projection: a role can be bound yet unprojected, and the author has still filled it.
+ */
+export function boundRoleFlags(dataView: DataView | undefined): Record<string, boolean> {
+    const cols = dataView?.metadata?.columns ?? [];
+    const has = (role: string) => cols.some(c => Boolean(c.roles?.[role]));
+    return {
+        hasSplit: has("category"), hasTarget: has("target"), hasHoliday: has("holiday"),
+        hasEvent: has("event"), hasEventType: has("eventType"),
+    };
+}
+
 /** Pick the first corner whose gear-sized box doesn't overlap any content rect. */
 function pickCorner(w: number, h: number, rects: number[][]): string {
     const G = 52, I = 10;
@@ -458,7 +472,7 @@ export class Visual implements IVisual {
             // A small-tile gear click already opens settings in FOCUS MODE (UAT-7, below),
             // so it only steps aside where it would be most of the tile.
             const tooSmallForGear = options.viewport.width < 160 || options.viewport.height < 110;
-            this.toolbar.update(this.formattingSettings, dark, readingView || tooSmallForGear);
+            this.toolbar.update(this.formattingSettings, dark, readingView || tooSmallForGear, boundRoleFlags(dataView));
             // UAT-7 — tiles too small for the settings popover to make sense: the
             // gear click switches the report into FOCUS MODE instead. The visual
             // fills the canvas, update() re-runs with isInFocus, and the bar
@@ -478,8 +492,7 @@ export class Visual implements IVisual {
             } : null);
             // zentrix-qa#22 (QA-STANDARD §2, Sankey L-5): back from focus mode, an open
             // panel must not come back over the now-small calendar.
-            if (this.wasInFocus && !options.isInFocus && this.toolbar.isOpen()) this.toolbar.close();
-            this.wasInFocus = !!options.isInFocus;
+            if (this.wasInFocus && !options.isInFocus && this.toolbar.isOpen()) this.toolbar.close();            this.wasInFocus = !!options.isInFocus;
             if (options.isInFocus && this.pendingFocusOpen) {
                 this.pendingFocusOpen = false;
                 this.toolbar.forceOpen();

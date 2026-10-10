@@ -1,8 +1,19 @@
 "use strict";
 
-// MIRROR OF @zentrix/visual-settings — do not hand-edit.
-// Edit the golden source (zentrix/packages/visual-settings/src/...) 
-// and re-mirror via scripts/sync-shared.mjs. Verified by sync-shared.mjs --check.
+// MIRROR OF @zentrix/visual-settings — normally do not hand-edit; edit the golden
+// source (zentrix/packages/visual-settings/src/...) and re-mirror via
+// scripts/sync-shared.mjs (verified by sync-shared.mjs --check).
+//
+// ⚠️ DELIBERATE DIVERGENCE (NG-048, network-graph only, CEO-approved 2026-07-20):
+// the in-visual gear was redesigned into standalone tabbed cards + a modern control
+// kit (tiles / sliders / MIN-MAX range / palette swatch list) per the 2a mockup. This
+// copy therefore intentionally differs from the golden source and will FAIL a naive
+// --check. Do NOT re-mirror over it without porting NG-048 forward. When the redesign
+// is promoted, land it in the golden source and re-mirror to every visual.
+//
+// Calendar Heatmap copy (HM-V2-40, 2026-10-10): the Sankey Pro / Org / Financial file
+// byte-for-byte, plus ONE targeted port — the Gantt's QA C-1 palette-list fix in
+// `renderPalette` (no `visible[0]` fallback). The six siblings still lack it.
 
 /**
  * Zentrix Settings Bar — the canonical in-visual settings component.
@@ -23,21 +34,63 @@
  * The heatmap-specific swatch ramp-mode gating was reverted to generic here.
  */
 
+import {
+    createSemanticIconSvg, getSemanticIcon, ICON_CATEGORIES,
+    type IconCategory,
+} from "./iconCatalog";
+import { buildSearchIndex, searchSettings, gateReason, type SearchEntry, type SearchResult } from "./settingsSearch";
+import {
+    PANEL_END_GUTTER, LIST_END_GUTTER, OPTION_SURFACE_MIN,
+    LIST_SURFACE_MAX, GRID_SURFACE_MAX, optionSurfaceMaxHeight,
+} from "./scrollGutter";
+
 /* ───────────────────────── public schema types ───────────────────────── */
 
 /** Live settings access — the host maps string keys to its real model + persist. */
 export interface SBCfg {
     get(key: string): unknown;
     set(key: string, value: unknown): void;
+    /** Optional: apply a value LIVE without persisting it and without opening an undo
+     *  entry. Controls the author drags continuously (the slider) call this at most once
+     *  per animation frame while the knob is moving and call `set` exactly once on
+     *  release — so a drag costs ONE host round-trip and ONE undo entry instead of one of
+     *  each per pointer-move. Hosts that do not implement it simply get no live canvas
+     *  preview during a drag; the knob still tracks the pointer and the release commits. */
+    preview?(key: string, value: unknown): void;
     /** Optional: revert every visual property to its model default. When absent,
      *  the bar hides its Reset action. */
     reset?(): void;
+    /** Optional: revert just the given engine keys to their model defaults. Powers
+     *  the per-card reset icon in the redesigned card header. When absent, the
+     *  per-card reset is hidden (the global Reset still works via `reset`). */
+    resetKeys?(keys: string[]): void;
+    /** Apply many keys as ONE authored action — one history step, one repaint. A preset
+     *  writes eight settings; without this it would cost eight undo presses to take back.
+     *  Optional so a host that has no batching still works via repeated `set`. */
+    setMany?: (values: Record<string, unknown>) => void;
 }
 
-/** A menu/seg option: a bare string (value === label) or an explicit [value, label]. */
-export type SBOption = string | [value: string | number, label: string];
+/** A menu/seg option: a bare string (value === label), an explicit [value, label],
+ *  or a dependency-aware option that stays visible but cannot be selected until
+ *  its prerequisite is satisfied. */
+export interface SBOptionConfig {
+    value: string | number;
+    label: string;
+    disabledIf?: (get: (key: string) => unknown) => boolean;
+    disabledReason?: string;
+    disabledReasonFn?: (get: (key: string) => unknown) => string | undefined;
+}
+export type SBOption = string | [value: string | number, label: string] | SBOptionConfig;
 
-export interface SBPalette { name: string; light: string[]; }
+export interface SBPalette {
+    name: string;
+    light: string[];
+    /** Palette family — "qualitative" | "sequential" | "diverging". Optional; lets a
+     *  paletteList filter rows by the colour encoding the host has chosen. */
+    family?: string;
+    /** Marks a colour-vision-deficiency-safe palette (drives the row badge + CVD filter). */
+    cvdSafe?: boolean;
+}
 export interface SBFont { id: string; label: string; css: string; }
 
 /** Power BI high-contrast colours (from host.colorPalette when isHighContrast).
@@ -51,21 +104,77 @@ export interface SBHCColors {
 
 /** One control inside a `fields` detail pane. */
 export interface SBField {
-    control: "switch" | "stepper" | "segText" | "segIcon" | "multiSeg" | "text" | "font" | "color" | "emoji" | "divider" | "heading";
+    control: "switch" | "stepper" | "slider" | "range" | "segText" | "segIcon" | "tiles" | "multiSeg" | "text" | "font" | "color" | "emoji" | "select" | "paletteList" | "orderList" | "divider" | "heading" | "note" | "upload" | "button";
     label?: string;
     /** Dynamic label computed from the live cfg (e.g. a rule's current condition
      *  summary). When present it overrides `label` for both display and aria name. */
     labelFn?: (get: (key: string) => unknown) => string;
     key?: string;                         // single-key controls
-    keys?: string[];                      // multiSeg → [boldKey, italicKey, underlineKey]
+    keys?: string[];                      // multiSeg → [boldKey, italicKey, underlineKey]; range → [minKey, maxKey]
     glyphs?: string[];                    // multiSeg glyph labels (B/I/U)
-    options?: SBOption[];                 // segText
+    options?: SBOption[];                 // segText / tiles / paletteList (option value === palette id) / orderList (the parts)
     iconOptions?: [string | number, "left" | "center" | "right"][]; // segIcon → [value, icon]
-    min?: number; max?: number; step?: number; suffix?: string;     // stepper
+    tileIcons?: Record<string, string>;   // tiles → option value → named inline icon (see TILE_ICONS)
+    /** select → a live preview chip drawn beside each option name (and beside the
+     *  collapsed trigger's current value), built by the per-visual schema. Lets a
+     *  visual answer "what does 'Stars' actually look like?" without opening a second
+     *  picker. Return null for an option that has nothing to preview (e.g. "None") —
+     *  the row keeps an empty slot so every label still lines up. */
+    optionPreview?: (value: string) => SVGElement | HTMLElement | null;
+    /** A COMPANION colour key rendered as a chip on the SAME row as this control, to the
+     *  right of it (the `select` / `emoji` / `color` / `font` triggers). It exists so a list
+     *  — one texture per stage, one icon per node — can carry "and draw it in THIS colour"
+     *  without doubling the row count. The chip opens the same colour picker the `color`
+     *  control uses, writing `colorKey`; the field's own `key` is untouched. */
+    colorKey?: string;
+    /** Colour fields (and `colorKey` chips) where an EMPTY value is a real, meaningful
+     *  choice — "let the visual pick a contrasting colour". Adds an Automatic button to
+     *  the picker and shows the chip as unset rather than as a colour. */
+    colorAuto?: boolean;
+    tileColumns?: number;                 // tiles → fixed grid columns; remaining options wrap to N rows
+    boxLabels?: [string, string];         // range → the two box prefixes, e.g. ["MIN","MAX"]
+    min?: number; max?: number; step?: number; suffix?: string;     // stepper / slider / range
     placeholder?: string;                 // text
+    /** Live variant of `placeholder` — lets a text field show the value it would fall
+     *  back to if left empty (e.g. a stage's automatic title), so the automatic choice
+     *  is visible rather than guessed at. */
+    placeholderFn?: (get: (key: string) => unknown) => string;
+    /** Grey helper line shown under a control (e.g. Filter's "Applies when …"). */
+    note?: string;
+    /** Dynamic helper line computed from the live cfg — overrides `note` when it
+     *  returns a string; return undefined to show no note (e.g. a role-bound hint
+     *  that disappears once the required data field is present). */
+    noteFn?: (get: (key: string) => unknown) => string | undefined;
+    /** Hover/focus help shown from the small info icon beside the field label.
+     *  Use only for non-obvious behavior, prerequisites, or setting interactions. */
+    info?: string;
+    /** Live variant of `info` for help that depends on the current settings/data. */
+    infoFn?: (get: (key: string) => unknown) => string | undefined;
     /** When present, the field is only rendered when this predicate returns true.
      *  `get` reads any engine-key value via the live cfg (cross-section reads are fine). */
     visibleIf?: (get: (key: string) => unknown) => boolean;
+    /** When present and true, the control renders dimmed + inert (used with `note`)
+     *  instead of being hidden — e.g. Filter's N when Show = All. */
+    dimIf?: (get: (key: string) => unknown) => boolean;
+    /** Licence tier this field belongs to. When the tier is locked the field keeps FULL
+     *  opacity and gains a PRO / ENTERPRISE badge — a paid feature should advertise
+     *  itself, not fade away (CEO 2026-08-25). Pair with `dimIf` for the lock itself. */
+    lockTag?: "PAID";
+    /** Exact prerequisite shown beside a dimmed control. Prefer the dynamic form
+     *  when more than one condition can make the setting unavailable. */
+    disabledReason?: string;
+    disabledReasonFn?: (get: (key: string) => unknown) => string | undefined;
+    /** button only: what the button does. Runs on click; the panel re-renders afterwards
+     *  so any `visibleIf` gated on the state it changed re-evaluates immediately. Use for
+     *  one-shot ACTIONS (clear a stored arrangement, release pinned items) — anything with
+     *  a persistent on/off state belongs in a `switch`. */
+    onClick?: (get: (key: string) => unknown, set: (key: string, value: unknown) => void, setMany?: (values: Record<string, unknown>) => void) => void;
+    /** button only: the label on the button face (the field `label` stays the row title). */
+    buttonLabel?: string;
+    /** paletteList only: optionally hide palette rows, read from the live cfg + the
+     *  palette metadata. Returns false to omit a row — used to show only the family
+     *  matching the current colour mode, or only CVD-safe palettes. */
+    optionFilter?: (get: (key: string) => unknown, id: string, palette?: SBPalette) => boolean;
 }
 
 /** A sub-group: one row in the left rail, one detail pane. */
@@ -87,6 +196,27 @@ export interface SBSub {
 /** A top-level category: one button in the open bar. */
 export interface SBCategory { id: string; name: string; flat?: boolean; subs: SBSub[]; }
 
+/**
+ * A resolvable icon: enough for the picker to draw it, name it and group it.
+ * Structurally satisfied by BOTH `SemanticIcon` (the shared entity catalog this
+ * visual uses) and a visual-specific library such as the Gantt's `StatusIcon`, so
+ * neither side needs to know about the other.
+ *
+ * G-055: ported UP from the Gantt's mirror, which grew this hook so its status
+ * badges could use the family picker WITHOUT editing `iconCatalog.ts` (that catalog
+ * is entity-only by contract — person / server / warehouse — and must stay
+ * byte-identical across the family). This visual injects nothing and therefore
+ * behaves EXACTLY as before; the point of carrying it here is that the three
+ * mirrors now share one contract, so the next sync in either direction cannot
+ * silently drop it.
+ */
+export interface SBIcon { value: string; label: string; category: string; paths: string[] }
+export interface SBIconLib {
+    resolve(value: string | null | undefined): SBIcon | null;
+    /** Canonical category order; the picker shows only those actually present. */
+    categories: readonly string[];
+}
+
 export interface SBOptions {
     cfg: SBCfg;
     cats: SBCategory[];
@@ -94,6 +224,10 @@ export interface SBOptions {
     palettes: Record<string, SBPalette>;
     presets?: string[];                   // color-picker preset swatches
     emoji?: string[];
+    /** G-055: an alternate icon library for the picker. Omitted here — this visual
+     *  uses the shared entity catalog, which is what the fallbacks resolve to. */
+    iconLib?: SBIconLib;
+    emojiNames?: Record<string, string>;  // glyph → searchable name (for the icon picker search)
     corner?: string;                      // bl | tl | tr | br
     dark?: boolean;
     hc?: boolean;                         // start in high-contrast mode
@@ -103,28 +237,65 @@ export interface SBOptions {
 
 /* ───────────────────────── layout constants ───────────────────────── */
 
-const RAIL_W = 198;   // wider rail to fit the per-row description line
-const POP_PAD = 18;
+const POP_PAD = 28;   // card horizontal chrome (border + inner padding) beyond content
+/** Vertical chrome the card reserves above its detail pane. `CHROME_FALLBACK` is only
+ *  used where layout can't be measured (jsdom); real cards measure header + tab strip and
+ *  add `CHROME_GUTTER` for the card border plus a little breathing room, so the last
+ *  control in a long tab never ends up flush against — or sliced by — the card edge. */
+const CHROME_FALLBACK = 96;
+const CHROME_GUTTER = 10;
+
+/* Expanded-option-surface sizing lives in scrollGutter.ts — see `optionSurfaceMaxHeight`. */
 const VIEWPORT_MAX = 600;
 
 function defaultWidth(sub: SBSub): number {
     if (sub.width != null) return sub.width;
-    if (sub.kind === "swatch") return 196;
-    if (sub.kind === "menu") return 184;
-    return 282; // fields
+    if (sub.kind === "swatch") return 242;
+    if (sub.kind === "menu") return 242;
+    return 242; // fields — redesign single-column card content width (2a mockup ≈ 270 total)
 }
 const catMaxWidth = (c: SBCategory): number => Math.max(...c.subs.map(defaultWidth));
 
-const optValue = (o: SBOption): string => String(Array.isArray(o) ? o[0] : o);
-const optLabel = (o: SBOption): string => String(Array.isArray(o) ? o[1] : o);
+/* ── tab strip sizing (SP-TABCROP) ──────────────────────────────────────────
+ * The strip is `display:flex; white-space:nowrap`, so a set of tab labels wider than
+ * the card was simply clipped by `.zsb-pop { overflow:hidden }` — Overlays lost the
+ * whole "Legend" tab with no scrollbar and no other way to reach it. Two independent
+ * guards now, because either alone still fails somewhere:
+ *   1. the card WIDENS to fit its own tabs (below), which is the right answer whenever
+ *      the tile has the room, and
+ *   2. the strip scrolls horizontally (`.zsb-tabs { overflow-x:auto }`), which is the
+ *      only answer left on a tile too narrow to widen into.
+ * Estimated arithmetically, never measured: `offsetWidth` is 0 under jsdom, so a
+ * measured width would hand the sweep a different card from the one a browser draws.
+ * The estimate is deliberately generous (the active tab is 600-weight, i.e. wider than
+ * the 500-weight resting label it is sized from) — and if it is ever wrong anyway,
+ * guard 2 catches it. */
+const TAB_CHAR_W = 6.5;   // avg advance of the 11.5px UI font at 600 weight
+const TAB_GAP = 16;       // .zsb-tabs column-gap
+const TABS_PAD = 30;      // .zsb-tabs left+right padding, plus a hair of slack
+/** Width the tab strip needs to show every label in full. 0 for a card with no strip. */
+export function tabStripWidth(c: SBCategory): number {
+    if (c.flat || c.subs.length < 2) return 0;
+    const labels = c.subs.reduce((w, s) => w + (s.name || s.id).length * TAB_CHAR_W, 0);
+    return Math.ceil(labels + TAB_GAP * (c.subs.length - 1) + TABS_PAD);
+}
+/** The card's outer width: wide enough for its content AND for its tab strip, but never
+ *  wider than the room it actually has. The card is positioned inside `.zsb-anchor`, which
+ *  is inset 18px from its corner, and `openCat` floors its left offset at 8 — so the room
+ *  from the card's leftmost possible edge to the far side of the tile is the tile less
+ *  both insets and that floor. (`hostW` 0 = the host hasn't laid out yet, so don't clamp;
+ *  the floor keeps a usable card on a tile too small for either.) */
+const CARD_MIN_W = 200;
+const CARD_TILE_INSET = 44;   // 18px anchor inset each side + the 8px popLeft floor
+export function cardWidth(c: SBCategory, hostW = 0): number {
+    const want = Math.max(catMaxWidth(c) + POP_PAD, tabStripWidth(c));
+    return hostW > 0 ? Math.min(want, Math.max(CARD_MIN_W, hostW - CARD_TILE_INSET)) : want;
+}
 
-/** Rough rendered width (px) of a segmented-text control. Used to decide whether
- *  it can sit inline beside its label or must drop to a full-width stacked row
- *  (so long option sets like a 4-way palette mode wrap instead of clipping). */
-const estimateSegWidth = (opts: SBOption[]): number =>
-    opts.reduce((w, o) => w + optLabel(o).length * 6.8 + 24, 0) + 8;
-/** A segText wider than this many px stacks below the label and wraps its buttons. */
-const SEG_INLINE_MAX = 150;
+const isOptionConfig = (o: SBOption): o is SBOptionConfig => typeof o === "object" && !Array.isArray(o);
+const optRawValue = (o: SBOption): string | number => Array.isArray(o) ? o[0] : isOptionConfig(o) ? o.value : o;
+const optValue = (o: SBOption): string => String(optRawValue(o));
+const optLabel = (o: SBOption): string => String(Array.isArray(o) ? o[1] : isOptionConfig(o) ? o.label : o);
 
 /* ───────────────────────── color math (manual HSV picker) ───────────────────────── */
 
@@ -161,8 +332,46 @@ const NS = "http://www.w3.org/2000/svg";
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string): HTMLElementTagNameMap[K] {
     const e = document.createElement(tag); if (cls) e.className = cls; return e;
 }
+/* ── orderList value codec ──
+   One string holds a whole arrangement: option values in the author's order, `-`-prefixed
+   when hidden. Kept here (not in a visual's schema file) so every Zentrix visual that
+   reaches for an orderList reads and writes the property the same way. */
+export interface OrderRow { value: string; on: boolean; }
+const ORDER_ROW_H = 30;
+
+export function parseOrderList(raw: string, options: SBOption[]): OrderRow[] {
+    const known = options.map((o) => String(optValue(o)));
+    const rows: OrderRow[] = [];
+    const seen = new Set<string>();
+    for (const token of String(raw ?? "").split(",")) {
+        const t = token.trim();
+        if (!t) continue;
+        const on = t.charAt(0) !== "-";
+        const value = (on ? t : t.slice(1)).trim();
+        if (known.indexOf(value) < 0 || seen.has(value)) continue;
+        seen.add(value);
+        rows.push({ value, on });
+    }
+    if (!rows.length) return known.map((value) => ({ value, on: true }));
+    // An option this build knows that the stored string predates is appended HIDDEN, so a
+    // later addition never silently changes what an existing report already shows.
+    for (const value of known) if (!seen.has(value)) rows.push({ value, on: false });
+    return rows;
+}
+
+export function serializeOrderList(rows: OrderRow[]): string {
+    return rows.map((r) => (r.on ? "" : "-") + r.value).join(",");
+}
+
 const div = (cls?: string) => el("div", cls);
 const btn = (cls?: string) => el("button", cls);
+/** Fixed-width holder for a select option's preview chip. Always emitted (even when the
+ *  option has no preview) so every option name in the list starts at the same x. */
+function previewSlot(node: SVGElement | HTMLElement | null): HTMLElement {
+    const slot = div("zsb-optpv"); slot.setAttribute("aria-hidden", "true");
+    if (node) slot.appendChild(node); else slot.style.boxShadow = "none";
+    return slot;
+}
 
 function svg(paths: string[], viewBox: string, sw: string, w: number, extra?: (s: SVGSVGElement) => void): SVGSVGElement {
     const s = document.createElementNS(NS, "svg");
@@ -178,16 +387,34 @@ function gearIcon(): SVGSVGElement {
     const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", "12"); c.setAttribute("cy", "12"); c.setAttribute("r", "3"); s.appendChild(c);
     return s;
 }
-function infoIcon(): SVGSVGElement {
-    const s = svg(["M12 11.5v5", "M12 7.75h.01"], "0 0 24 24", "2", 15);
-    const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", "12"); c.setAttribute("cy", "12"); c.setAttribute("r", "9.25"); s.appendChild(c);
-    return s;
-}
 const resetIcon = () => svg(["M2.5 8a5.5 5.5 0 1 0 1.7-3.98", "M2.2 2v3.3h3.3"], "0 0 16 16", "1.6", 15); // circular arrow
+const searchIcon = () => svg(["M10.3 10.3 14 14"], "0 0 16 16", "1.7", 15, (s) => {  // magnifier
+    const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", "7"); c.setAttribute("cy", "7"); c.setAttribute("r", "4.3"); s.appendChild(c);
+});
 const caretIcon = () => svg(["M3.5 6 8 10.5 12.5 6"], "0 0 16 16", "1.8", 12);   // down; rotate 180 when open
-const chevR = () => svg(["M6 3.5 10.5 8 6 12.5"], "0 0 16 16", "1.8", 13);          // rail ›
 const dblChev = (left: boolean) => svg(["M4 4 8.5 9 4 14", "M9.5 4 14 9 9.5 14"], "0 0 18 18", "2.1", 17, s => { if (left) s.style.transform = "rotate(180deg)"; });
 const checkIcon = () => svg(["M3.5 8.5 6.5 11.5 12.5 4.5"], "0 0 16 16", "2", 14);
+/** Six-dot drag grip. Circles, not a zero-length stroked path — a dot rendered from an
+ *  empty subpath is renderer-dependent, and this handle is the only affordance that says
+ *  "this row moves". */
+const gripIcon = () => svg([], "0 0 16 16", "0", 14, (s) => {
+    for (const x of [5.5, 10.5]) for (const y of [3.5, 8, 12.5]) {
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", String(x)); c.setAttribute("cy", String(y)); c.setAttribute("r", "1.15");
+        c.setAttribute("fill", "currentColor"); c.setAttribute("stroke", "none");
+        s.appendChild(c);
+    }
+});
+const eyeIcon = () => svg(["M1.6 8S3.9 3.8 8 3.8 14.4 8 14.4 8 12.1 12.2 8 12.2 1.6 8 1.6 8Z"], "0 0 16 16", "1.4", 14, (s) => {
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", "8"); c.setAttribute("cy", "8"); c.setAttribute("r", "1.9"); s.appendChild(c);
+});
+const eyeOffIcon = () => svg([
+    "M2.2 2.2 13.8 13.8",
+    "M4.6 4.9C2.8 6.1 1.6 8 1.6 8S3.9 12.2 8 12.2c1 0 1.9-.2 2.6-.6",
+    "M12.2 10.2c1.4-1.1 2.2-2.2 2.2-2.2S12.1 3.8 8 3.8c-.6 0-1.1.1-1.6.2",
+    "M6.6 6.7A1.9 1.9 0 0 0 9.3 9.4",
+], "0 0 16 16", "1.4", 14);
 function alignIcon(dir: "left" | "center" | "right"): SVGSVGElement {
     const ys = [4, 7.5, 11, 14.5], ws = [14, 9, 13, 8];
     const ds = ys.map((y, i) => {
@@ -196,6 +423,71 @@ function alignIcon(dir: "left" | "center" | "right"): SVGSVGElement {
     });
     return svg(ds, "0 0 18 18", "1.7", 16);
 }
+
+/* Layout-mode tile icons (transcribed byte-for-byte from assets/icons/layout-mode-*.svg).
+   The generic svg() helper only emits <path>; these need <circle>/<rect> too, so they
+   build their own element tree. All strokes/fills use currentColor so the active tile
+   tints to the accent. viewBox 0 0 18 18 to match the source art. */
+function mkTile(build: (s: SVGSVGElement) => void): SVGSVGElement {
+    const s = document.createElementNS(NS, "svg");
+    s.setAttribute("width", "16"); s.setAttribute("height", "16"); s.setAttribute("viewBox", "0 0 18 18");
+    s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "1.6");
+    s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
+    build(s);
+    return s;
+}
+function shC(s: SVGSVGElement, cx: number, cy: number, r: number, opts?: { fill?: boolean; dash?: string }): void {
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", String(cx)); c.setAttribute("cy", String(cy)); c.setAttribute("r", String(r));
+    if (opts?.fill) { c.setAttribute("fill", "currentColor"); c.setAttribute("stroke", "none"); }
+    if (opts?.dash) c.setAttribute("stroke-dasharray", opts.dash);
+    s.appendChild(c);
+}
+function shR(s: SVGSVGElement, x: number, y: number, w: number, h: number, rx: number): void {
+    const r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", String(x)); r.setAttribute("y", String(y)); r.setAttribute("width", String(w));
+    r.setAttribute("height", String(h)); r.setAttribute("rx", String(rx)); s.appendChild(r);
+}
+function shP(s: SVGSVGElement, d: string): void {
+    const p = document.createElementNS(NS, "path"); p.setAttribute("d", d); s.appendChild(p);
+}
+const TILE_ICONS: Record<string, () => SVGSVGElement> = {
+    force: () => mkTile(s => { shC(s, 5, 4.5, 1.7); shC(s, 14, 7, 1.7); shC(s, 7.5, 14, 1.7); shP(s, "M6.4 5.7 12.5 6.6"); shP(s, "M6 6 7.2 12.4"); shP(s, "M13 8.5 8.8 12.9"); }),
+    circular: () => mkTile(s => { shC(s, 9, 9, 6.2, { dash: "1.5 2.4" }); shC(s, 9, 2.8, 1.5, { fill: true }); shC(s, 15.2, 9, 1.5, { fill: true }); shC(s, 9, 15.2, 1.5, { fill: true }); shC(s, 2.8, 9, 1.5, { fill: true }); }),
+    concentric: () => mkTile(s => { shC(s, 9, 9, 6.2); shC(s, 9, 9, 3.7); shC(s, 9, 9, 1.35, { fill: true }); }),
+    tree: () => mkTile(s => { shC(s, 9, 3.6, 1.7); shC(s, 4.5, 13.5, 1.7); shC(s, 13.5, 13.5, 1.7); shP(s, "M9 5.4 9 8.2"); shP(s, "M9 8.2 4.5 11.8"); shP(s, "M9 8.2 13.5 11.8"); }),
+    geo: () => mkTile(s => { shC(s, 9, 9, 6.5); shP(s, "M2.5 9h13"); shP(s, "M9 2.5c2.4 1.8 2.4 11.2 0 13"); shP(s, "M9 2.5c-2.4 1.8-2.4 11.2 0 13"); }),
+    grid: () => mkTile(s => { shC(s, 5.5, 5.5, 1.6, { fill: true }); shC(s, 12.5, 5.5, 1.6, { fill: true }); shC(s, 5.5, 12.5, 1.6, { fill: true }); shC(s, 12.5, 12.5, 1.6, { fill: true }); }),
+    // node-shape tiles (Nodes ▸ Style ▸ Shape) — outline glyphs of each marker shape
+    shapeCircle: () => mkTile(s => { shC(s, 9, 9, 5.5); }),
+    shapeSquare: () => mkTile(s => { shR(s, 3.5, 3.5, 11, 11, 1.5); }),
+    shapeDiamond: () => mkTile(s => { shP(s, "M9 3 15 9 9 15 3 9 Z"); }),
+    shapeTriangle: () => mkTile(s => { shP(s, "M9 3.4 15.2 14.3 2.8 14.3 Z"); }),
+    shapeHexagon: () => mkTile(s => { shP(s, "M15 9 12 14.2 6 14.2 3 9 6 3.8 12 3.8 Z"); }),
+    shapeDonut: () => mkTile(s => { shC(s, 9, 9, 5.5); shC(s, 9, 9, 2.2); }),
+    // node-fill tiles (Nodes ▸ Style ▸ Fill) — a glyph of each fill texture
+    fillSolid: () => mkTile(s => { shC(s, 9, 9, 5.5, { fill: true }); }),
+    fillDots: () => mkTile(s => { for (const [x, y] of [[6, 6], [12, 6], [9, 9], [6, 12], [12, 12]]) shC(s, x, y, 1.2, { fill: true }); }),
+    fillRings: () => mkTile(s => { shC(s, 9, 9, 6); shC(s, 9, 9, 3.5); shC(s, 9, 9, 1); }),
+    fillDiagonal: () => mkTile(s => { shP(s, "M2 10 10 2"); shP(s, "M5 13 13 5"); shP(s, "M8 16 16 8"); }),
+    fillCrosshatch: () => mkTile(s => { shP(s, "M3 11 11 3"); shP(s, "M7 15 15 7"); shP(s, "M3 7 11 15"); shP(s, "M7 3 15 11"); }),
+    fillGrid: () => mkTile(s => { shR(s, 3, 3, 12, 12, 1); shP(s, "M7 3 7 15"); shP(s, "M11 3 11 15"); shP(s, "M3 7 15 7"); shP(s, "M3 11 15 11"); }),
+    fillHorizontal: () => mkTile(s => { shP(s, "M2 4.5h14"); shP(s, "M2 9h14"); shP(s, "M2 13.5h14"); }),
+    fillVertical: () => mkTile(s => { shP(s, "M4.5 2v14"); shP(s, "M9 2v14"); shP(s, "M13.5 2v14"); }),
+    fillChecker: () => mkTile(s => { shR(s, 3, 3, 12, 12, 1); shR(s, 3, 3, 6, 6, 0); shR(s, 9, 9, 6, 6, 0); }),
+    fillDiamonds: () => mkTile(s => { shP(s, "M5 2 8 5 5 8 2 5Z"); shP(s, "M13 2 16 5 13 8 10 5Z"); shP(s, "M9 10 12 13 9 16 6 13Z"); }),
+    fillZigzag: () => mkTile(s => { shP(s, "M1 6 5 3 9 6 13 3 17 6"); shP(s, "M1 13 5 10 9 13 13 10 17 13"); }),
+    fillWaves: () => mkTile(s => { shP(s, "M1 5c2-3 4 3 6 0s4-3 6 0 4-3 6 0"); shP(s, "M1 12c2-3 4 3 6 0s4-3 6 0 4-3 6 0"); }),
+    fillAntidiagonal: () => mkTile(s => { shP(s, "M2 8 8 2"); shP(s, "M5 15 15 5"); shP(s, "M11 16 16 11"); }),
+    fillTriangles: () => mkTile(s => { shP(s, "M2 8 5 3 8 8Z"); shP(s, "M10 8 13 3 16 8Z"); shP(s, "M6 15 9 10 12 15Z"); }),
+    fillBricks: () => mkTile(s => { shP(s, "M2 6h14"); shP(s, "M2 12h14"); shP(s, "M9 2v4"); shP(s, "M5 6v6"); shP(s, "M13 6v6"); shP(s, "M9 12v4"); }),
+    fillScales: () => mkTile(s => { shP(s, "M2 8a3.5 3.5 0 0 1 7 0"); shP(s, "M9 8a3.5 3.5 0 0 1 7 0"); shP(s, "M5.5 15a3.5 3.5 0 0 1 7 0"); }),
+    fillPlus: () => mkTile(s => { shP(s, "M5 3v5M2.5 5.5h5"); shP(s, "M13 3v5M10.5 5.5h5"); shP(s, "M9 10v5M6.5 12.5h5"); }),
+    fillStars: () => mkTile(s => { shP(s, "M6 3v6M3 6h6M4 4l4 4M8 4l-4 4"); shP(s, "M13 9v5M10.5 11.5h5"); }),
+    fillHexagons: () => mkTile(s => { shP(s, "M6 3 10 3 12 6.5 10 10 6 10 4 6.5Z"); shP(s, "M12 10 15 10 16.5 12.5 15 15 12 15 10.5 12.5Z"); }),
+    fillDashes: () => mkTile(s => { shP(s, "M2 5h5"); shP(s, "M10 5h5"); shP(s, "M5 10h5"); shP(s, "M2 14h5"); shP(s, "M10 14h5"); }),
+    fillWeave: () => mkTile(s => { shP(s, "M2 6h6M6 2v6"); shP(s, "M10 6h6M12 2v6"); shP(s, "M2 12h6M4 9v6"); shP(s, "M10 12h6M14 9v6"); }),
+};
 
 /* ───────────────────────── injected styles ───────────────────────── */
 
@@ -219,15 +511,34 @@ export class ZentrixSettingsBar {
     private pop: HTMLDivElement | null = null;
     private detailWrap: HTMLDivElement | null = null;
     private detailInner: HTMLDivElement | null = null;
+    /** Host-clamped cap for the detail pane, set per pop build (null = CSS default). */
+    private detailMaxH: number | null = null;
     private infoBtn: HTMLButtonElement | null = null;
     private infoTip: HTMLDivElement | null = null;
     private ro: ResizeObserver | null = null;
     private onDoc: ((e: MouseEvent) => void) | null = null;
     private onKey: ((e: KeyboardEvent) => void) | null = null;   // Escape-to-dismiss (keyboard escape hatch)
+    private onWheel: ((e: WheelEvent) => void) | null = null;    // wheel-to-page the category row
     private closeTimer: number | null = null;   // pending bar-teardown after the close animation
     private resetBtn: HTMLButtonElement | null = null;
     private resetArmed = false;                  // two-tap confirm state for Reset
     private resetTimer: number | null = null;    // auto-disarm timer for Reset
+    private searchBtn: HTMLButtonElement | null = null;
+    private searchPop: HTMLDivElement | null = null;   // the search input + results panel
+    private searchIndex: SearchEntry[] | null = null;  // lazily built from opts.cats
+    private fieldInfoId = 0;                     // aria-describedby ids for field help
+    private activeFieldHelp: HTMLElement | null = null;
+    private activeFieldTip: HTMLElement | null = null;
+    private textTimer: number | null = null;     // debounced live text commit (see makeText)
+    private textCommit: (() => void) | null = null;
+    /** How many controls are mid-drag. `renderDetail` tears the whole field list down and
+     *  rebuilds it, which would detach the very <input> the pointer is dragging — the
+     *  browser then loses the drag and the next click jumps the value to wherever the
+     *  track was hit. While this is non-zero a refresh is recorded and replayed on
+     *  release instead of running immediately. */
+    private dragDepth = 0;
+    private refreshDeferred = false;
+    private refreshDeferredKey: string | undefined;
 
     private open = false;
     private activeCat: string | null = null;
@@ -249,7 +560,7 @@ export class ZentrixSettingsBar {
         if (opts.hcColors) this.writeHCColors(opts.hcColors);
         this.applyTheme();
         this.gear = btn("zsb-gear zsb-collapsed");
-        this.gear.title = "Visual settings";
+        this.gear.title = "Settings \u2014 layout, colours, labels and the rest";
         this.gear.setAttribute("aria-label", "Visual settings");
         this.gear.setAttribute("aria-haspopup", "true");
         this.gear.appendChild(gearIcon());
@@ -270,8 +581,6 @@ export class ZentrixSettingsBar {
     /** True while the settings bar is expanded — the host suppresses competing
      *  hover tooltips/rings so the open menu isn't fighting a cursor card (issue #7). */
     isOpen(): boolean { return this.open; }
-    /** Close the bar from outside (the visual leaving focus mode — zentrix-qa#22). */
-    close(): void { if (this.open) this.collapse(); }
     /** Switch light/dark. High contrast (when active) takes precedence over both. */
     setTheme(dark: boolean): void { this.opts.dark = dark; this.applyTheme(); }
     /** Enter/leave Power BI high-contrast mode. When `on`, the bar themes itself
@@ -293,6 +602,11 @@ export class ZentrixSettingsBar {
         if (c.background) s.setProperty("--hc-bg", c.background);
         const accent = c.foregroundSelected || c.hyperlink;
         if (accent) s.setProperty("--hc-accent", accent);
+        // Text drawn ON the accent fill. The CSS default is HighlightText, which is
+        // only meaningful under forced-colors; once the host hands us real roles the
+        // accent is no longer `Highlight`, so pair it with the host background
+        // instead (Power BI guarantees foregroundSelected/background contrast).
+        if (accent && c.background) s.setProperty("--hc-on-accent", c.background);
     }
     setVisible(show: boolean): void { this.anchor.style.display = show ? "flex" : "none"; }
     setCloseOnAway(v: boolean): void { this.opts.closeOnAway = v; }
@@ -308,6 +622,11 @@ export class ZentrixSettingsBar {
     private openGate: (() => boolean) | null = null;
     setOpenGate(fn: (() => boolean) | null): void { this.openGate = fn; }
 
+    /** Host helper: collapse the bar from outside a gear click. Needed when the host
+     *  decides the bar can no longer fit — e.g. the report leaves focus mode back onto a
+     *  small tile, where `setOpenGate` would have refused to open it in the first place. */
+    forceClose(): void { if (this.open) this.collapse(); }
+
     /** Harness/host helper: open the bar and, if given, the category containing `subId`. */
     forceOpen(subId?: string): void {
         this.expand();
@@ -319,11 +638,14 @@ export class ZentrixSettingsBar {
     }
 
     destroy(): void {
+        this.hideFieldInfo();
+        this.cancelTextCommit();
         if (this.closeTimer) { clearTimeout(this.closeTimer); this.closeTimer = null; }
         if (this.resetTimer) { clearTimeout(this.resetTimer); this.resetTimer = null; }
         if (this.ro) { this.ro.disconnect(); this.ro = null; }
         if (this.onDoc) { document.removeEventListener("mousedown", this.onDoc); this.onDoc = null; }
         if (this.onKey) { document.removeEventListener("keydown", this.onKey); this.onKey = null; }
+        if (this.onWheel && this.vp) { this.vp.removeEventListener("wheel", this.onWheel); this.onWheel = null; }
         this.open = false;
         this.anchor.remove();
     }
@@ -336,11 +658,18 @@ export class ZentrixSettingsBar {
     }
     private collapse(): void {
         if (!this.open && !this.bar) return;
+        // Land a half-typed text edit before the panel (and its input) goes away —
+        // detaching a focused input does not reliably fire `change`.
+        this.flushTextCommit();
+        this.hideFieldInfo();
+        this.closeSearch(); this.searchBtn = null;
         this.disarmReset(); this.resetBtn = null;
         this.open = false; this.activeCat = this.activeSub = this.exp = null;
+        this.clearControlDrags();
         if (this.ro) { this.ro.disconnect(); this.ro = null; }
         if (this.onDoc) { document.removeEventListener("mousedown", this.onDoc); this.onDoc = null; }
         if (this.onKey) { document.removeEventListener("keydown", this.onKey); this.onKey = null; }
+        if (this.onWheel && this.vp) { this.vp.removeEventListener("wheel", this.onWheel); this.onWheel = null; }
         // the popover (if any) is torn down at once; only the bar + gear animate out
         if (this.pop) { this.pop.remove(); this.pop = null; }
         this.detailWrap = this.detailInner = null;
@@ -397,6 +726,26 @@ export class ZentrixSettingsBar {
         this.pageR.onclick = (e) => { e.stopPropagation(); this.page(1); };
 
         this.bar.appendChild(this.pageL); this.bar.appendChild(this.vp); this.bar.appendChild(this.pageR);
+
+        // Wheel-to-page: a vertical scroll (or a trackpad's horizontal swipe) over the
+        // category row nudges it left/right, so the bar is navigable without hunting for
+        // the chevrons. Non-passive so we can preventDefault and stop the wheel from
+        // bubbling to the host (which would pan/zoom the graph). We only swallow the wheel
+        // while there's actually room to page AND the move isn't clamped at an end — so at
+        // the extremes the gesture passes through instead of feeling stuck.
+        this.onWheel = (e: WheelEvent) => {
+            if (this.maxOffset <= 0) return;
+            const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+            if (delta === 0) return;
+            const next = Math.max(0, Math.min(this.maxOffset, this.offset + delta));
+            if (next === this.offset) return;
+            e.preventDefault();
+            this.closePop();
+            this.offset = next;
+            this.applyOffset();
+        };
+        this.vp.addEventListener("wheel", this.onWheel, { passive: false });
+        this.buildSearchAction();
         this.buildResetAction();
         this.buildBrand();
         this.anchor.appendChild(this.bar);
@@ -416,13 +765,154 @@ export class ZentrixSettingsBar {
         // picker → the open category popover → finally the whole bar.
         this.onKey = (e) => {
             if (!this.open || (e.key !== "Escape" && e.key !== "Esc")) return;
-            if (this.exp) { this.exp = null; this.rerenderExpandable(); }
+            if (this.searchPop) { this.closeSearch(); }
+            else if (this.exp) { this.exp = null; this.rerenderExpandable(); }
             else if (this.activeCat) { this.closePop(); }
             else { this.collapse(); }
             e.stopPropagation(); e.preventDefault();
         };
         document.addEventListener("keydown", this.onKey);
         this.applyOffset();
+    }
+
+    /* ---- settings search ---- */
+    /** A magnifier button beside Reset. Clicking it collapses any open category and
+     *  opens a search field that finds any control by name, a Power BI synonym
+     *  (e.g. "conditional formatting" → Rules, "ribbon" → Flows), or a close typo,
+     *  then jumps to it and briefly highlights it. */
+    private buildSearchAction(): void {
+        if (!this.bar) return;
+        this.bar.appendChild(div("zsb-div"));
+        const b = btn("zsb-search-btn"); b.type = "button";
+        b.title = "Search settings"; b.setAttribute("aria-label", "Search settings");
+        b.appendChild(searchIcon());
+        b.onclick = (e) => { e.stopPropagation(); this.toggleSearch(); };
+        this.searchBtn = b;
+        this.bar.appendChild(b);
+    }
+
+    private toggleSearch(): void {
+        if (this.searchPop) { this.closeSearch(); return; }
+        this.openSearch();
+    }
+
+    private openSearch(): void {
+        if (!this.bar) return;
+        this.closePop();                         // hide any open category (shrink open settings)
+        this.hideFieldInfo();
+        if (!this.searchIndex) this.searchIndex = buildSearchIndex(this.opts.cats);
+        this.searchBtn?.setAttribute("data-active", "true");
+
+        const pop = div("zsb-pop zsb-search-pop zsb-pop-anim" + (this.opensDown ? " zsb-pop--down" : ""));
+        pop.onclick = (e) => e.stopPropagation();
+        // Position: right-aligned under the search/reset cluster, clamped to the bar.
+        const barRect = this.bar.getBoundingClientRect();
+        const popW = Math.min(360, Math.max(240, barRect.width - 24));
+        pop.style.width = `${popW}px`;
+        // Clamp to the HOST tile, not the browser viewport — the same fix the category
+        // card carries. Without it a short visual gets a 364px-tall search card whose
+        // head (and therefore the input) is pushed off the top edge.
+        const searchHostH = this.host.clientHeight || 0;
+        if (searchHostH > 0) pop.style.maxHeight = `${Math.max(150, searchHostH - 84)}px`;
+        const btnRect = (this.searchBtn as HTMLElement).getBoundingClientRect();
+        pop.style.left = `${Math.round(Math.max(8, Math.min(btnRect.left - barRect.left - popW + 40, barRect.width - popW - 6)))}px`;
+
+        const head = div("zsb-search-head");
+        head.appendChild(searchIcon());
+        const input = el("input", "zsb-search-input");
+        input.type = "text"; input.placeholder = "Search settings — e.g. colour, transparency, ribbon";
+        input.setAttribute("aria-label", "Search settings");
+        input.autocomplete = "off"; input.spellcheck = false;
+        head.appendChild(input);
+        pop.appendChild(head);
+
+        const results = div("zsb-search-results");
+        // .zsb-pop is overflow:hidden, so clamping the CARD alone would clip the result
+        // list instead of scrolling it. The scroller itself has to be given the same
+        // budget, less the search head (44px) the card spends above it.
+        if (searchHostH > 0) results.style.maxHeight = `${Math.max(96, searchHostH - 84 - 44)}px`;
+        pop.appendChild(results);
+
+        input.oninput = () => this.renderSearchResults(input.value, results);
+        input.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                const first = results.querySelector(".zsb-search-item") as HTMLElement | null;
+                first?.click();
+            }
+        };
+        this.bar.appendChild(pop);
+        this.searchPop = pop;
+        this.renderSearchResults("", results);
+        input.focus();
+    }
+
+    private closeSearch(): void {
+        this.searchBtn?.setAttribute("data-active", "false");
+        if (this.searchPop) { this.searchPop.remove(); this.searchPop = null; }
+    }
+
+    /** Look up the live SBField behind a search hit, so results can show a lock/dim
+     *  reason (the user asked to see EVERYTHING, gated items included). */
+    private findField(catId: string, subId: string, key: string): SBField | undefined {
+        const cat = this.opts.cats.find((c) => c.id === catId);
+        const sub = cat?.subs.find((s) => s.id === subId);
+        if (sub?.key === key) return { control: "select", label: sub.name, key } as SBField; // menu/swatch sub
+        return sub?.fields?.find((f) => f.key === key || (f.keys && f.keys[0] === key));
+    }
+
+    private renderSearchResults(query: string, host: HTMLElement): void {
+        host.textContent = "";
+        const hits = this.searchIndex ? searchSettings(this.searchIndex, query) : [];
+        if (query.trim().length < 2) {
+            host.appendChild(Object.assign(div("zsb-search-empty"), { textContent: "Type to search every setting by name or meaning." }));
+            return;
+        }
+        if (!hits.length) {
+            host.appendChild(Object.assign(div("zsb-search-empty"), { textContent: `No settings match “${query.trim()}”.` }));
+            return;
+        }
+        const get = (k: string) => this.cfg.get(k);
+        for (const r of hits) host.appendChild(this.searchItem(r, get));
+    }
+
+    private searchItem(r: SearchResult, get: (k: string) => unknown): HTMLElement {
+        const item = btn("zsb-search-item"); item.type = "button";
+        item.setAttribute("data-cat", r.catId); item.setAttribute("data-sub", r.subId); item.setAttribute("data-fkey", r.key);
+
+        const main = div("zsb-search-item-main");
+        main.appendChild(Object.assign(div("zsb-search-item-label"), { textContent: r.label }));
+        const path = r.subName && r.subName !== r.catName ? `${r.catName} › ${r.subName}` : r.catName;
+        main.appendChild(Object.assign(div("zsb-search-item-path"), { textContent: path }));
+        // "You mean this" context for a synonym / fuzzy (non-literal) match.
+        if (r.hint) main.appendChild(Object.assign(div("zsb-search-item-hint"), { textContent: r.hint }));
+        item.appendChild(main);
+
+        // Show EVERYTHING, but flag anything currently locked / not applicable with its
+        // reason, so a result never silently does nothing when clicked.
+        const reason = gateReason(this.findField(r.catId, r.subId, r.key), get);
+        if (reason) {
+            item.setAttribute("data-gated", "true");
+            item.appendChild(Object.assign(div("zsb-search-item-lock"), { textContent: reason }));
+        }
+        item.onclick = () => this.jumpToSetting(r);
+        return item;
+    }
+
+    /** Jump to a searched setting: close search, open its category + sub, then scroll
+     *  to and briefly highlight the exact control. */
+    private jumpToSetting(r: SearchResult): void {
+        this.closeSearch();
+        const cat = this.opts.cats.find((c) => c.id === r.catId);
+        if (!cat) return;
+        this.openCat(cat, undefined, r.subId);
+        // The popover renders synchronously in openCat; find and highlight the field.
+        const target = this.pop?.querySelector(`[data-fkey="${r.key}"]`) as HTMLElement | null;
+        if (target) {
+            // scrollIntoView isn't implemented under jsdom (the sweep harness) — guard it.
+            try { target.scrollIntoView?.({ block: "nearest" }); } catch { /* non-DOM env */ }
+            target.classList.add("zsb-field--found");
+            setTimeout(() => target.classList.remove("zsb-field--found"), 2000);
+        }
     }
 
     /* ---- reset action (two-tap confirm) ---- */
@@ -550,6 +1040,8 @@ export class ZentrixSettingsBar {
         this.openCat(c, b);
     }
     private closePop(): void {
+        this.hideFieldInfo();
+        this.clearControlDrags();
         this.activeCat = this.activeSub = this.exp = null;
         if (this.pop) { this.pop.remove(); this.pop = null; }
         this.detailWrap = this.detailInner = null;
@@ -565,6 +1057,7 @@ export class ZentrixSettingsBar {
     }
 
     private openCat(c: SBCategory, b?: HTMLButtonElement, subId?: string): void {
+        this.hideFieldInfo();
         if (this.pop) { this.pop.remove(); this.pop = null; }
         this.activeCat = c.id;
         this.activeSub = subId && c.subs.some(s => s.id === subId) ? subId : c.subs[0].id;
@@ -575,74 +1068,151 @@ export class ZentrixSettingsBar {
         const barRect = this.bar.getBoundingClientRect();
         const trigger = b ?? (this.row!.querySelector(`[data-cat="${c.id}"]`) as HTMLElement);
         const r = trigger.getBoundingClientRect();
-        const popW = (c.flat ? 0 : RAIL_W) + catMaxWidth(c) + POP_PAD;
+        const popW = cardWidth(c, this.host.clientWidth || 0);
         this.popLeft = Math.max(8, Math.min(r.left - barRect.left, barRect.width - popW - 6));
         this.buildPop(c);
     }
 
     private buildPop(c: SBCategory): void {
         if (!this.bar) return;
+        // Redesign: the category popover is a single standalone CARD (2a mockup). A
+        // header (mono title + per-card reset), an optional horizontal tab strip for
+        // multi-sub categories (replacing the old left rail), then a full-width detail.
         this.pop = div("zsb-pop zsb-pop-anim" + (this.opensDown ? " zsb-pop--down" : ""));
         this.pop.style.left = `${Math.round(this.popLeft)}px`;
+        this.pop.style.width = `${cardWidth(c, this.host.clientWidth || 0)}px`;
+        // Clamp the card to the HOST canvas, not the browser viewport: the CSS
+        // max-height uses vh, which in the dev harness (and any big window) exceeds
+        // the visual, so a tall card grew past the top edge — header cut off, last
+        // control (e.g. Layout › Stage bands) unreachable (QA L4). The detail pane
+        // gets the remainder after header + tab strip and scrolls internally.
+        const hostH = this.host.clientHeight || 0;
+        if (hostH > 0) {
+            const avail = Math.max(180, hostH - 84);            // bar strip + breathing room
+            this.pop.style.maxHeight = `${avail}px`;
+            // Provisional: the real chrome height is only measurable once the header and
+            // tab strip are in the DOM, so this is re-derived at the end of buildPop.
+            this.detailMaxH = Math.max(120, avail - CHROME_FALLBACK);
+        } else this.detailMaxH = null;
         this.pop.onclick = (e) => e.stopPropagation();
 
         const head = div("zsb-pop-head");
+        // Brand-accent tick above the category title (the violet Zentrix gradient) — the
+        // signature "you opened a Zentrix card" mark, matching the Calendar Heatmap.
         const headL = div("zsb-pop-head-l");
-        headL.appendChild(div("zsb-pop-accent"));   // gradient accent bar above the category title
+        headL.appendChild(div("zsb-pop-accent"));
         headL.appendChild(Object.assign(document.createElement("span"), { className: "zsb-pop-title", textContent: c.name }));
         head.appendChild(headL);
-        this.infoBtn = btn("zsb-info"); this.infoBtn.type = "button"; this.infoBtn.setAttribute("aria-label", "About this setting");
-        this.infoBtn.appendChild(infoIcon());
-        this.infoTip = div("zsb-info-tip"); this.infoBtn.appendChild(this.infoTip);
-        head.appendChild(this.infoBtn);
+        // Per-card reset — reverts just this category's keys to their model defaults.
+        // Only shown when the host wired cfg.resetKeys (the global Reset still exists on the bar).
+        if (typeof this.cfg.resetKeys === "function") {
+            const rb = btn("zsb-card-reset"); rb.type = "button";
+            rb.title = `Reset ${c.name} to defaults`; rb.setAttribute("aria-label", `Reset ${c.name} to defaults`);
+            rb.appendChild(resetIcon());
+            rb.onclick = (e) => { e.stopPropagation(); this.resetCategory(c); };
+            head.appendChild(rb);
+        }
         this.pop.appendChild(head);
-        const body = div("zsb-pop-body"); this.pop.appendChild(body);
+        // legacy info-tooltip refs are unused in the card layout
+        this.infoBtn = this.infoTip = null;
 
-        if (!c.flat) {
-            const rail = div("zsb-rail");
+        if (!c.flat && c.subs.length > 1) {
+            const tabs = div("zsb-tabs");
             for (const s of c.subs) {
-                const rb = btn("zsb-rail-row"); rb.setAttribute("data-active", String(s.id === this.activeSub));
-                if (s.special) rb.setAttribute("data-special", "true");
-                const txt = div("zsb-rail-txt");
-                const nameRow = div("zsb-rail-name-row");
-                nameRow.appendChild(Object.assign(document.createElement("span"), { className: "zsb-rail-name", textContent: s.name || s.id }));
-                if (s.special) nameRow.appendChild(Object.assign(document.createElement("span"), { className: "zsb-rail-spark", textContent: "⚡" }));
-                if (s.badge) nameRow.appendChild(Object.assign(document.createElement("span"), { className: "zsb-rail-badge", textContent: s.badge }));
-                txt.appendChild(nameRow);
-                if (s.desc) txt.appendChild(Object.assign(div("zsb-rail-desc"), { textContent: s.desc }));
-                rb.appendChild(txt);
-                rb.appendChild(chevR());
-                rb.onclick = (e) => { e.stopPropagation(); if (this.activeSub === s.id) return; this.activeSub = s.id; this.exp = null; this.syncRail(); this.renderDetail(c); };
-                rail.appendChild(rb);
+                const tb = btn("zsb-tab"); tb.setAttribute("data-active", String(s.id === this.activeSub));
+                tb.setAttribute("data-sub", s.id);
+                tb.textContent = s.name || s.id;
+                tb.onclick = (e) => { e.stopPropagation(); if (this.activeSub === s.id) return; this.activeSub = s.id; this.exp = null; this.syncTabs(); this.renderDetail(c); };
+                tabs.appendChild(tb);
             }
-            body.appendChild(rail);
+            this.pop.appendChild(tabs);
+            // A tab reached from the settings search (or restored on reopen) can be past
+            // the strip's right edge on a narrow tile — scroll it into view rather than
+            // leaving the card looking like it opened on the wrong tab.
+            this.revealActiveTab();
         }
 
-        this.detailWrap = div("zsb-detail"); this.detailWrap.style.width = `${catMaxWidth(c)}px`;
+        this.detailWrap = div("zsb-detail");
         this.detailInner = div("zsb-detail-inner");
         this.detailWrap.appendChild(this.detailInner);
-        body.appendChild(this.detailWrap);
+        this.pop.appendChild(this.detailWrap);
 
         this.bar.appendChild(this.pop);
+        // Now that the card is in the DOM, replace the estimate with the MEASURED chrome.
+        // The old hard-coded 96px was wrong in both directions (a tabbed card's header +
+        // strip is ~71px, a flat card's ~39px), so the detail pane was handed a height
+        // that disagreed with what `.zsb-pop`'s own max-height would actually show — the
+        // pane believed it fitted, never scrolled, and the last control in a long tab
+        // (Nodes › Icons "Icon & image size" under a full per-node list) was simply
+        // sliced off. Measuring makes the two numbers agree.
+        this.remeasureChrome();
         this.renderDetail(c, true);
     }
 
-    private syncRail(): void {
-        this.pop?.querySelectorAll(".zsb-rail-row").forEach((rb, i) => {
-            const cat = this.opts.cats.find(c => c.id === this.activeCat);
-            const id = cat?.subs[i]?.id;
-            rb.setAttribute("data-active", String(id === this.activeSub));
+    /** Height the card's own chrome (header + tab strip + borders) takes above the detail
+     *  pane. Measured, never guessed; falls back to the old estimate where layout is
+     *  unavailable (jsdom reports every offsetHeight as 0). */
+    private chromeH(): number {
+        const head = this.pop?.querySelector(".zsb-pop-head") as HTMLElement | null;
+        const tabs = this.pop?.querySelector(".zsb-tabs") as HTMLElement | null;
+        const measured = (head?.offsetHeight || 0) + (tabs?.offsetHeight || 0);
+        return measured > 0 ? measured + CHROME_GUTTER : CHROME_FALLBACK;
+    }
+
+    /** Re-derive `detailMaxH` from the measured chrome. Returns true when it changed. */
+    private remeasureChrome(): boolean {
+        if (!this.pop) return false;
+        const hostH = this.host.clientHeight || 0;
+        if (hostH <= 0) return false;
+        const avail = Math.max(180, hostH - 84);
+        const inner = Math.max(120, avail - this.chromeH());
+        if (this.detailMaxH === inner) return false;
+        this.pop.style.maxHeight = `${avail}px`;
+        this.detailMaxH = inner;
+        if (this.detailInner) this.detailInner.style.maxHeight = `${inner}px`;
+        return true;
+    }
+
+    private syncTabs(): void {
+        this.pop?.querySelectorAll(".zsb-tab").forEach((tb) => {
+            tb.setAttribute("data-active", String(tb.getAttribute("data-sub") === this.activeSub));
         });
+        this.revealActiveTab();
+    }
+
+    /** Bring the active tab fully inside the (horizontally scrollable) strip.
+     *  `scrollIntoView` isn't implemented under jsdom — guarded, exactly as the
+     *  settings-search jump does. */
+    private revealActiveTab(): void {
+        const tb = this.pop?.querySelector('.zsb-tab[data-active="true"]') as HTMLElement | null;
+        try { tb?.scrollIntoView?.({ block: "nearest", inline: "nearest" }); } catch { /* non-DOM env */ }
+    }
+
+    /** Revert every engine key reachable in this category to its model default. */
+    private resetCategory(c: SBCategory): void {
+        if (typeof this.cfg.resetKeys !== "function") return;
+        const keys = new Set<string>();
+        for (const s of c.subs) for (const f of (s.fields || [])) {
+            if (f.key) keys.add(f.key);
+            if (f.colorKey) keys.add(f.colorKey);
+            for (const k of (f.keys || [])) keys.add(k);
+        }
+        this.cfg.resetKeys([...keys]);
+        this.refreshActiveDetail();
     }
 
     /** Rebuild the detail inner and animate the wrapper to its new measured height. */
     private renderDetail(c: SBCategory, first = false): void {
         if (!this.detailWrap || !this.detailInner) return;
+        this.hideFieldInfo();
         const sub = c.subs.find(s => s.id === this.activeSub) || c.subs[0];
         this.updateInfo(sub);
         this.detailInner.textContent = "";
         this.renderSub(sub, this.detailInner);
-        const h = this.detailInner.offsetHeight;
+        if (this.detailMaxH != null) this.detailInner.style.maxHeight = `${this.detailMaxH}px`;
+        const h = this.detailMaxH != null
+            ? Math.min(this.detailInner.offsetHeight, this.detailMaxH)
+            : this.detailInner.offsetHeight;
         if (first) {
             // popover itself animates in; set height with no separate transition jump
             this.detailWrap.style.transition = "none";
@@ -654,9 +1224,19 @@ export class ZentrixSettingsBar {
         }
     }
 
+    /** Re-derive the host-height clamp for an ALREADY-OPEN pop. The build-time clamp
+     *  goes stale when the viewport resizes while the card is open (QA L4 residual) —
+     *  call this on every host update so the card tracks the canvas. */
+    reclampPop(): void {
+        if (this.remeasureChrome()) this.remeasure();
+    }
+
     private remeasure(): void {
         if (!this.detailWrap || !this.detailInner) return;
-        this.detailWrap.style.height = `${this.detailInner.offsetHeight}px`;
+        const h = this.detailMaxH != null
+            ? Math.min(this.detailInner.offsetHeight, this.detailMaxH)
+            : this.detailInner.offsetHeight;
+        this.detailWrap.style.height = `${h}px`;
     }
 
     /**
@@ -665,11 +1245,44 @@ export class ZentrixSettingsBar {
      * change only persists + re-renders the chart; the open panel keeps showing
      * the stale field set (e.g. Number format → Custom revealed no input,
      * Variance bar → Show revealed no options). No-op when the panel is closed.
+     *
+     * `focusKey` re-focuses the text input bound to that engine key after the rebuild
+     * and restores its caret — a text field that gates its siblings (Chart title) must
+     * stay typeable across the re-render it just triggered.
      */
-    private refreshActiveDetail(): void {
+    private refreshActiveDetail(focusKey?: string): void {
         if (!this.pop || !this.detailWrap || !this.detailInner) return;
+        // A rebuild now would detach the control under the pointer (see `dragDepth`).
+        if (this.dragDepth > 0) { this.refreshDeferred = true; this.refreshDeferredKey ??= focusKey; return; }
         const c = this.opts.cats.find(cat => cat.id === this.activeCat);
-        if (c) this.renderDetail(c);
+        if (!c) return;
+        const active = document.activeElement as HTMLInputElement | null;
+        const caret = focusKey && active && typeof active.selectionStart === "number" ? active.selectionStart : null;
+        this.renderDetail(c);
+        if (!focusKey) return;
+        const next = this.detailInner.querySelector(`input[data-zsb-key="${focusKey}"]`) as HTMLInputElement | null;
+        if (!next) return;
+        next.focus();
+        const at = caret == null ? next.value.length : Math.min(caret, next.value.length);
+        if (typeof next.setSelectionRange === "function") next.setSelectionRange(at, at);
+    }
+
+    /** Take/release the rebuild lock around a continuous pointer drag on a control.
+     *  Any refresh that arrived while the lock was held is replayed exactly once. */
+    private beginControlDrag(): void { this.dragDepth++; }
+    private endControlDrag(): void {
+        if (this.dragDepth > 0) this.dragDepth--;
+        if (this.dragDepth > 0 || !this.refreshDeferred) return;
+        const focusKey = this.refreshDeferredKey;
+        this.refreshDeferred = false; this.refreshDeferredKey = undefined;
+        this.refreshActiveDetail(focusKey);
+    }
+
+    /** Drop every drag the pane was holding. Tearing the pane down detaches the dragged
+     *  input, so its `pointerup` will never arrive — without this the lock would stay
+     *  held and no card would ever refresh again. */
+    private clearControlDrags(): void {
+        this.dragDepth = 0; this.refreshDeferred = false; this.refreshDeferredKey = undefined;
     }
 
     /** Point the header info icon + hover tooltip at the active sub-group's description. */
@@ -707,7 +1320,8 @@ export class ZentrixSettingsBar {
             const b = btn("zsb-opt"); b.setAttribute("data-active", String(active));
             b.appendChild(Object.assign(div("zsb-opt-label"), { textContent: optLabel(o) }));
             if (active) this.addCheck(b);
-            b.onclick = () => { this.selectOpt(host, b, key, Array.isArray(o) ? o[0] : o); };
+            const disabled = this.applyOptionDependency(b, o);
+            b.onclick = () => { if (!disabled) this.selectOpt(host, b, key, optRawValue(o)); };
             host.appendChild(b);
         }
     }
@@ -735,6 +1349,21 @@ export class ZentrixSettingsBar {
 
     private get cfg(): SBCfg { return this.opts.cfg; }
 
+    /** A stored option can outlive the field or calculation that made it valid.
+     *  Keep the preference persisted, but present the first currently available
+     *  choice so a disabled option is never shown as active. */
+    private effectiveOptionValue(f: SBField): string {
+        const get = (key: string) => this.cfg.get(key);
+        const options = f.options || [];
+        const stored = String(this.cfg.get(f.key!) ?? "");
+        const available = (option: SBOption): boolean =>
+            !isOptionConfig(option) || !option.disabledIf?.(get);
+        const selected = options.find((option) => String(optValue(option)) === stored);
+        if (selected && available(selected)) return stored;
+        const fallback = options.find(available);
+        return fallback ? String(optValue(fallback)) : stored;
+    }
+
     /* ---- field controls ---- */
     private renderField(f: SBField, sub?: SBSub): HTMLElement {
         // Resolve the display label (labelFn wins — e.g. live rule summaries, issue #6)
@@ -742,29 +1371,554 @@ export class ZentrixSettingsBar {
         const label = (f.labelFn ? f.labelFn(k => this.cfg.get(k)) : f.label) ?? "";
         const subName = sub?.name ?? "";
         const aria = this.ariaName(label, subName);
+        const get = (k: string) => this.cfg.get(k);
+        const dim = f.dimIf ? f.dimIf(get) : false;
+        const disabledReason = dim
+            ? ((f.disabledReasonFn ? f.disabledReasonFn(get) : undefined) ?? f.disabledReason)
+            : undefined;
+        // One explanation, one place. The `i` icon carries what the setting DOES; the
+        // grey line under the control carries state — why it is currently inert. The
+        // disabled reason therefore no longer pre-empts the tooltip: it is already
+        // printed as its own line by `applyFieldDependency`, and showing it in both
+        // spots is the same duplication this rule exists to kill.
+        const info = (f.infoFn ? f.infoFn(get) : undefined) ?? f.info
+            ?? (f.noteFn ? f.noteFn(get) : undefined) ?? f.note;
+        // F-4: the helper note is resolved ONCE here and attached by `withNote` below,
+        // for every control type. It used to be threaded per-case, so only switch /
+        // button / slider / upload ever showed one — a `note` or `noteFn` on a select,
+        // segText, stepper, text or tiles field was silently dropped (the `i` icon still
+        // showed it, which is why the loss went unnoticed). `noteFn` returning undefined
+        // still means "no note", so this is a ternary, not a `??` chain.
+        const rawNote = f.noteFn ? f.noteFn(get) : f.note;
+        // …and the note is DROPPED when the `i` tooltip already says exactly it — which
+        // is every field whose schema declares only a `note`/`noteFn`, since the tooltip
+        // falls back to it. Those printed the same sentence twice: once on hover, once
+        // as grey text under the control. A field that declares a distinct `info` keeps
+        // both — short gist on the icon, the longer detail on the line.
+        const note = rawNote !== undefined && rawNote === info ? undefined : rawNote;
+        let rendered: HTMLElement;
         switch (f.control) {
-            case "divider": return div("zsb-div-h");
-            case "heading": { const d = div("zsb-field-head"); d.textContent = label; return d; }
-            case "switch": return this.fieldRow(label, this.makeSwitch(f.key!, aria));
-            case "stepper": return this.fieldRow(label, this.makeStepper(f, aria));
+            case "divider": rendered = div("zsb-div-h"); break;
+            case "heading": { const d = div("zsb-field-head"); d.textContent = label; rendered = d; break; }
+            // A standalone explanatory paragraph — used for empty-state hints when every
+            // control in a tab is gated off (e.g. Gradient in a categorical colour mode).
+            case "note": { const d = div("zsb-note-block"); d.textContent = label; rendered = d; break; }
+            case "switch": rendered = this.fieldRow(label, this.makeSwitch(f.key!, aria), { dim, info }); break;
+            case "stepper": rendered = this.fieldRow(label, this.makeStepper(f, aria), { info }); break;
+            case "slider": rendered = this.renderSlider(f, label, aria, info); break;
+            case "range": rendered = this.renderRange(f, label, aria, info); break;
+            case "tiles": rendered = this.renderTiles(f, label, aria, info); break;
+            case "paletteList": rendered = this.renderPalette(f, label, aria, info); break;
+            case "orderList": rendered = this.renderOrderList(f, label, aria, info); break;
             case "segText": {
-                const stack = estimateSegWidth(f.options || []) > SEG_INLINE_MAX;
-                return this.fieldRow(label, this.makeSegText(f, aria, stack), stack);
+                // Redesign: segmented pills always stack (label above, full-width grey
+                // track below) — matches the 2a mockup for every seg control.
+                rendered = this.fieldStack(label, this.makeSegText(f, aria, true), { info });
+                break;
             }
-            case "segIcon": return this.fieldRow(label, this.makeSegIcon(f, aria));
-            case "multiSeg": return this.fieldRow(label, this.makeMultiSeg(f, subName || aria));
-            case "text": return this.fieldRow(label, this.makeText(f, aria));
-            case "font": return this.makeExpandable(f, "font", aria);
-            case "color": return this.makeExpandable(f, "color", aria);
-            case "emoji": return this.makeExpandable(f, "emoji", aria);
+            case "segIcon": rendered = this.fieldRow(label, this.makeSegIcon(f, aria), { info }); break;
+            case "multiSeg": rendered = this.fieldRow(label, this.makeMultiSeg(f, subName || aria), { info }); break;
+            case "text": rendered = this.fieldRow(label, this.makeText(f, aria), { info }); break;
+            case "upload": rendered = this.makeUpload(f, label, aria, info); break;
+            case "button": rendered = this.fieldRow(label, this.makeButton(f, aria), { dim, info }); break;
+            case "font": rendered = this.makeExpandable(f, "font", aria, info); break;
+            case "color": rendered = this.makeExpandable(f, "color", aria, info); break;
+            case "emoji": rendered = this.makeExpandable(f, "emoji", aria, info); break;
+            case "select": rendered = this.makeExpandable(f, "select", aria, info); break;
         }
+        // Tag the row with its engine key(s) so the settings search can scroll to and
+        // briefly highlight this exact control after jumping into its category.
+        const fkey = f.key ?? (f.keys && f.keys[0]);
+        if (fkey && rendered!) rendered!.setAttribute("data-fkey", fkey);
+        return this.applyFieldDependency(this.withNote(rendered!, f.control, note), dim, disabledReason, f.lockTag);
     }
 
-    /** label-left / control-right inline row. */
-    private fieldRow(label: string, control: HTMLElement, stack = false): HTMLElement {
-        const wrap = div("zsb-field"); const top = div("zsb-field-top" + (stack ? " zsb-field-stack" : ""));
-        top.appendChild(Object.assign(div("zsb-label"), { textContent: label }));
-        top.appendChild(control); wrap.appendChild(top); return wrap;
+    /** Append the resolved helper note to a rendered field, whatever its control type.
+     *  Skipped for the structural controls (divider / heading / the standalone `note`
+     *  paragraph, which IS its own text). On an expandable that is currently open the
+     *  note goes ABOVE the picker panel, so it stays next to the trigger it explains. */
+    private withNote(field: HTMLElement, control: SBField["control"], note?: string): HTMLElement {
+        if (!note || control === "divider" || control === "heading" || control === "note") return field;
+        const noteEl = Object.assign(div("zsb-fs-note"), { textContent: note });
+        const expansion = Array.from(field.children).find((c) => c.classList.contains("zsb-field-exp"));
+        if (expansion) field.insertBefore(noteEl, expansion);
+        else field.appendChild(noteEl);
+        return field;
+    }
+
+    /** Make every control type genuinely inert when its schema dependency is unmet.
+     *  Help remains focusable so the author can still discover the prerequisite. */
+    private applyFieldDependency(field: HTMLElement, dim: boolean, reason?: string, lockTag?: "PAID"): HTMLElement {
+        if (!dim) return field;
+        if (lockTag) {
+            // Licence lock: stays fully legible and carries a badge, because this control
+            // is an advertisement for a paid tier. Data-dependency dimming keeps the
+            // faded look (`zsb-field-dim`) — that one is a "not yet applicable" state.
+            field.classList.add("zsb-field-locked");
+            // The badge rides inside the label wrapper so it sits right after the text,
+            // for every control shape (inline rows AND the stacked/heading blocks).
+            const labelEl = field.querySelector(".zsb-label-wrap") ?? field.querySelector(".zsb-label");
+            if (labelEl && !field.querySelector(".zsb-lock-tag")) {
+                const tag = div("zsb-lock-tag");   // one tier — one badge style
+                tag.textContent = lockTag;
+                labelEl.appendChild(tag);
+            }
+        } else {
+            field.classList.add("zsb-field-dim");
+        }
+        field.setAttribute("aria-disabled", "true");
+        field.querySelectorAll<HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+            "button,input,select,textarea",
+        ).forEach((control) => {
+            control.setAttribute("aria-disabled", "true");
+            if (control instanceof HTMLButtonElement) {
+                // Keep buttons focusable so a help icon nested in an expandable
+                // trigger remains reachable; replace the setting action itself.
+                control.onclick = (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                };
+            } else {
+                control.disabled = true;
+            }
+        });
+        if (reason) {
+            const alreadyShown = Array.from(field.querySelectorAll(".zsb-fs-note"))
+                .some((note) => note.textContent === reason);
+            if (!alreadyShown) {
+                field.appendChild(Object.assign(div("zsb-fs-note zsb-dependency-note"), { textContent: reason }));
+            }
+        }
+        return field;
+    }
+
+    /** Mark one unavailable option without disabling its parent field. The compact
+     *  question mark uses our themed tooltip immediately; native `title` help is
+     *  deliberately avoided because browsers delay and style it inconsistently. */
+    private applyOptionDependency(button: HTMLButtonElement, option: SBOption, aria?: string): boolean {
+        if (!isOptionConfig(option) || !option.disabledIf?.(k => this.cfg.get(k))) return false;
+        const reason = option.disabledReasonFn?.(k => this.cfg.get(k)) ?? option.disabledReason ?? "This option is unavailable.";
+        const id = `zsb-option-dependency-${++this.fieldInfoId}`;
+        button.classList.add("zsb-option-disabled");
+        button.setAttribute("aria-disabled", "true");
+        button.setAttribute("aria-label", `${aria ?? optLabel(option)} — unavailable. ${reason}`);
+        button.setAttribute("aria-describedby", id);
+        const help = Object.assign(document.createElement("span"), {
+            className: "zsb-option-dependency", textContent: "?",
+        });
+        const tip = Object.assign(div("zsb-field-info-tip zsb-option-dependency-tip"), {
+            id, textContent: reason,
+        });
+        tip.setAttribute("role", "tooltip");
+        help.appendChild(tip);
+        help.onmouseenter = () => this.showFieldInfo(help, tip);
+        help.onmouseleave = () => this.hideFieldInfo(help, tip);
+        button.onfocus = () => this.showFieldInfo(help, tip);
+        button.onblur = () => this.hideFieldInfo(help, tip);
+        button.appendChild(help);
+        return true;
+    }
+
+    /** Field label plus an optional keyboard-accessible hover/focus explanation. */
+    private fieldLabel(label: string, info?: string): HTMLElement {
+        const wrap = div("zsb-label-wrap");
+        wrap.appendChild(Object.assign(div("zsb-label"), { textContent: label }));
+        if (!info) return wrap;
+        const id = `zsb-field-info-${++this.fieldInfoId}`;
+        const help = Object.assign(document.createElement("span"), {
+            className: "zsb-field-info", tabIndex: 0, textContent: "i",
+        });
+        help.setAttribute("role", "button");
+        help.setAttribute("aria-label", `About ${label}`);
+        help.setAttribute("aria-describedby", id);
+        const tip = Object.assign(div("zsb-field-info-tip"), { id, textContent: info });
+        tip.setAttribute("role", "tooltip");
+        help.appendChild(tip);
+        help.onmouseenter = () => this.showFieldInfo(help, tip);
+        help.onmouseleave = () => this.hideFieldInfo(help, tip);
+        help.onfocus = () => this.showFieldInfo(help, tip);
+        help.onblur = () => this.hideFieldInfo(help, tip);
+        // Expandable rows use a large parent trigger; help interaction must not
+        // open or close the picker behind it.
+        help.onmousedown = (e) => e.stopPropagation();
+        help.onclick = (e) => e.stopPropagation();
+        help.onkeydown = (e) => e.stopPropagation();
+        wrap.appendChild(help);
+        return wrap;
+    }
+
+    /**
+     * Lift field help out of the popover's two overflow-clipping layers while it is
+     * visible. The overlay remains inside the settings anchor so it inherits the
+     * active theme, but fixed positioning lets us clamp it to the visual viewport.
+     */
+    private showFieldInfo(help: HTMLElement, tip: HTMLElement): void {
+        this.hideFieldInfo();
+        const field = help.closest(".zsb-field");
+        const preferAbove = Boolean(field?.matches(":nth-last-child(-n+3)"));
+
+        this.activeFieldHelp = help;
+        this.activeFieldTip = tip;
+        this.anchor.appendChild(tip);
+        tip.classList.add("is-visible");
+
+        const iconRect = help.getBoundingClientRect();
+        const tipRect = tip.getBoundingClientRect();
+        const hostRect = this.host.getBoundingClientRect();
+        const margin = 8;
+        const gap = 7;
+        const leftBound = hostRect.width ? hostRect.left + margin : margin;
+        const rightBound = hostRect.width ? hostRect.right - margin : window.innerWidth - margin;
+        const topBound = hostRect.height ? hostRect.top + margin : margin;
+        const bottomBound = hostRect.height ? hostRect.bottom - margin : window.innerHeight - margin;
+        const maxLeft = Math.max(leftBound, rightBound - tipRect.width);
+        const left = Math.max(leftBound, Math.min(iconRect.left - 6, maxLeft));
+
+        const aboveTop = iconRect.top - gap - tipRect.height;
+        const belowTop = iconRect.bottom + gap;
+        const aboveFits = aboveTop >= topBound;
+        const belowFits = belowTop + tipRect.height <= bottomBound;
+        const aboveSpace = iconRect.top - gap - topBound;
+        const belowSpace = bottomBound - iconRect.bottom - gap;
+        const placeAbove = (preferAbove && aboveFits)
+            || (!belowFits && (aboveFits || aboveSpace > belowSpace));
+        const rawTop = placeAbove ? aboveTop : belowTop;
+        const maxTop = Math.max(topBound, bottomBound - tipRect.height);
+        const top = Math.max(topBound, Math.min(rawTop, maxTop));
+
+        tip.classList.toggle("is-above", placeAbove);
+        tip.style.left = `${Math.round(left)}px`;
+        tip.style.top = `${Math.round(top)}px`;
+    }
+
+    private hideFieldInfo(help?: HTMLElement, tip?: HTMLElement): void {
+        if (!this.activeFieldTip) return;
+        if (help && this.activeFieldHelp !== help) return;
+        if (tip && this.activeFieldTip !== tip) return;
+        const activeHelp = this.activeFieldHelp;
+        const activeTip = this.activeFieldTip;
+        activeTip.classList.remove("is-visible", "is-above");
+        activeTip.style.removeProperty("left");
+        activeTip.style.removeProperty("top");
+        if (activeHelp?.isConnected) activeHelp.appendChild(activeTip);
+        else activeTip.remove();
+        this.activeFieldHelp = this.activeFieldTip = null;
+    }
+
+    /** label-left / control-right inline row, with an optional dimmed state.
+     *  Helper notes are appended by `withNote` in renderField, for every control type. */
+    private fieldRow(label: string, control: HTMLElement, opts?: { stack?: boolean; dim?: boolean; info?: string }): HTMLElement {
+        const wrap = div("zsb-field" + (opts?.dim ? " zsb-field-dim" : "")); const top = div("zsb-field-top" + (opts?.stack ? " zsb-field-stack" : ""));
+        top.appendChild(this.fieldLabel(label, opts?.info));
+        top.appendChild(control); wrap.appendChild(top);
+        return wrap;
+    }
+
+    /** Redesign block: a label header row (with an optional right-aligned value read-out)
+     *  and the control body beneath it. Used by slider, range, tiles, paletteList and
+     *  segText — the controls the 2a mockup stacks. The grey helper note underneath is
+     *  appended by `withNote` in renderField. */
+    private fieldStack(label: string, body: HTMLElement, opts?: { valueEl?: HTMLElement; dim?: boolean; info?: string }): HTMLElement {
+        const wrap = div("zsb-field zsb-fstack" + (opts?.dim ? " zsb-field-dim" : ""));
+        const head = div("zsb-fs-head");
+        head.appendChild(this.fieldLabel(label, opts?.info));
+        if (opts?.valueEl) head.appendChild(opts.valueEl);
+        wrap.appendChild(head);
+        wrap.appendChild(body);
+        return wrap;
+    }
+
+    /** Slider = a mockup-faithful custom track (rail + fill + knob) with a transparent
+     *  native range input on top for drag + keyboard + a11y, plus an editable value box. */
+    private renderSlider(f: SBField, label: string, aria: string, info?: string): HTMLElement {
+        const min = f.min ?? 0, max = f.max ?? 100, step = f.step ?? 1;
+        const dim = f.dimIf ? f.dimIf(k => this.cfg.get(k)) : false;
+        let val = Number(this.cfg.get(f.key!)) || 0;
+        val = Math.max(min, Math.min(max, val));
+
+        const valBox = el("input", "zsb-slider-val"); valBox.type = "number";
+        valBox.min = String(min); valBox.max = String(max); valBox.step = String(step);
+        valBox.value = String(val); valBox.setAttribute("aria-label", aria);
+        const valWrap = div("zsb-slider-valwrap"); valWrap.appendChild(valBox);
+        if (f.suffix) valWrap.appendChild(Object.assign(div("zsb-slider-sfx"), { textContent: f.suffix }));
+
+        const track = div("zsb-slider-track");
+        const fill = div("zsb-slider-fill"); const knob = div("zsb-slider-knob");
+        track.appendChild(div("zsb-slider-rail")); track.appendChild(fill); track.appendChild(knob);
+        const range = el("input", "zsb-slider-input"); range.type = "range";
+        range.min = String(min); range.max = String(max); range.step = String(step); range.value = String(val);
+        range.setAttribute("aria-label", aria); track.appendChild(range);
+
+        const paint = () => { const pct = max > min ? ((val - min) / (max - min)) * 100 : 0; fill.style.width = pct + "%"; knob.style.left = pct + "%"; };
+        paint();
+
+        // A drag is split in two so it stays smooth however heavy the diagram is:
+        //   `show`    — this control's own DOM only. Always synchronous, always instant.
+        //   `preview` — a live canvas repaint, coalesced to one per animation frame and
+        //               costing no persist and no undo entry.
+        //   `commit`  — the durable write. Exactly ONCE per drag, on release.
+        // Before this, every `input` event ran the full authoring path (persistProperties
+        // round-trip + model rebuild + repaint + two history snapshots), so a pointer-move
+        // stream buried the main thread and a drag stuttered, stalled, then snapped to
+        // whatever the last click landed on.
+        let committed = String(val);   // last value handed to cfg.set
+        let previewed = false;         // a live preview is sitting on the model, uncommitted
+        let dragging = false;
+        let raf = 0;
+
+        const show = (n: number, fromRange: boolean) => {
+            val = Math.max(min, Math.min(max, isNaN(n) ? min : n));
+            if (!fromRange) range.value = String(val);
+            valBox.value = String(val); paint();
+        };
+        const cancelPreview = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+        const schedulePreview = () => {
+            if (raf || !this.cfg.preview) return;
+            raf = requestAnimationFrame(() => {
+                raf = 0;
+                // The card (or the whole bar) can be torn down between scheduling and the
+                // frame landing — never preview from a slider that is no longer on screen.
+                if (!range.isConnected) return;
+                previewed = true; this.cfg.preview!(f.key!, val);
+            });
+        };
+        const commit = (n: number, fromRange: boolean) => {
+            show(n, fromRange);
+            // Skip a no-op write, but never skip one that has to overwrite a live preview
+            // still standing on the model (drag out and back to the starting value).
+            if (!previewed && String(val) === committed) return;
+            previewed = false; committed = String(val);
+            this.cfg.set(f.key!, val);
+        };
+        const endDrag = () => {
+            if (!dragging) return;
+            dragging = false;
+            cancelPreview();
+            commit(Number(range.value), true);
+            // Release the rebuild lock only after this event turn: `change` still has to
+            // reach this input, and a deferred rebuild would detach it first.
+            setTimeout(() => this.endControlDrag(), 0);
+        };
+
+        // addEventListener, not the `on*` properties: pointer-event handler attributes are
+        // not universally reflected as IDL properties, and this must never silently no-op.
+        range.addEventListener("pointerdown", () => { if (!dragging) { dragging = true; this.beginControlDrag(); } });
+        range.addEventListener("pointerup", endDrag);
+        range.addEventListener("pointercancel", endDrag);
+        // Mid-drag: move the knob now, preview the canvas next frame. Otherwise (keyboard,
+        // or a host with no preview channel) `change` right behind this does the commit.
+        range.oninput = () => { show(Number(range.value), true); if (dragging) schedulePreview(); };
+        // Fires on release AND on every keyboard step — the single durable write.
+        range.onchange = () => { if (dragging) endDrag(); else commit(Number(range.value), true); };
+        valBox.onchange = () => commit(parseFloat(valBox.value), false);
+        if (dim) { range.disabled = true; valBox.disabled = true; }
+        return this.fieldStack(label, track, { valueEl: valWrap, dim, info });
+    }
+
+    /** Range = two labelled MIN/MAX numeric boxes bound to a [minKey, maxKey] pair. */
+    private renderRange(f: SBField, label: string, aria: string, info?: string): HTMLElement {
+        const [minKey, maxKey] = f.keys || [];
+        const [preA, preB] = f.boxLabels || ["MIN", "MAX"];
+        const lo = f.min ?? 0, hi = f.max ?? 999, step = f.step ?? 1;
+        const body = div("zsb-range");
+        const box = (key: string, pre: string) => {
+            if (!key) return;
+            const wrap = el("label", "zsb-range-box");
+            wrap.appendChild(Object.assign(div("zsb-range-pre"), { textContent: pre }));
+            const inp = el("input", "zsb-range-in"); inp.type = "number";
+            inp.min = String(lo); inp.max = String(hi); inp.step = String(step);
+            inp.value = String(Number(this.cfg.get(key)) || 0);
+            inp.setAttribute("aria-label", `${aria} ${pre}`);
+            inp.onchange = () => { const n = Math.max(lo, Math.min(hi, parseFloat(inp.value) || 0)); inp.value = String(n); this.cfg.set(key, n); };
+            wrap.appendChild(inp);
+            if (f.suffix) wrap.appendChild(Object.assign(div("zsb-range-sfx"), { textContent: f.suffix }));
+            body.appendChild(wrap);
+        };
+        box(minKey, preA); box(maxKey, preB);
+        return this.fieldStack(label, body, { info });
+    }
+
+    /** Tiles = the one genuinely visual choice (layout mode): icon-over-label tiles. */
+    private renderTiles(f: SBField, label: string, aria: string, info?: string): HTMLElement {
+        const key = f.key!; const cur = () => this.effectiveOptionValue(f);
+        const body = div("zsb-tiles"); body.setAttribute("role", "radiogroup"); body.setAttribute("aria-label", aria);
+        const columns = Math.max(1, Math.floor(f.tileColumns ?? (f.options?.length || 1)));
+        body.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+        for (const o of (f.options || [])) {
+            const v = optValue(o); const b = btn("zsb-tile"); b.setAttribute("role", "radio");
+            const iconName = f.tileIcons?.[v]; const make = iconName ? TILE_ICONS[iconName] : undefined;
+            if (make) b.appendChild(make());
+            b.appendChild(Object.assign(div("zsb-tile-lbl"), { textContent: optLabel(o) }));
+            const sel = cur() === v; b.setAttribute("data-active", String(sel)); b.setAttribute("aria-checked", String(sel));
+            b.setAttribute("aria-label", `${aria}: ${optLabel(o)}`);
+            const disabled = this.applyOptionDependency(b, o, `${aria}: ${optLabel(o)}`);
+            b.onclick = () => {
+                if (disabled) return;
+                body.querySelectorAll(".zsb-tile").forEach(x => { x.setAttribute("data-active", "false"); x.setAttribute("aria-checked", "false"); });
+                b.setAttribute("data-active", "true"); b.setAttribute("aria-checked", "true");
+                this.cfg.set(key, optRawValue(o)); this.refreshActiveDetail();
+            };
+            body.appendChild(b);
+        }
+        return this.fieldStack(label, body, { info });
+    }
+
+    /** Palette = a vertical list, each row showing the palette's real swatch dots. */
+    private renderPalette(f: SBField, label: string, aria: string, info?: string): HTMLElement {
+        const key = f.key!;
+        const body = div("zsb-pal-list"); body.setAttribute("role", "radiogroup"); body.setAttribute("aria-label", aria);
+        const getter = (k: string) => this.cfg.get(k);
+        const visible = (f.options || []).filter((option) => {
+            const id = String(optValue(option));
+            return !f.optionFilter || f.optionFilter(getter, id, this.opts.palettes[id]);
+        });
+        const stored = String(this.cfg.get(key));
+        /**
+         * QA C-1 (ported from the Gantt's generation) — when the stored value is not in the
+         * visible list, this used to fall back to `visible[0]` and mark THAT row active, a
+         * selection the visual was not using. The calendar hits it without any filter: in a
+         * custom colour mode the Palette key reads "" (Z-137), and the list claimed Violet
+         * while the grid painted the custom colours. Nothing in the list is in use, so
+         * nothing is marked active.
+         */
+        const effective = visible.some((option) => String(optValue(option)) === stored)
+            ? stored
+            : null;
+        for (const o of (f.options || [])) {
+            const v = optValue(o); const pal = this.opts.palettes[v];
+            if (f.optionFilter && !f.optionFilter(getter, String(v), pal)) continue;
+            const b = btn("zsb-pal-row"); b.setAttribute("role", "radio");
+            const nameEl = Object.assign(div("zsb-pal-name"), { textContent: pal?.name ?? optLabel(o) });
+            b.appendChild(nameEl);
+            if (pal?.cvdSafe) { const badge = div("zsb-pal-cvd"); badge.textContent = "CVD"; badge.title = "Colour-vision-deficiency safe"; nameEl.appendChild(badge); }
+            const dots = div("zsb-pal-dots");
+            for (const c of (pal?.light ?? []).slice(0, 8)) { const d = div("zsb-pal-dot"); d.style.background = c; dots.appendChild(d); }
+            b.appendChild(dots);
+            const sel = effective === v; b.setAttribute("data-active", String(sel)); b.setAttribute("aria-checked", String(sel));
+            b.setAttribute("aria-label", `${aria}: ${pal?.name ?? optLabel(o)}`);
+            const disabled = this.applyOptionDependency(b, o, `${aria}: ${pal?.name ?? optLabel(o)}`);
+            if (sel) { const chk = checkIcon(); chk.classList.add("zsb-pal-check"); b.appendChild(chk); }
+            b.onclick = () => {
+                if (disabled) return;
+                body.querySelectorAll(".zsb-pal-row").forEach(x => { x.setAttribute("data-active", "false"); x.setAttribute("aria-checked", "false"); x.querySelector(".zsb-pal-check")?.remove(); });
+                b.setAttribute("data-active", "true"); b.setAttribute("aria-checked", "true");
+                if (!b.querySelector(".zsb-pal-check")) { const c2 = checkIcon(); c2.classList.add("zsb-pal-check"); b.appendChild(c2); }
+                this.cfg.set(key, optRawValue(o));
+            };
+            body.appendChild(b);
+        }
+        return this.fieldStack(label, body, { info });
+    }
+
+    /**
+     * Order list = the author arranges a small, fixed set of pieces: drag a row to reorder,
+     * click its eye to hide it. Used for label content (Name / Value / Percent), and
+     * deliberately generic — the engine knows nothing about what the pieces mean.
+     *
+     * ONE string carries the whole arrangement: the option values in the author's order,
+     * each prefixed `-` when hidden ("percent,-value,name"). Hiding a row therefore keeps
+     * its slot, so turning it back on restores it where it was instead of dumping it at
+     * the end. An unrecognised or empty string falls back to "every option, in schema
+     * order, all shown", so a corrupt property can never render an empty control.
+     *
+     * Reorder is pointer-drag with a fixed row height — the target index is arithmetic
+     * (`round((y - top) / ROW_H)`), never a hit-test, so it behaves the same in jsdom as
+     * in the browser. The handle is also a real button: focus it and Arrow Up/Down move
+     * the row, which is the only way this control is operable without a pointer.
+     */
+    private renderOrderList(f: SBField, label: string, aria: string, info?: string): HTMLElement {
+        const key = f.key!;
+        const options = f.options || [];
+        const labelOf = (value: string): string => {
+            const found = options.find((o) => String(optValue(o)) === value);
+            return found ? optLabel(found) : value;
+        };
+        let rows = parseOrderList(String(this.cfg.get(key) ?? ""), options);
+
+        const body = div("zsb-olist");
+        body.setAttribute("role", "list");
+        body.setAttribute("aria-label", aria);
+
+        const commit = (): void => { this.cfg.set(key, serializeOrderList(rows)); };
+        // Rebuild in place rather than through `refreshActiveDetail`: the card refresh
+        // would re-run every `visibleIf` and rebuild sibling fields, which on a reorder
+        // means the row the author just grabbed is replaced under their pointer.
+        const repaint = (): void => { body.textContent = ""; rows.forEach((r, i) => body.appendChild(makeRow(r, i))); };
+        const move = (from: number, to: number): void => {
+            const at = Math.max(0, Math.min(rows.length - 1, to));
+            if (at === from) return;
+            const [moved] = rows.splice(from, 1);
+            rows.splice(at, 0, moved);
+            commit();
+            repaint();
+            // Keep the moved row's handle focused so a keyboard reorder can continue.
+            (body.children[at]?.querySelector(".zsb-olist-grip") as HTMLButtonElement | null)?.focus();
+        };
+
+        const makeRow = (row: OrderRow, index: number): HTMLElement => {
+            const name = labelOf(row.value);
+            const el = div("zsb-olist-row");
+            el.setAttribute("role", "listitem");
+            el.setAttribute("data-on", String(row.on));
+
+            const grip = btn("zsb-olist-grip");
+            grip.appendChild(gripIcon());
+            grip.setAttribute("aria-label", `${name}: position ${index + 1} of ${rows.length}. Use arrow keys to reorder.`);
+            grip.onkeydown = (e: KeyboardEvent) => {
+                const delta = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+                if (!delta) return;
+                e.preventDefault();
+                move(index, index + delta);
+            };
+            el.appendChild(grip);
+
+            el.appendChild(Object.assign(div("zsb-olist-name"), { textContent: name }));
+
+            const eye = btn("zsb-olist-eye");
+            eye.appendChild(row.on ? eyeIcon() : eyeOffIcon());
+            eye.setAttribute("aria-pressed", String(row.on));
+            eye.setAttribute("aria-label", `${name}: ${row.on ? "shown — hide it" : "hidden — show it"}`);
+            eye.onclick = () => { rows[index] = { value: row.value, on: !row.on }; commit(); repaint(); };
+            el.appendChild(eye);
+
+            // Pointer reorder. Started from the grip only, so a click on the eye (or a
+            // drag-select of the row's text) is never mistaken for a reorder.
+            grip.addEventListener("pointerdown", (e: PointerEvent) => {
+                if (e.button != null && e.button !== 0) return;
+                e.preventDefault();
+                const first = body.firstElementChild as HTMLElement | null;
+                const rowH = first?.getBoundingClientRect().height || ORDER_ROW_H;
+                const top = body.getBoundingClientRect().top;
+                let target = index;
+                el.setAttribute("data-dragging", "true");
+                this.beginControlDrag();
+                const onMove = (ev: PointerEvent) => {
+                    // Arithmetic index, not a hit-test: rows are uniform, so the slot under
+                    // the pointer is just how far down the list it has travelled.
+                    const at = Math.round((ev.clientY - top - rowH / 2) / (rowH || 1));
+                    target = Math.max(0, Math.min(rows.length - 1, at));
+                    Array.from(body.children).forEach((c, i) => {
+                        (c as HTMLElement).setAttribute("data-drop", String(i === target && target !== index));
+                    });
+                };
+                const onUp = () => {
+                    window.removeEventListener("pointermove", onMove);
+                    window.removeEventListener("pointerup", onUp);
+                    window.removeEventListener("pointercancel", onUp);
+                    el.removeAttribute("data-dragging");
+                    Array.from(body.children).forEach((c) => (c as HTMLElement).removeAttribute("data-drop"));
+                    this.endControlDrag();
+                    move(index, target);
+                };
+                window.addEventListener("pointermove", onMove);
+                window.addEventListener("pointerup", onUp);
+                window.addEventListener("pointercancel", onUp);
+            });
+            return el;
+        };
+
+        repaint();
+        return this.fieldStack(label, body, { info });
     }
 
     private makeSwitch(key: string, aria?: string): HTMLElement {
@@ -785,22 +1939,41 @@ export class ZentrixSettingsBar {
         const inp = el("input", "zsb-step-in"); inp.type = "number"; inp.value = String(val); inp.setAttribute("aria-label", name);
         const suf = div("zsb-step-suffix"); if (f.suffix) suf.textContent = f.suffix; else suf.style.display = "none";
         const inc = btn("zsb-step-btn"); inc.textContent = "+"; inc.setAttribute("aria-label", `Increase ${name}`);
-        const commit = (n: number) => { val = Math.max(min, Math.min(max, n)); inp.value = String(val); this.cfg.set(f.key!, val); };
+        const commit = (n: number) => {
+            val = Math.max(min, Math.min(max, n));
+            inp.value = String(val);
+            this.cfg.set(f.key!, val);
+            // A stepper can control sibling visibility just like a switch or
+            // segmented control (for example Gradient → Midpoints reveals Mid 1..N).
+            this.refreshActiveDetail();
+        };
         dec.onclick = () => commit(val - step); inc.onclick = () => commit(val + step);
         inp.onchange = () => commit(parseFloat(inp.value) || 0);
         shell.append(dec, inp, suf, inc); return shell;
     }
 
     private makeSegText(f: SBField, aria?: string, stack = false): HTMLElement {
-        const key = f.key!; const cur = () => String(this.cfg.get(key));
+        const key = f.key!; const cur = () => this.effectiveOptionValue(f);
         const seg = div("zsb-seg zsb-seg-text" + (stack ? " zsb-seg-wrap" : "")); seg.setAttribute("role", "radiogroup");
         if (aria) seg.setAttribute("aria-label", aria);
         for (const o of (f.options || [])) {
-            const v = optValue(o); const b = btn("zsb-seg-btn"); b.textContent = optLabel(o);
+            const v = optValue(o); const b = btn("zsb-seg-btn");
+            // The label lives in its own span, not as a bare text node: a dependency badge
+            // ("?") is appended alongside it, and a bare text node cannot be ellipsised or
+            // kept on the same line once a sibling element joins it (SP-085).
+            b.appendChild(Object.assign(document.createElement("span"), {
+                className: "zsb-seg-lbl", textContent: optLabel(o),
+            }));
             b.setAttribute("role", "radio");
             const sel = cur() === v; b.setAttribute("data-active", String(sel)); b.setAttribute("aria-checked", String(sel));
             b.setAttribute("aria-label", aria ? `${aria}: ${optLabel(o)}` : optLabel(o));
-            b.onclick = () => { seg.querySelectorAll(".zsb-seg-btn").forEach(x => { x.setAttribute("data-active", "false"); x.setAttribute("aria-checked", "false"); }); b.setAttribute("data-active", "true"); b.setAttribute("aria-checked", "true"); this.cfg.set(key, Array.isArray(o) ? o[0] : o); this.refreshActiveDetail(); };
+            const disabled = this.applyOptionDependency(b, o, aria ? `${aria}: ${optLabel(o)}` : optLabel(o));
+            b.onclick = () => {
+                if (disabled) return;
+                seg.querySelectorAll(".zsb-seg-btn").forEach(x => { x.setAttribute("data-active", "false"); x.setAttribute("aria-checked", "false"); });
+                b.setAttribute("data-active", "true"); b.setAttribute("aria-checked", "true");
+                this.cfg.set(key, optRawValue(o)); this.refreshActiveDetail();
+            };
             seg.appendChild(b);
         }
         return seg;
@@ -843,19 +2016,187 @@ export class ZentrixSettingsBar {
         return seg;
     }
 
+    /** One-shot action button. The handler gets the same get/set pair every other control
+     *  writes through, so an action is just a scripted set — no new persistence path. */
+    private makeButton(f: SBField, aria?: string): HTMLElement {
+        const b = btn("zsb-action");
+        b.type = "button";
+        b.textContent = f.buttonLabel || f.label || "Apply";
+        if (aria) b.setAttribute("aria-label", aria);
+        b.onclick = (e) => {
+            e.stopPropagation();
+            f.onClick?.(
+                (k) => this.cfg.get(k),
+                (k, v) => this.cfg.set(k, v),
+                // Falls back to one-at-a-time when the host provides no batch path, so
+                // the button still works — it just costs more undo steps.
+                (vals) => {
+                    if (this.cfg.setMany) this.cfg.setMany(vals);
+                    else for (const [k, v] of Object.entries(vals)) this.cfg.set(k, v);
+                },
+            );
+            this.refreshActiveDetail();
+        };
+        return b;
+    }
+
+    /** Debounce window for live text edits — long enough that a normal word is one
+     *  persist, short enough that the canvas reads as "typing straight onto the chart". */
+    private static readonly TEXT_LIVE_MS = 250;
+
+    /** Run a keystroke-debounced text commit `TEXT_LIVE_MS` after the last keystroke,
+     *  replacing any commit still waiting. One timer for the whole bar: only one text
+     *  field can hold the caret at a time. */
+    private scheduleTextCommit(commit: () => void): void {
+        this.cancelTextCommit();
+        this.textCommit = commit;
+        this.textTimer = window.setTimeout(() => {
+            this.textTimer = null;
+            const pending = this.textCommit; this.textCommit = null;
+            pending?.();
+        }, ZentrixSettingsBar.TEXT_LIVE_MS);
+    }
+
+    /** Drop a pending debounced commit (the caller is about to commit synchronously,
+     *  or the bar is going away). */
+    private cancelTextCommit(): void {
+        if (this.textTimer != null) { clearTimeout(this.textTimer); this.textTimer = null; }
+        this.textCommit = null;
+    }
+
+    /** Run a pending debounced commit NOW (panel closing — the input is about to be
+     *  detached, and a detached input never fires `change`). */
+    private flushTextCommit(): void {
+        if (this.textTimer != null) { clearTimeout(this.textTimer); this.textTimer = null; }
+        const pending = this.textCommit; this.textCommit = null;
+        pending?.();
+    }
+
     private makeText(f: SBField, aria?: string): HTMLElement {
+        const key = f.key!;
         const inp = el("input", "zsb-input"); inp.type = "text";
-        inp.value = String(this.cfg.get(f.key!) ?? ""); if (f.placeholder) inp.placeholder = f.placeholder;
+        inp.value = String(this.cfg.get(key) ?? "");
+        const ph = f.placeholderFn ? f.placeholderFn((k) => this.cfg.get(k)) : f.placeholder;
+        if (ph) inp.placeholder = ph;
+        inp.dataset.zsbKey = key;                       // lets refreshActiveDetail find it again
         if (aria) inp.setAttribute("aria-label", aria);
-        inp.onchange = () => this.cfg.set(f.key!, inp.value);
+
+        let last = inp.value;
+        const commit = (): boolean => {
+            if (inp.value === last) return false;
+            last = inp.value;
+            this.cfg.set(key, inp.value);
+            return true;
+        };
+        // Text edits are LIVE: committing only on `change` (i.e. on blur) meant the chart
+        // title appeared only once the panel was dismissed, which reads as "the setting is
+        // broken". Every keystroke therefore schedules a debounced commit — one persist +
+        // repaint per pause in typing, not one per character.
+        //
+        // A text field can also GATE its siblings (Chart title unlocks its font/size/style/
+        // colour). That flip must not wait for the debounce, and it is the ONLY case that
+        // re-renders the open sub: a rebuild mid-word would otherwise churn the DOM under
+        // the caret on every keystroke.
+        inp.oninput = () => {
+            const gateFlipped = (last.trim().length === 0) !== (inp.value.trim().length === 0);
+            if (gateFlipped) {
+                this.cancelTextCommit();
+                if (commit()) this.refreshActiveDetail(key);
+                return;
+            }
+            this.scheduleTextCommit(() => { commit(); });
+        };
+        // Blur/Enter: commit immediately. A no-op when the debounce already landed the
+        // same value — `commit` returns false and nothing re-renders.
+        inp.onchange = () => { this.cancelTextCommit(); if (commit()) this.refreshActiveDetail(key); };
         return inp;
     }
 
+    /** Image upload control: a preview thumb + Upload/Replace + Remove. The picked file
+     *  is read locally (FileReader), downscaled on a canvas, and stored as a small base64
+     *  `data:` URI via cfg.set — NO network, NO external assets (certification-safe). The
+     *  bound engine key holds the data URI string. */
+    private makeUpload(f: SBField, label: string, aria: string, info?: string): HTMLElement {
+        const key = f.key!;
+        const cur = String(this.cfg.get(key) ?? "");
+        const body = div(); Object.assign(body.style, { display: "flex", gap: "10px", alignItems: "center" } as CSSStyleDeclaration);
+
+        const preview = div();
+        Object.assign(preview.style, {
+            width: "44px", height: "44px", flex: "0 0 auto", borderRadius: "8px",
+            border: "1px solid var(--border)", background: "var(--surface-subtle)", display: "grid", placeItems: "center", overflow: "hidden",
+        } as CSSStyleDeclaration);
+        if (cur.startsWith("data:")) {
+            const img = document.createElement("img"); img.src = cur; img.alt = "";
+            Object.assign(img.style, { width: "100%", height: "100%", objectFit: "contain" } as CSSStyleDeclaration);
+            preview.appendChild(img);
+        } else {
+            const dot = div(); Object.assign(dot.style, { width: "6px", height: "6px", borderRadius: "50%", background: "var(--text-tertiary)", opacity: "0.6" } as CSSStyleDeclaration);
+            preview.appendChild(dot);
+        }
+
+        const input = el("input"); input.type = "file";
+        input.accept = "image/png,image/jpeg,image/svg+xml,image/webp,image/gif";
+        input.style.display = "none";
+        input.onchange = () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const src = String(reader.result || "");
+                if (!src.startsWith("data:")) return;
+                const image = new Image();
+                image.onload = () => { this.cfg.set(key, this.downscaleUpload(image, src)); this.refreshActiveDetail(); };
+                image.onerror = () => { /* ignore unreadable images */ };
+                image.src = src;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const controls = div(); Object.assign(controls.style, { display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" } as CSSStyleDeclaration);
+        const upBtn = btn(); upBtn.type = "button"; upBtn.textContent = cur ? "Replace" : "Upload image";
+        upBtn.setAttribute("aria-label", `${cur ? "Replace" : "Upload"} image for ${aria}`);
+        Object.assign(upBtn.style, {
+            font: "600 12px/1 'Inter',system-ui,sans-serif", color: "#FFFFFF", background: "var(--accent)",
+            border: "none", borderRadius: "8px", padding: "8px 12px", cursor: "pointer",
+        } as CSSStyleDeclaration);
+        upBtn.onclick = (e) => { e.stopPropagation(); input.value = ""; input.click(); };
+        controls.appendChild(upBtn);
+        if (cur) {
+            const rm = btn(); rm.type = "button"; rm.textContent = "Remove";
+            rm.setAttribute("aria-label", `Remove image for ${aria}`);
+            Object.assign(rm.style, {
+                font: "600 12px/1 'Inter',system-ui,sans-serif", color: "var(--text-primary)", background: "transparent",
+                border: "1px solid var(--border)", borderRadius: "8px", padding: "8px 12px", cursor: "pointer",
+            } as CSSStyleDeclaration);
+            rm.onclick = (e) => { e.stopPropagation(); this.cfg.set(key, ""); this.refreshActiveDetail(); };
+            controls.appendChild(rm);
+        }
+
+        body.appendChild(preview); body.appendChild(controls); body.appendChild(input);
+        return this.fieldStack(label, body, { info });
+    }
+
+    /** Downscale to <= 48px on the longest side via canvas (local, no network). PNG keeps
+     *  logo transparency and is tiny at this size. Falls back to the original on failure. */
+    private downscaleUpload(image: HTMLImageElement, original: string): string {
+        const MAX = 48;
+        const w = image.naturalWidth || image.width, h = image.naturalHeight || image.height;
+        if (!w || !h) return original;
+        const scale = Math.min(1, MAX / Math.max(w, h));
+        const tw = Math.max(1, Math.round(w * scale)), th = Math.max(1, Math.round(h * scale));
+        const canvas = document.createElement("canvas"); canvas.width = tw; canvas.height = th;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return original;
+        try { ctx.drawImage(image, 0, 0, tw, th); return canvas.toDataURL("image/png"); }
+        catch { return original; }
+    }
+
     /* ---- expandable controls (one open at a time) ---- */
-    private makeExpandable(f: SBField, kind: "font" | "color" | "emoji", aria?: string): HTMLElement {
+    private makeExpandable(f: SBField, kind: "font" | "color" | "emoji" | "select", aria?: string, info?: string): HTMLElement {
         const id = f.key!; const wrap = div("zsb-field");
         const trigger = btn("zsb-trigger"); trigger.setAttribute("data-open", String(this.exp === id));
-        const labelSpan = Object.assign(document.createElement("span"), { textContent: aria ?? f.label ?? "", className: "zsb-label" });
+        const labelSpan = this.fieldLabel(aria ?? f.label ?? "", info);
         const valWrap = div("zsb-trigger-val");
         this.fillTriggerValue(valWrap, f, kind);
         // Accessible name = control + its current value, e.g. "Start / hue #7C5CFF",
@@ -866,24 +2207,149 @@ export class ZentrixSettingsBar {
         const head = div("zsb-trigger-head"); head.appendChild(labelSpan); head.appendChild(valWrap);
         trigger.appendChild(head); trigger.appendChild(chev);
         trigger.onclick = (e) => { e.stopPropagation(); this.exp = this.exp === id ? null : id; this.rerenderExpandable(); };
-        wrap.appendChild(trigger);
+        // A companion colour chip sits on the SAME row, right of the trigger: pick the
+        // mark on the left, the colour it is drawn in on the right. Its picker is the
+        // ordinary colour expansion, opened under the pair.
+        const colorField = f.colorKey ? { ...f, key: f.colorKey, control: "color" as const } : null;
+        if (colorField) {
+            const pair = div("zsb-field-pair");
+            const swatch = btn("zsb-pairswatch");
+            const swVal = div("zsb-trigger-val");
+            this.fillTriggerValue(swVal, colorField, "color");
+            swatch.appendChild(swVal);
+            swatch.setAttribute("data-open", String(this.exp === colorField.key));
+            swatch.setAttribute("aria-haspopup", "true");
+            swatch.setAttribute("aria-expanded", String(this.exp === colorField.key));
+            swatch.setAttribute("aria-label", `${aria ?? f.label ?? ""} colour ${this.triggerValueText(colorField, "color")}`.trim());
+            swatch.onclick = (e) => {
+                e.stopPropagation();
+                this.exp = this.exp === colorField.key ? null : colorField.key;
+                this.rerenderExpandable();
+            };
+            pair.appendChild(trigger); pair.appendChild(swatch);
+            wrap.appendChild(pair);
+            if (this.exp === colorField.key) wrap.appendChild(this.buildExpansion(colorField, "color", swVal));
+        } else {
+            wrap.appendChild(trigger);
+        }
         if (this.exp === id) wrap.appendChild(this.buildExpansion(f, kind, valWrap));
         return wrap;
     }
 
+    /**
+     * G-055 — the icon-library indirection, ported up from the Gantt's mirror.
+     *
+     * Resolve an icon-picker value. `opts.iconLib` wins when a visual injects one
+     * (the Gantt's status badges); otherwise the shared entity catalog, which is
+     * what THIS visual and the Sankey get — their behaviour is unchanged, because
+     * neither injects a library and every fallback below is the call that used to
+     * be made directly.
+     */
+    private resolveIcon(value: string | null | undefined): SBIcon | null {
+        return this.opts.iconLib ? this.opts.iconLib.resolve(value) : getSemanticIcon(value);
+    }
+
+    /** The canonical category order for whichever library is in play. */
+    private iconCategories(): readonly string[] {
+        return this.opts.iconLib ? this.opts.iconLib.categories : ICON_CATEGORIES;
+    }
+
+    /** Draw a resolved icon. Mirrors `createSemanticIconSvg` for injected libraries. */
+    private iconSvg(value: string, size: number): SVGSVGElement | null {
+        if (!this.opts.iconLib) return createSemanticIconSvg(value, size);
+        const entry = this.opts.iconLib.resolve(value);
+        if (!entry) return null;
+        const ns = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("width", String(size));
+        svg.setAttribute("height", String(size));
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "1.8");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+        svg.setAttribute("aria-hidden", "true");
+        for (const d of entry.paths) {
+            const path = document.createElementNS(ns, "path");
+            path.setAttribute("d", d);
+            svg.appendChild(path);
+        }
+        return svg;
+    }
+
     /** The current value of an expandable control as plain text, for its aria name. */
-    private triggerValueText(f: SBField, kind: "font" | "color" | "emoji"): string {
-        const cur = String(this.cfg.get(f.key!) ?? "");
+    private triggerValueText(f: SBField, kind: "font" | "color" | "emoji" | "select"): string {
+        const cur = kind === "select"
+            ? this.effectiveOptionValue(f)
+            : String(this.cfg.get(f.key!) ?? "");
         if (kind === "color") return isHex(cur) ? cur.toUpperCase() : "Auto";
         if (kind === "font") { const font = this.opts.fonts.find(x => x.id === cur || x.css === cur); return font ? font.label : cur; }
-        return cur;
+        if (kind === "select") { const o = (f.options || []).find(x => String(optValue(x)) === cur); return o ? optLabel(o) : cur; }
+        return this.resolveIcon(cur)?.label ?? (cur || "None");
     }
 
     private rerenderExpandable(): void {
         const cat = this.opts.cats.find(c => c.id === this.activeCat); if (cat) this.renderDetail(cat);
+        this.revealExpansion();
     }
 
-    private fillTriggerValue(valWrap: HTMLElement, f: SBField, kind: "font" | "color" | "emoji"): void {
+    /**
+     * How tall an expanded option surface may be, given the pane it has to live in.
+     *
+     * `preferred` is the roomy-tile height; on a short visual the pane simply cannot show
+     * that much, and a list taller than its pane pushes its own last options past the card
+     * edge — reachable only by scrolling a pane the reader has no reason to think scrolled.
+     * Falls back to `preferred` where the pane height is unknown (jsdom).
+     */
+    private optionSurfaceMaxH(preferred: number): number {
+        return optionSurfaceMaxHeight(preferred, this.detailMaxH);
+    }
+
+    /**
+     * Scroll the just-opened option surface into the detail pane.
+     *
+     * `rerenderExpandable` rebuilds the pane's children, which resets `scrollTop` to 0 —
+     * so expanding a control near the BOTTOM of a long tab dropped its list below the fold
+     * with nothing on screen to say so. This puts the open row back in view, respecting the
+     * pane's end gutter so the last option clears the card edge.
+     *
+     * Arithmetic on `getBoundingClientRect`, deliberately, rather than `scrollIntoView`:
+     * the latter also scrolls every scrollable ANCESTOR (in the Service that can pan the
+     * report page under us) and jsdom does not implement it at all.
+     */
+    private revealExpansion(): void {
+        const pane = this.detailInner;
+        const box = pane?.querySelector(".zsb-field-exp") as HTMLElement | null;
+        if (!pane || !box) return;
+        const row = (box.parentElement ?? box) as HTMLElement;          // the .zsb-field
+        const paneR = pane.getBoundingClientRect();
+        if (paneR.height <= 0) return;                                  // no layout (jsdom)
+
+        // `optionSurfaceMaxH` sizes the list from constants, which cannot know how tall THIS
+        // field's label and description note happen to be — and a field whose whole row
+        // outgrows the pane can only ever show part of its list. So measure the rendered row
+        // and give back the excess, exactly as `remeasureChrome` does for the card chrome.
+        const surface = box.querySelector(".zsb-fontlist, .zsb-emojigrid") as HTMLElement | null;
+        if (surface) {
+            const excess = (row.getBoundingClientRect().height + PANEL_END_GUTTER) - paneR.height;
+            if (excess > 0) {
+                const shown = surface.getBoundingClientRect().height;
+                surface.style.maxHeight = `${Math.max(OPTION_SURFACE_MIN, shown - excess)}px`;
+            }
+        }
+
+        // Bring the bottom of the open row (list included) inside the pane, gutter and all.
+        const below = (row.getBoundingClientRect().bottom + PANEL_END_GUTTER) - paneR.bottom;
+        if (below > 0) pane.scrollTop += below;
+        // …but never at the cost of the trigger itself: if the row is taller than the pane,
+        // the scroll above pushed its top out of sight, so pin the TOP instead — the reader
+        // must see the control they just opened, and the list scrolls internally anyway.
+        const above = paneR.top - row.getBoundingClientRect().top;
+        if (above > 0) pane.scrollTop -= above;
+    }
+
+    private fillTriggerValue(valWrap: HTMLElement, f: SBField, kind: "font" | "color" | "emoji" | "select"): void {
         valWrap.textContent = "";
         if (kind === "font") {
             const cur = String(this.cfg.get(f.key!)); const font = this.opts.fonts.find(x => x.id === cur || x.css === cur);
@@ -895,29 +2361,88 @@ export class ZentrixSettingsBar {
             if (!isHex(cur)) chip.style.boxShadow = "inset 0 0 0 1px var(--border-default)";
             const hex = Object.assign(document.createElement("span"), { className: "zsb-mono", textContent: isHex(cur) ? cur.toUpperCase() : "Auto" });
             valWrap.append(chip, hex);
+        } else if (kind === "select") {
+            const cur = this.effectiveOptionValue(f);
+            const o = (f.options || []).find(x => String(optValue(x)) === cur);
+            // Same chip as the open list, so the collapsed row shows the texture the
+            // reader just picked instead of only its name.
+            const pv = f.optionPreview?.(cur);
+            if (pv) valWrap.appendChild(previewSlot(pv));
+            valWrap.appendChild(Object.assign(document.createElement("span"), { textContent: o ? optLabel(o) : cur }));
         } else {
-            const s = Object.assign(document.createElement("span"), { className: "zsb-emoji-cur", textContent: String(this.cfg.get(f.key!) || "") });
+            const cur = String(this.cfg.get(f.key!) || "");
+            const semantic = this.resolveIcon(cur);
+            const s = div("zsb-emoji-cur");
+            const svgIcon = semantic ? this.iconSvg(cur, 18) : null;
+            if (svgIcon) s.appendChild(svgIcon);
+            else s.textContent = cur || "None";
+            if (semantic) s.appendChild(Object.assign(document.createElement("span"), { textContent: semantic.label }));
             valWrap.appendChild(s);
         }
     }
 
-    private buildExpansion(f: SBField, kind: "font" | "color" | "emoji", valWrap: HTMLElement): HTMLElement {
+    /** Update both visible and screen-reader values while an expandable picker is
+     *  still mounted. */
+    private syncTriggerValue(
+        valWrap: HTMLElement,
+        f: SBField,
+        kind: "font" | "color" | "emoji" | "select",
+    ): void {
+        this.fillTriggerValue(valWrap, f, kind);
+        const trigger = valWrap.closest<HTMLButtonElement>("button.zsb-trigger");
+        if (trigger) {
+            trigger.setAttribute(
+                "aria-label",
+                `${f.label ?? ""} ${this.triggerValueText(f, kind)}`.trim(),
+            );
+        }
+    }
+
+    private buildExpansion(f: SBField, kind: "font" | "color" | "emoji" | "select", valWrap: HTMLElement): HTMLElement {
         const box = div("zsb-field-exp");
         if (kind === "font") box.appendChild(this.buildFontList(f, valWrap));
         else if (kind === "color") box.appendChild(this.buildColorPicker(f, valWrap));
+        else if (kind === "select") box.appendChild(this.buildSelectList(f, valWrap));
         else box.appendChild(this.buildEmojiGrid(f, valWrap));
         return box;
     }
 
+    /** Dropdown list for a "select" control — one row per option (any count). */
+    private buildSelectList(f: SBField, valWrap: HTMLElement): HTMLElement {
+        const list = div("zsb-fontlist"); const cur = this.effectiveOptionValue(f);
+        list.style.maxHeight = `${this.optionSurfaceMaxH(LIST_SURFACE_MAX)}px`;
+        for (const o of (f.options || [])) {
+            const v = String(optValue(o));
+            const b = btn("zsb-fontopt"); b.setAttribute("data-active", String(v === cur));
+            if (f.optionPreview) { b.classList.add("zsb-fontopt--pv"); b.appendChild(previewSlot(f.optionPreview(v))); }
+            b.appendChild(Object.assign(document.createElement("span"), { textContent: optLabel(o) }));
+            const disabled = this.applyOptionDependency(b, o, `${f.label ?? "Option"}: ${optLabel(o)}`);
+            b.onclick = () => {
+                if (disabled) return;
+                list.querySelectorAll(".zsb-fontopt").forEach(x => x.setAttribute("data-active", "false")); b.setAttribute("data-active", "true");
+                this.cfg.set(f.key!, optRawValue(o)); this.syncTriggerValue(valWrap, f, "select");
+                // A select can gate sibling fields (visibleIf/dimIf) — re-render the detail so
+                // dependent controls appear/disappear live, matching segText/switch behaviour.
+                this.exp = null;
+                this.refreshActiveDetail();
+            };
+            list.appendChild(b);
+        }
+        return list;
+    }
+
     private buildFontList(f: SBField, valWrap: HTMLElement): HTMLElement {
         const list = div("zsb-fontlist"); const cur = String(this.cfg.get(f.key!));
+        list.style.maxHeight = `${this.optionSurfaceMaxH(LIST_SURFACE_MAX)}px`;
         for (const font of this.opts.fonts) {
             const o = btn("zsb-fontopt"); o.style.fontFamily = font.css;
             o.setAttribute("data-active", String(font.id === cur || font.css === cur));
             o.appendChild(Object.assign(document.createElement("span"), { textContent: font.label }));
             o.onclick = () => {
                 list.querySelectorAll(".zsb-fontopt").forEach(x => x.setAttribute("data-active", "false")); o.setAttribute("data-active", "true");
-                this.cfg.set(f.key!, font.id); this.fillTriggerValue(valWrap, f, "font");
+                this.cfg.set(f.key!, font.id); this.syncTriggerValue(valWrap, f, "font");
+                this.exp = null;
+                this.refreshActiveDetail();
             };
             list.appendChild(o);
         }
@@ -925,16 +2450,70 @@ export class ZentrixSettingsBar {
     }
 
     private buildEmojiGrid(f: SBField, valWrap: HTMLElement): HTMLElement {
-        const grid = div("zsb-emojigrid"); const cur = String(this.cfg.get(f.key!) || "");
-        for (const em of (this.opts.emoji || [])) {
-            const b = btn("zsb-emojibtn"); b.textContent = em; b.setAttribute("data-active", String(em === cur));
-            b.onclick = () => {
-                grid.querySelectorAll(".zsb-emojibtn").forEach(x => x.setAttribute("data-active", "false")); b.setAttribute("data-active", "true");
-                this.cfg.set(f.key!, em); this.fillTriggerValue(valWrap, f, "emoji");
+        const wrap = div("zsb-emojiwrap");
+        const cur = String(this.cfg.get(f.key!) || "");
+        const names = this.opts.emojiNames || {};
+        let category: IconCategory | "All" = "All";
+
+        // Search-by-name box (icon library).
+        const search = el("input", "zsb-emojisearch"); search.type = "search";
+        search.placeholder = "Search icons…"; search.setAttribute("aria-label", "Search icons by name");
+        search.style.cssText = "width:100%;box-sizing:border-box;margin:0 0 8px;padding:8px 10px;border:1px solid var(--border-default);border-radius:8px;background:transparent;color:inherit;font:400 11px var(--font-ui)";
+        wrap.appendChild(search);
+
+        const filters = div("zsb-iconfilters");
+        const categories: (IconCategory | "All")[] = ["All", ...this.iconCategories() as readonly IconCategory[]];
+        for (const name of categories) {
+            const filter = btn("zsb-iconfilter");
+            filter.textContent = name;
+            filter.setAttribute("data-active", String(name === category));
+            filter.onclick = () => {
+                category = name;
+                filters.querySelectorAll(".zsb-iconfilter").forEach((item) =>
+                    item.setAttribute("data-active", String(item.textContent === name)));
+                build(search.value);
             };
-            grid.appendChild(b);
+            filters.appendChild(filter);
         }
-        return grid;
+        wrap.appendChild(filters);
+
+        const grid = div("zsb-emojigrid");
+        grid.style.maxHeight = `${this.optionSurfaceMaxH(GRID_SURFACE_MAX)}px`; grid.style.overflowY = "auto";
+        wrap.appendChild(grid);
+
+        const build = (q: string): void => {
+            grid.textContent = "";
+            const ql = q.trim().toLowerCase();
+            for (const em of (this.opts.emoji || [])) {
+                const semantic = this.resolveIcon(em);
+                if (category !== "All" && semantic?.category !== category) continue;
+                if (ql) { if (em === "") continue; if (!(names[em] || "").toLowerCase().includes(ql)) continue; }
+                const b = btn("zsb-emojibtn");
+                const svgIcon = semantic ? this.iconSvg(em, 21) : null;
+                if (svgIcon) b.appendChild(svgIcon);
+                else b.textContent = "∅";
+                b.title = semantic?.label || (em === "" ? "None" : names[em] || em);
+                b.setAttribute("data-active", String(em === cur));
+                b.setAttribute("aria-label", semantic?.label || (em === "" ? "None" : names[em] || em));
+                b.onclick = () => {
+                    grid.querySelectorAll(".zsb-emojibtn").forEach(x => x.setAttribute("data-active", "false")); b.setAttribute("data-active", "true");
+                    this.cfg.set(f.key!, em); this.syncTriggerValue(valWrap, f, "emoji");
+                };
+                grid.appendChild(b);
+            }
+        };
+        build("");
+        search.oninput = () => {
+            // Search is global: a query should not be able to look "empty" merely
+            // because an unrelated use-case filter was still active.
+            if (search.value.trim()) {
+                category = "All";
+                filters.querySelectorAll(".zsb-iconfilter").forEach((item) =>
+                    item.setAttribute("data-active", String(item.textContent === "All")));
+            }
+            build(search.value);
+        };
+        return wrap;
     }
 
     private buildColorPicker(f: SBField, valWrap: HTMLElement): HTMLElement {
@@ -948,6 +2527,25 @@ export class ZentrixSettingsBar {
         rowEl.append(chip, hex);
         const presetGrid = div("zsb-cp-presets");
         cp.append(sv, hue, rowEl, presetGrid);
+        // "Automatic" is a real value for these fields (an empty stored colour), so the
+        // picker must be able to get BACK to it — otherwise the first click on the wheel
+        // is a one-way door out of the contrast-derived default.
+        if (f.colorAuto) {
+            const auto = btn("zsb-cp-auto");
+            const syncAuto = () => auto.setAttribute("data-active", String(!isHex(String(this.cfg.get(f.key!) || ""))));
+            auto.textContent = "Automatic";
+            auto.title = "Let the visual pick a contrasting colour";
+            syncAuto();
+            auto.onclick = () => {
+                this.cfg.set(f.key!, "");
+                this.syncTriggerValue(valWrap, f, "color");
+                syncAuto();
+                presetGrid.querySelectorAll(".zsb-swatch2").forEach(x => x.setAttribute("data-active", "false"));
+            };
+            cp.insertBefore(auto, sv);
+            // Any explicit pick leaves Automatic behind — keep its state honest.
+            cp.addEventListener("pointerdown", () => window.setTimeout(syncAuto, 0));
+        }
 
         const state = hexToHsv(start);
         const paint = (commit: boolean) => {
@@ -957,7 +2555,7 @@ export class ZentrixSettingsBar {
             hueThumb.style.left = `${(state.h / 360) * 100}%`;
             chip.style.background = col; hex.value = col.toUpperCase();
             presetGrid.querySelectorAll(".zsb-swatch2").forEach(s => s.setAttribute("data-active", String((s.getAttribute("data-c") || "").toLowerCase() === col.toLowerCase())));
-            if (commit) { this.cfg.set(f.key!, col); this.fillTriggerValue(valWrap, f, "color"); }
+            if (commit) { this.cfg.set(f.key!, col); this.syncTriggerValue(valWrap, f, "color"); }
         };
         const drag = (apply: (cx: number, cy: number) => void) => (e: PointerEvent) => {
             e.preventDefault(); apply(e.clientX, e.clientY);
@@ -1085,7 +2683,7 @@ const CSS = `
 .zsb-anchor[data-theme="hc"] button:focus-visible, .zsb-anchor[data-theme="hc"] input:focus-visible{ outline:2px solid var(--hc-accent); outline-offset:1px; }
 
 @media (forced-colors: active){
-  .zsb-bar, .zsb-pop, .zsb-gear, .zsb-group, .zsb-step, .zsb-seg, .zsb-input, .zsb-info-tip{ border:1px solid CanvasText; }
+  .zsb-bar, .zsb-pop, .zsb-gear, .zsb-group, .zsb-step, .zsb-seg, .zsb-input, .zsb-action, .zsb-info-tip, .zsb-field-info-tip{ border:1px solid CanvasText; }
   .zsb-seg-btn[data-active="true"]{ background:Highlight; color:HighlightText; }
   .zsb-group[data-open="true"], .zsb-rail-row[data-active="true"], .zsb-trigger[data-open="true"]{ outline:2px solid Highlight; }
   .zsb-switch{ border:1px solid CanvasText; }
@@ -1107,8 +2705,6 @@ const CSS = `
 .zsb-bar .zsb-gear{ width:34px; height:34px; background:var(--tb-pill); border-color:var(--tb-border); color:var(--tb-text); box-shadow:none; }
 .zsb-bar .zsb-gear:hover{ color:var(--tb-text-strong); border-color:var(--tb-gear-hover-border); }
 .zsb-bar .zsb-gear.is-open{ background:var(--tb-pill-active); border-color:transparent; color:var(--tb-pill-active-fg); box-shadow:0 0 0 1px var(--tb-ring); }
-/* zentrix-qa#28: text floor raised to 11–12px (was 9–11.5) — at Desktop's Fit-to-page
-   zoom the gear read at ~7px beside the 12px Format pane. Port to every bar generation. */
 /* Gear spin uses CSS animations, NOT a transition: buildBar()/collapse() re-parent
    the gear between the anchor and the bar, and a re-parent cancels transitions — but
    an animation replays on (re)insertion, so the spin survives the move. forwards holds
@@ -1170,7 +2766,7 @@ const CSS = `
 .zsb-reset.zsb-reset--armed svg{ color:var(--tb-danger-fg); }
 .zsb-brand{ display:flex; align-items:center; gap:6px; padding:0 6px 0 2px; flex:none; }
 .zsb-brand-dot{ width:6px; height:6px; border-radius:50%; background:var(--tb-brand-dot); box-shadow:var(--tb-brand-glow); }
-.zsb-brand-name{ font:500 12px var(--font-mono); letter-spacing:.5px; color:var(--tb-brand-text); }
+.zsb-brand-name{ font:500 11px var(--font-mono); letter-spacing:.5px; color:var(--tb-brand-text); }
 .zsb-mwrap{ position:relative; display:flex; }
 .zsb-group{ display:flex; align-items:center; gap:6px; white-space:nowrap; padding:6px 13px; border:0; background:var(--tb-pill);
   cursor:pointer; border-radius:8px; font:500 12.5px var(--font-ui); color:var(--tb-text); transition:all .18s var(--ease-standard); }
@@ -1180,12 +2776,7 @@ const CSS = `
 .zsb-group[data-open="true"] svg{ color:var(--tb-pill-active-fg); }
 
 /* master-detail popover */
-/* OPAQUE surface, NOT a backdrop-filter glass: backdrop-filter promotes the popover
-   to a permanent GPU composite layer, and text on that layer is rasterised soft — so
-   the whole panel read blurry at rest (not just during the entrance). An opaque
-   elevated surface keeps text crisp (direct-to-screen) while the shadow still gives
-   depth. The entrance animation below is unaffected. */
-.zsb-pop{ position:absolute; bottom:calc(100% + 12px); background:var(--surface-elevated);
+.zsb-pop{ position:absolute; bottom:calc(100% + 12px); background:var(--surface-glass); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
   border:1px solid var(--border-subtle); border-radius:16px; box-shadow:var(--shadow-popover); padding:0; overflow:hidden; z-index:40; }
 .zsb-pop--down{ bottom:auto; top:calc(100% + 12px); }
 /* Entrance: the popover rises out of the toolbar — up when the bar sits at the
@@ -1202,13 +2793,13 @@ const CSS = `
   border-bottom:1px solid var(--border-subtle); background:linear-gradient(180deg,var(--surface-card) 0%,transparent 100%); }
 .zsb-pop-head-l{ display:flex; flex-direction:column; gap:5px; min-width:0; }
 .zsb-pop-accent{ height:3px; width:22px; border-radius:2px; background:var(--accent-grad); box-shadow:0 1px 4px rgba(124,92,255,.4); }
-.zsb-pop-title{ font:600 11.5px var(--font-mono); letter-spacing:1.6px; text-transform:uppercase; color:var(--text-tertiary); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.zsb-pop-title{ font:600 10.5px var(--font-mono); letter-spacing:1.6px; text-transform:uppercase; color:var(--text-tertiary); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .zsb-info{ position:relative; flex:none; width:22px; height:22px; display:grid; place-items:center; padding:0; border:0; border-radius:6px;
   background:transparent; color:var(--text-tertiary); cursor:help; transition:color .14s, background .14s; }
 .zsb-info:hover, .zsb-info:focus-visible{ color:var(--accent); background:var(--accent-soft); outline:none; }
 .zsb-info-tip{ position:absolute; top:calc(100% + 8px); right:0; width:max-content; max-width:236px; box-sizing:border-box;
   padding:8px 11px; border-radius:9px; background:var(--surface-card); border:1px solid var(--border-default); box-shadow:var(--shadow-popover);
-  font:500 12px var(--font-ui); letter-spacing:normal; text-transform:none; line-height:1.45; color:var(--text-secondary); text-align:left; white-space:normal;
+  font:500 11.5px var(--font-ui); letter-spacing:normal; text-transform:none; line-height:1.45; color:var(--text-secondary); text-align:left; white-space:normal;
   opacity:0; transform:translateY(-4px); pointer-events:none; transition:opacity .14s var(--ease-standard), transform .14s var(--ease-standard); z-index:60; }
 .zsb-info:hover .zsb-info-tip, .zsb-info:focus-visible .zsb-info-tip{ opacity:1; transform:translateY(0); }
 .zsb-pop-body{ display:flex; gap:0; align-items:stretch; }
@@ -1221,21 +2812,28 @@ const CSS = `
 .zsb-rail-name-row{ display:flex; align-items:center; gap:6px; }
 .zsb-rail-name{ font:500 13px var(--font-ui); color:var(--text-primary); line-height:1.3; }
 .zsb-rail-row[data-active="true"] .zsb-rail-name{ color:var(--accent); font-weight:600; }
-.zsb-rail-desc{ font:400 12px var(--font-ui); color:var(--text-tertiary); margin-top:1.5px; line-height:1.3; white-space:normal; }
+.zsb-rail-desc{ font:400 11px var(--font-ui); color:var(--text-tertiary); margin-top:1.5px; line-height:1.3; white-space:normal;
+  transition:color .14s var(--ease-standard); }
+.zsb-rail-row:hover .zsb-rail-desc{ color:var(--text-primary); }
 .zsb-rail-row[data-active="true"] .zsb-rail-desc{ color:rgba(124,92,255,.62); }
-.zsb-rail-spark{ font-size:12px; line-height:1; }
-.zsb-rail-badge{ font:700 11px var(--font-ui); letter-spacing:.5px; text-transform:uppercase; padding:1px 5px; border-radius:4px;
+.zsb-rail-spark{ font-size:11px; line-height:1; }
+.zsb-rail-badge{ font:700 9px var(--font-ui); letter-spacing:.5px; text-transform:uppercase; padding:1px 5px; border-radius:4px;
   background:var(--accent-soft); color:var(--accent); white-space:nowrap; }
 .zsb-rail-row svg{ color:var(--text-faint); flex:none; margin-top:2px; }
 .zsb-rail-row[data-active="true"] svg{ color:var(--accent); }
 .zsb-detail{ overflow:hidden; transition:height .46s cubic-bezier(0.4,0.05,0.2,1); }
-.zsb-detail-inner{ padding:6px 12px 8px; max-height:min(56vh,360px); overflow-y:auto; }
+.zsb-detail-inner{ padding:6px 12px ${PANEL_END_GUTTER}px; scroll-padding-block:6px ${PANEL_END_GUTTER}px;
+  max-height:min(56vh,360px); overflow-y:auto; }
+/* The last control in a scrolling tab sat 8px off the card border, so its bottom edge
+   read as sliced at the fold (Filter › "Show" segmented control). The gutter is now the
+   shared PANEL_END_GUTTER contract (see scrollGutter.ts) rather than a per-surface guess,
+   so scrolling ANY tab to its end leaves the same unmistakable "this is the end" band. */
 
 /* option rows (menu / swatch) */
 .zsb-opt{ width:100%; display:flex; align-items:center; gap:11px; text-align:left; padding:9px 11px; border:0; background:transparent;
   cursor:pointer; border-radius:9px; color:var(--text-primary); transition:background .13s; }
 .zsb-opt:hover{ background:var(--hover-overlay); }
-.zsb-opt-label{ font:500 12.5px var(--font-ui); flex:1; white-space:nowrap; }
+.zsb-opt-label{ font:500 12.5px var(--font-ui); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .zsb-opt[data-active="true"] .zsb-opt-label{ color:var(--accent); font-weight:600; }
 .zsb-opt-sw{ width:18px; height:18px; border-radius:6px; flex:none; box-shadow:inset 0 0 0 1px var(--border-default); }
 .zsb-accent{ color:var(--accent); display:grid; place-items:center; flex:none; }
@@ -1244,8 +2842,8 @@ const CSS = `
 .zsb-field{ padding:0; }
 .zsb-field-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:42px; padding:0 8px; border-radius:8px; transition:background .12s; }
 .zsb-field-top:hover{ background:var(--hover-overlay); }
-.zsb-field-head{ font:600 11.5px var(--font-mono); letter-spacing:1px; text-transform:uppercase; color:var(--text-tertiary); padding:10px 4px 3px; }
-.zsb-label{ font:500 12.5px var(--font-ui); color:var(--text-secondary); white-space:nowrap; }
+.zsb-field-head{ font:600 10px var(--font-mono); letter-spacing:1px; text-transform:uppercase; color:var(--text-tertiary); padding:10px 4px 3px; }
+.zsb-label{ font:500 12.5px var(--font-ui); color:var(--text-secondary); white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .zsb-div-h{ height:1px; background:var(--border-subtle); margin:6px 4px; }
 .zsb-trigger{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:42px; border:0;
   background:transparent; cursor:pointer; border-radius:8px; padding:0 8px; margin:0; transition:background .14s; }
@@ -1265,19 +2863,41 @@ const CSS = `
 .zsb-input::placeholder{ color:var(--text-tertiary); }
 .zsb-input:focus{ outline:none; border-color:var(--accent); background:var(--surface-card); box-shadow:0 0 0 3px var(--accent-soft); }
 
-.zsb-step{ display:inline-flex; align-items:center; height:34px; border:1px solid var(--border-default); border-radius:9px; background:var(--surface-subtle); overflow:hidden; box-shadow:var(--shadow-card); }
-.zsb-step-btn{ width:30px; height:100%; border:0; background:transparent; cursor:pointer; color:var(--accent); font-size:16px; line-height:1; display:grid; place-items:center; transition:.13s; flex:none; }
+/* One-shot action button (control: "button") — sized like .zsb-input so an action row
+   lines up with the text/stepper rows above and below it. */
+.zsb-action{ height:32px; box-sizing:border-box; max-width:148px; min-width:0; overflow:hidden; text-overflow:ellipsis; padding:0 13px; border:1px solid var(--border-default);
+  border-radius:9px; background:var(--surface-subtle); font:600 12px var(--font-ui); color:var(--text-primary);
+  cursor:pointer; white-space:nowrap; transition:.15s; }
+.zsb-action:hover{ border-color:var(--accent); color:var(--accent); background:var(--surface-card); }
+.zsb-action:focus-visible{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+
+/* SP-115 — the stepper is a FIXED-WIDTH control, and its own children never shrink.
+   It used to be an inline-flex with no flex sizing, sitting inside .zsb-field-top
+   (display:flex), so a long label and the stepper shared the shrinkage between them.
+   The minus and plus are flex:none, so the shell overflowed its shrunken box and
+   overflow:hidden (there for the border-radius) clipped the LAST child — the plus
+   rendered as a half-button. A 242px card is the default, so any label past roughly
+   twenty characters triggered it; the Filter tab's longer labels made it visible.
+   flex:none plus an explicit width ends it: shrinkage now lands entirely on the label,
+   which already ellipsises. The number input flexes to fill whatever the buttons and
+   an optional suffix leave, so it gains room rather than being pinned at 34px. */
+.zsb-step{ display:inline-flex; align-items:center; flex:none; width:100px; height:34px; border:1px solid var(--border-default); border-radius:9px; background:var(--surface-subtle); overflow:hidden; box-shadow:var(--shadow-card); }
+.zsb-step-btn{ width:26px; height:100%; border:0; background:transparent; cursor:pointer; color:var(--accent); font-size:13px; line-height:1; display:grid; place-items:center; transition:.13s; flex:none; }
 .zsb-step-btn:hover{ background:var(--accent-soft); color:var(--accent); }
-.zsb-step-in{ width:34px; text-align:center; border:0; background:transparent; height:100%; font:600 13px var(--font-mono); color:var(--text-primary); outline:none; padding:0; font-variant-numeric:tabular-nums; -moz-appearance:textfield; appearance:textfield; }
+.zsb-step-in{ flex:1 1 auto; width:auto; min-width:0; text-align:center; border:0; background:transparent; height:100%; font:600 13px var(--font-mono); color:var(--text-primary); outline:none; padding:0; font-variant-numeric:tabular-nums; -moz-appearance:textfield; appearance:textfield; }
 .zsb-step-in::-webkit-outer-spin-button, .zsb-step-in::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
-.zsb-step-suffix{ font:500 12px var(--font-mono); color:var(--text-tertiary); padding:0 9px 0 2px; }
+.zsb-step-suffix{ flex:none; font:500 11px var(--font-mono); color:var(--text-tertiary); padding:0 7px 0 1px; }
 
 .zsb-seg{ display:inline-flex; padding:3px; gap:2px; background:var(--surface-subtle); border:1px solid var(--border-default); border-radius:10px; }
-.zsb-seg-btn{ min-width:32px; height:26px; padding:0 4px; border:0; background:transparent; border-radius:7px; cursor:pointer; color:var(--text-secondary); display:grid; place-items:center; transition:.15s; }
+/* Row layout, NOT grid: these buttons can gain a second child (the "?" dependency
+   badge), and a single-column grid drops it onto its own implicit row — which the fixed
+   height then crops (SP-085). inline-flex centres an icon exactly as place-items did. */
+.zsb-seg-btn{ min-width:32px; height:26px; padding:0 4px; border:0; background:transparent; border-radius:7px; cursor:pointer; color:var(--text-secondary); display:inline-flex; align-items:center; justify-content:center; transition:.15s; }
+.zsb-seg-lbl{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .zsb-seg-btn:hover{ color:var(--text-primary); }
 .zsb-seg-btn[data-active="true"]{ background:var(--accent-grad); color:#fff; box-shadow:var(--seg-glow); }
 .zsb-seg[data-multi="true"] .zsb-seg-btn[data-active="true"]{ background:var(--accent-grad); color:#fff; box-shadow:var(--seg-glow); }
-.zsb-seg-text .zsb-seg-btn{ padding:0 11px; font:600 12px var(--font-ui); }
+.zsb-seg-text .zsb-seg-btn{ padding:0 11px; font:600 11.5px var(--font-ui); }
 .zsb-seg-text .zsb-seg-btn[data-active="true"]{ font-weight:600; }
 /* wide segmented sets: stack under the label and let the buttons wrap full-width */
 .zsb-field-top.zsb-field-stack{ flex-direction:column; align-items:stretch; gap:7px; }
@@ -1294,12 +2914,28 @@ const CSS = `
 .zsb-switch[data-on="true"] i{ left:21px; }
 
 .zsb-color-chip{ width:22px; height:22px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1px rgba(13,14,26,.18), 0 2px 6px rgba(13,14,26,.18); }
-.zsb-mono{ font:500 12px var(--font-mono); color:var(--text-secondary); letter-spacing:.3px; }
+/* A control + its ink colour, side by side on one row: the mark picker keeps the width
+   it always had, the colour chip is a fixed-width button pinned to its right. */
+.zsb-field-pair{ display:flex; align-items:center; gap:4px; }
+.zsb-field-pair .zsb-trigger{ flex:1; min-width:0; }
+.zsb-pairswatch{ flex:none; display:flex; align-items:center; min-height:42px; padding:0 7px; border:0; border-radius:8px;
+  background:transparent; color:inherit; cursor:pointer; transition:background .12s; }
+.zsb-pairswatch:hover{ background:var(--hover-overlay); }
+.zsb-pairswatch[data-open="true"]{ background:var(--accent-soft); }
+/* The chip alone — the hex text that the full-width colour trigger shows would double
+   the row width here, and the value is already in the button's accessible name. */
+.zsb-pairswatch .zsb-mono{ display:none; }
+.zsb-pairswatch .zsb-color-chip{ width:18px; height:18px; }
+.zsb-cp-auto{ display:block; width:100%; margin:0 0 7px; padding:6px 10px; border:1px solid var(--border-default); border-radius:8px;
+  background:transparent; color:var(--text-secondary); font:600 11px var(--font-ui); cursor:pointer; }
+.zsb-cp-auto:hover{ border-color:var(--accent); color:var(--accent); }
+.zsb-cp-auto[data-active="true"]{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+.zsb-mono{ font:500 11.5px var(--font-mono); color:var(--text-secondary); letter-spacing:.3px; }
 .zsb-swatch2{ width:100%; aspect-ratio:1; border-radius:7px; border:0; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(20,23,50,.16); transition:transform .12s; }
 .zsb-swatch2:hover{ transform:scale(1.12); }
 .zsb-swatch2[data-active="true"]{ box-shadow:0 0 0 2px var(--surface-elevated), 0 0 0 4px var(--accent); }
 
-.zsb-cp{ width:254px; }
+.zsb-cp{ width:100%; box-sizing:border-box; }
 .zsb-cp-sv{ position:relative; width:100%; height:94px; border-radius:10px; cursor:crosshair; overflow:hidden; touch-action:none; box-shadow:inset 0 0 0 1px rgba(20,23,50,.12); }
 .zsb-cp-sv-white{ position:absolute; inset:0; background:linear-gradient(to right,#fff,rgba(255,255,255,0)); }
 .zsb-cp-sv-black{ position:absolute; inset:0; background:linear-gradient(to top,#000,rgba(0,0,0,0)); }
@@ -1310,13 +2946,306 @@ const CSS = `
 .zsb-cp-row .zsb-hex{ width:auto; flex:1; max-width:none; font-family:var(--font-mono); font-size:12px; }
 .zsb-cp-presets{ display:grid; grid-template-columns:repeat(8,1fr); gap:6px; margin-top:11px; }
 
-.zsb-emoji-cur{ font-size:17px; line-height:1; }
-.zsb-emojigrid{ display:grid; grid-template-columns:repeat(6,1fr); gap:4px; }
-.zsb-emojibtn{ aspect-ratio:1; border:0; background:transparent; border-radius:9px; cursor:pointer; font-size:19px; line-height:1; display:grid; place-items:center; transition:.12s; }
-.zsb-emojibtn:hover{ background:var(--hover-overlay); transform:scale(1.1); }
+.zsb-emoji-cur{ display:flex; align-items:center; gap:6px; min-width:0; font:500 11px/1 var(--font-ui); color:var(--text-secondary); }
+.zsb-emoji-cur svg{ flex:0 0 auto; color:var(--text-primary); }
+.zsb-iconfilters{ display:flex; flex-wrap:wrap; gap:5px; margin:0 0 9px; padding:1px; }
+.zsb-iconfilter{ flex:0 0 auto; padding:5px 8px; border:1px solid var(--border-default); border-radius:999px; background:transparent; color:var(--text-secondary); cursor:pointer; font:600 10px/1 var(--font-ui); }
+.zsb-iconfilter:hover{ background:var(--hover-overlay); color:var(--text-primary); }
+.zsb-iconfilter[data-active="true"]{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+.zsb-emojigrid{ display:grid; grid-template-columns:repeat(8,1fr); gap:5px;
+  padding-bottom:${LIST_END_GUTTER}px; scroll-padding-block:5px ${LIST_END_GUTTER}px; }
+.zsb-emojibtn{ aspect-ratio:1; border:0; background:transparent; color:var(--text-primary); border-radius:9px; cursor:pointer; font-size:15px; line-height:1; display:grid; place-items:center; transition:.12s; }
+.zsb-emojibtn svg{ width:21px; height:21px; pointer-events:none; }
+.zsb-emojibtn:hover{ background:var(--hover-overlay); color:var(--accent); transform:scale(1.06); }
 .zsb-emojibtn[data-active="true"]{ background:var(--accent-soft); box-shadow:inset 0 0 0 1.5px var(--accent); }
-.zsb-fontlist{ display:flex; flex-direction:column; gap:1px; max-height:156px; overflow-y:auto; }
-.zsb-fontopt{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 9px; border:0; background:transparent; cursor:pointer; border-radius:8px; font-size:14.5px; color:var(--text-primary); transition:background .12s; text-align:left; }
+/* Every "select" dropdown AND the font picker render as .zsb-fontlist, so this is the most
+   frequently scrolled surface in the gear — and it carried the thinnest gutter of all (4px
+   under 165px of scroll), which is what "the last option is half cropped" actually was. */
+.zsb-fontlist{ display:flex; flex-direction:column; gap:1px; max-height:156px; overflow-y:scroll;
+  padding-bottom:${LIST_END_GUTTER}px; scroll-padding-block:4px ${LIST_END_GUTTER}px; }
+.zsb-fontopt{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 9px; border:0; background:transparent; cursor:pointer; border-radius:8px;
+  font:500 11px/1.35 var(--font-ui); color:var(--text-primary); transition:background .12s; text-align:left; }
 .zsb-fontopt:hover{ background:var(--hover-overlay); }
 .zsb-fontopt[data-active="true"]{ background:var(--accent-soft); }
+/* Option rows carrying a preview chip read left-to-right: chip, then name. The slot keeps
+   its width even when an option has nothing to draw ("None"), so names stay aligned. */
+.zsb-fontopt--pv{ justify-content:flex-start; }
+.zsb-optpv{ flex:0 0 auto; display:grid; place-items:center; width:26px; height:16px; border-radius:4px;
+  box-shadow:inset 0 0 0 1px var(--border-default); color:var(--text-secondary); overflow:hidden; }
+.zsb-fontopt[data-active="true"] .zsb-optpv, .zsb-trigger-val .zsb-optpv{ color:var(--accent); }
+.zsb-optpv svg{ display:block; }
+
+/* Persistent, compact scroll affordance for every settings option surface.
+   Custom WebKit styling prevents macOS overlay scrollbars from disappearing
+   until the user starts scrolling; Firefox uses its equivalent thin mode. */
+.zsb-detail-inner,.zsb-fontlist,.zsb-emojigrid{
+  scrollbar-width:thin; scrollbar-color:var(--border-strong) transparent; scrollbar-gutter:stable;
+}
+.zsb-detail-inner::-webkit-scrollbar,.zsb-fontlist::-webkit-scrollbar,.zsb-emojigrid::-webkit-scrollbar{ width:5px; }
+.zsb-detail-inner::-webkit-scrollbar-track,.zsb-fontlist::-webkit-scrollbar-track,.zsb-emojigrid::-webkit-scrollbar-track{ background:transparent; }
+.zsb-detail-inner::-webkit-scrollbar-thumb,.zsb-fontlist::-webkit-scrollbar-thumb,.zsb-emojigrid::-webkit-scrollbar-thumb{
+  background:var(--border-strong); border-radius:999px;
+}
+.zsb-detail-inner::-webkit-scrollbar-thumb:hover,.zsb-fontlist::-webkit-scrollbar-thumb:hover,.zsb-emojigrid::-webkit-scrollbar-thumb:hover{
+  background:var(--text-tertiary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NETWORK-GRAPH REDESIGN (2a mockup) — standalone card + modern control kit.
+   Appended last so it wins by source order. Network-graph only: this diverges
+   deliberately from the @zentrix/visual-settings golden source (CEO-approved,
+   2026-07-20). Token-driven so light / dark / high-contrast all keep working.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.zsb-anchor{ --rd-card-bg:#FFFFFF; --rd-card-bd:#D8DDE6; --rd-sep:#E8EBF1; --rd-label:#5B6477;
+  --rd-val:#1C2330; --rd-muted:#8A93A3; --rd-faint:#B7BFCC; --rd-accent:#5B3FD6;
+  --rd-accent-soft:rgba(124,92,255,.09); --rd-track:#F3F4F6; --rd-rail:#E4E7EE; --rd-white:#FFFFFF; }
+.zsb-anchor[data-theme="dark"]{ --rd-card-bg:var(--surface-card); --rd-card-bd:var(--border-default); --rd-sep:var(--border-subtle);
+  --rd-label:var(--text-secondary); --rd-val:var(--text-primary); --rd-muted:var(--text-tertiary); --rd-faint:var(--text-faint);
+  --rd-accent:#A48BFF; --rd-accent-soft:rgba(124,92,255,.20); --rd-track:var(--surface-subtle); --rd-rail:var(--border-strong); --rd-white:var(--surface-elevated); }
+/* NG-026 — these MUST resolve through --hc-fg/-bg/-accent, not through raw
+   Canvas/CanvasText. Power BI *Service* runs high contrast as an app-level theme
+   in an ordinary browser that is NOT in forced-colors mode, so the CSS system
+   colours fall back to their plain-light values (Canvas=white, CanvasText=black)
+   — which is why the popover stayed a white card inside a yellow-on-black report.
+   --hc-* are written from host.colorPalette by setHighContrast() and themselves
+   default to the system colours, so Desktop/forced-colors still behaves. */
+.zsb-anchor[data-theme="hc"]{ --rd-card-bg:var(--hc-bg); --rd-card-bd:var(--hc-fg); --rd-sep:var(--hc-fg); --rd-label:var(--hc-fg);
+  --rd-val:var(--hc-fg); --rd-muted:var(--hc-fg); --rd-faint:var(--hc-fg); --rd-accent:var(--hc-accent);
+  --rd-accent-soft:var(--hc-bg); --rd-track:var(--hc-bg); --rd-rail:var(--hc-fg); --rd-white:var(--hc-bg); }
+/* The card's drop shadow and the accent-soft fills are colour-only affordances:
+   in HC they read as muddy panels, so shapes are carried by borders instead. */
+.zsb-anchor[data-theme="hc"] .zsb-pop{ box-shadow:none; border-width:1.5px; }
+
+/* card shell */
+.zsb-anchor .zsb-pop{ background:var(--rd-card-bg); -webkit-backdrop-filter:none; backdrop-filter:none;
+  border:1px solid var(--rd-card-bd); border-radius:12px; box-shadow:0 2px 6px rgba(16,24,40,.05),0 16px 40px -16px rgba(16,24,40,.22); }
+.zsb-anchor .zsb-pop-head{ height:38px; padding:0 12px 0 14px; gap:8px; background:none; border-bottom:1px solid var(--rd-sep); }
+.zsb-anchor .zsb-pop-title{ font:600 10px var(--font-mono); letter-spacing:.9px; text-transform:uppercase; color:var(--rd-label); }
+.zsb-card-reset{ width:24px; height:24px; display:grid; place-items:center; border:0; border-radius:6px; background:transparent; color:var(--rd-muted); cursor:pointer; transition:.12s; flex:none; }
+.zsb-card-reset:hover{ background:var(--hover-overlay); color:var(--rd-accent); }
+.zsb-card-reset svg{ width:13px; height:13px; }
+
+/* tab strip (replaces the old left rail for multi-sub categories)
+   SP-TABCROP — the strip SCROLLS sideways instead of being clipped. .zsb-pop is
+   overflow:hidden, so before this a tab set wider than the card (Overlays: Tooltip ·
+   View switch · Annotations · Legend) simply lost its last tab, with no scrollbar and no
+   keyboard route to it. cardWidth() widens the card to fit the strip wherever the tile
+   allows; this is the fallback for tiles too narrow for that. column-gap rather than a
+   per-tab margin-right so the last tab has no trailing margin inventing scroll width. */
+.zsb-tabs{ display:flex; column-gap:16px; padding:0 14px; border-bottom:1px solid var(--rd-sep);
+  overflow-x:auto; overflow-y:hidden; scroll-behavior:smooth; scroll-padding-inline:14px;
+  scrollbar-width:none; -ms-overflow-style:none; }
+/* The strip is one row 30px tall; a visible horizontal scrollbar would eat a third of it
+   and shove the active underline off. Scrolling stays available by wheel, drag, and the
+   scroll-into-view the bar performs on every tab change. */
+.zsb-tabs::-webkit-scrollbar{ height:0; width:0; }
+/* nowrap + no shrink: the strip is a flex row, so a tab with a two-word label ("Click &
+   drag") was being squeezed and broke its own text onto three lines, blowing out the header
+   height. A tab label must stay on one line. */
+.zsb-tab{ height:30px; padding:0 2px; border:0; border-bottom:2px solid transparent; background:transparent;
+  flex:0 0 auto; white-space:nowrap;
+  font:500 11.5px var(--font-ui); color:var(--rd-muted); cursor:pointer; transition:color .12s; }
+.zsb-tab:hover{ color:var(--rd-val); }
+.zsb-tab[data-active="true"]{ border-bottom-color:var(--rd-accent); color:var(--rd-val); font-weight:600; }
+
+/* detail column */
+/* SP-DETAILCROP: this rule overrides max-height/padding from the base .zsb-detail-inner
+   rule above but never re-declared overflow-y — a more-specific selector overrides only
+   the properties it sets, so the panel kept its (now too-small) max-height with no
+   scroll affordance, silently clipping the last field in every category (Layout's
+   "Stage titles..." note, Analysis's Finance presets, etc). overflow-y:auto here closes
+   that gap without touching the base rule other panels still rely on. */
+.zsb-anchor .zsb-detail-inner{ padding:12px 14px ${PANEL_END_GUTTER}px; display:flex; flex-direction:column; gap:12px;
+  max-height:min(60vh,420px); overflow-y:auto; scroll-padding-block:12px ${PANEL_END_GUTTER}px; }
+.zsb-anchor .zsb-field{ padding:0; }
+.zsb-anchor .zsb-field-top{ min-height:0; padding:0; border-radius:0; }
+.zsb-anchor .zsb-field-top:hover{ background:transparent; }
+.zsb-anchor .zsb-label{ font:500 11px var(--font-ui); color:var(--rd-label); }
+.zsb-label-wrap{ display:inline-flex; align-items:center; gap:5px; min-width:0; position:relative; }
+.zsb-field-info{ position:relative; flex:none; width:13px; height:13px; box-sizing:border-box; display:inline-grid; place-items:center;
+  border:1px solid var(--rd-muted); border-radius:50%; color:var(--rd-muted); background:transparent; cursor:help;
+  font:700 8.5px/1 var(--font-ui); text-transform:none; transition:color .12s,border-color .12s,background .12s; }
+.zsb-field-info:hover,.zsb-field-info:focus-visible{ color:var(--rd-accent); border-color:var(--rd-accent);
+  background:var(--rd-accent-soft); outline:none; }
+.zsb-field-info-tip{ position:fixed; left:0; top:0; width:max-content; max-width:min(240px,calc(100vw - 16px)); box-sizing:border-box;
+  padding:8px 10px; border:1px solid var(--rd-card-bd); border-radius:7px; background:var(--rd-card-bg);
+  box-shadow:0 8px 24px -8px rgba(16,24,40,.32); color:var(--rd-val); font:400 10.5px/1.45 var(--font-ui);
+  letter-spacing:0; text-align:left; white-space:normal; opacity:0; visibility:hidden; transform:translateY(-3px); pointer-events:none;
+  transition:opacity .12s var(--ease-standard),transform .12s var(--ease-standard); z-index:80; }
+.zsb-field-info-tip.is-visible{ opacity:1; visibility:visible; transform:translateY(0); }
+.zsb-field-info-tip.is-above:not(.is-visible){ transform:translateY(3px); }
+.zsb-fstack{ display:flex; flex-direction:column; gap:6px; }
+.zsb-fs-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:22px; }
+.zsb-fs-note{ font:400 9.5px var(--font-ui); color:var(--rd-faint); line-height:1.4; }
+/* standalone empty-state paragraph (the "note" control) — softer/larger than fs-note */
+.zsb-note-block{ font:400 11px var(--font-ui); color:var(--rd-muted); line-height:1.5; padding:6px 4px; }
+.zsb-field-dim{ opacity:.5; }
+/* Licence-locked fields stay at FULL opacity: a paid feature should sell itself. The
+   badge carries the message; the control is inert via aria-disabled. */
+.zsb-field-locked{ opacity:1; }
+/* The badge needs room, so a locked label wraps rather than ellipsing away — the label
+   is what the badge is selling, and "Show variance in…" tells nobody anything. */
+.zsb-field-locked .zsb-label-wrap{ flex:1 1 auto; flex-wrap:wrap; }
+.zsb-field-locked .zsb-label{ white-space:normal; overflow:visible; text-overflow:clip; }
+.zsb-lock-tag{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:999px;
+  font-size:9px; font-weight:800; letter-spacing:.06em; vertical-align:middle;
+  background:var(--zsb-accent,#7c5cff); color:#fff; line-height:1.5; }
+.zsb-lock-ent{ background:#b06010; }
+
+/* ── SP-DIMNOTE — the help text under a control comes forward on hover ────────
+ * Every explanatory line in the card is deliberately quiet at rest so it never
+ * competes with the control it explains: --rd-faint is #B7BFCC on white, which is
+ * a ~2.1:1 ratio at 9.5px. That is fine to skim past and genuinely hard to READ,
+ * and these lines are where the non-obvious settings are actually explained.
+ * Pointing at the row (or at the text itself) promotes it to --rd-val, the same
+ * colour the control's own value uses — so the text is legible exactly when the
+ * author has signalled they want to read it, and quiet the rest of the time.
+ * A transition, not a jump, so a pointer crossing the card doesn't strobe.
+ * In high contrast --rd-faint / --rd-muted / --rd-val are all --hc-fg, so this
+ * resolves to a no-op there — HC is already at full contrast by contract. */
+.zsb-fs-note,.zsb-note-block,.zsb-anchor .zsb-field-head,.zsb-field-dim{ transition:color .14s var(--ease-standard),opacity .14s var(--ease-standard); }
+.zsb-anchor .zsb-field:hover .zsb-fs-note,
+.zsb-anchor .zsb-field:focus-within .zsb-fs-note,
+.zsb-fs-note:hover,
+.zsb-note-block:hover,
+.zsb-anchor .zsb-field-head:hover{ color:var(--rd-val); }
+/* A gated control keeps its dimmed look, but the note that says WHY it is gated is
+   the one line the author most needs to read — so hovering lifts the whole row far
+   enough to read without ever making it look enabled (it stays aria-disabled and
+   inert; only the ink changes). */
+.zsb-anchor .zsb-field-dim:hover{ opacity:.78; }
+.zsb-anchor .zsb-field-dim:hover .zsb-fs-note{ color:var(--rd-val); }
+.zsb-option-disabled{ opacity:.5; cursor:not-allowed!important; }
+.zsb-option-dependency{ display:inline-grid; place-items:center; flex:none; width:12px; height:12px; margin-left:4px;
+ border:1px solid currentColor; border-radius:50%; font:700 7.5px/1 var(--font-ui); }
+.zsb-dependency-note{ color:var(--rd-muted); }
+/* the "heading" control is repurposed as the Rules card's description line */
+.zsb-anchor .zsb-field-head{ font:400 10px var(--font-ui); letter-spacing:0; text-transform:none; color:var(--rd-muted); line-height:1.5; padding:0; }
+
+/* switches — smaller pill (32×18) */
+.zsb-anchor .zsb-switch{ width:32px; height:18px; border-radius:9px; background:var(--rd-rail); box-shadow:none; }
+.zsb-anchor .zsb-switch[data-on="true"]{ background:var(--rd-accent); box-shadow:none; }
+.zsb-anchor .zsb-switch i{ top:2px; left:2px; width:14px; height:14px; box-shadow:0 1px 2px rgba(16,24,40,.25); }
+.zsb-anchor .zsb-switch[data-on="true"] i{ left:16px; }
+
+/* segmented pills — neutral grey track, white active pill (2a) */
+.zsb-anchor .zsb-seg{ display:flex; width:100%; box-sizing:border-box; padding:2px; gap:2px; background:var(--rd-track); border:0; border-radius:6px; }
+.zsb-anchor .zsb-seg-btn{ flex:1 1 0; min-width:0; height:24px; padding:0 6px; border-radius:4px; background:transparent; color:var(--rd-label);
+  font:500 10.5px var(--font-ui); box-shadow:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.zsb-anchor .zsb-seg-btn:hover{ color:var(--rd-val); }
+.zsb-anchor .zsb-seg-btn[data-active="true"]{ background:var(--rd-white); color:var(--rd-val); font-weight:600; box-shadow:0 1px 2px rgba(16,24,40,.12); }
+/* B/I/U (multiSeg) is a fixed three-glyph group, NOT a full-width segmented control.
+   Inheriting the width:100% above made it eat the whole row and ellipsize the label
+   next to it ("Style" → "St…") everywhere multiSeg is used — title, node and link
+   labels alike. Size it to its glyphs and leave the rest of the row to the label. */
+.zsb-anchor .zsb-seg[data-multi="true"]{ width:auto; flex:0 0 auto; }
+.zsb-anchor .zsb-seg[data-multi="true"] .zsb-seg-btn{ flex:0 0 auto; width:30px; padding:0; }
+
+/* layout-mode tiles */
+.zsb-tiles{ display:grid; gap:4px; }
+.zsb-tile{ position:relative; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; padding:7px 0 6px; border:1px solid var(--rd-card-bd);
+  border-radius:6px; background:var(--rd-card-bg); color:var(--rd-label); cursor:pointer; transition:.12s; }
+/* A tile is a COLUMN, so an inline badge would land under the label as a third row and
+   push the tile taller than its neighbours. Pin it to the corner instead (SP-085). */
+.zsb-tile .zsb-option-dependency{ position:absolute; top:3px; right:3px; margin:0; }
+.zsb-tile:hover{ border-color:var(--rd-accent); color:var(--rd-accent); }
+.zsb-tile[data-active="true"]{ border:1.5px solid var(--rd-accent); background:var(--rd-accent-soft); color:var(--rd-accent); }
+.zsb-tile svg{ width:16px; height:16px; }
+.zsb-tile-lbl{ font:600 9px var(--font-ui); }
+
+/* slider — custom rail + fill + knob, transparent native range on top */
+.zsb-slider-valwrap{ display:flex; align-items:center; justify-content:flex-end; gap:3px; min-width:36px; height:22px; padding:0 6px;
+  border:1px solid var(--rd-card-bd); border-radius:5px; }
+.zsb-slider-val{ width:24px; min-width:0; border:0; background:transparent; text-align:right; font:500 11px var(--font-mono); color:var(--rd-val);
+  outline:none; padding:0; -moz-appearance:textfield; appearance:textfield; }
+.zsb-slider-val::-webkit-outer-spin-button,.zsb-slider-val::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.zsb-slider-sfx{ font:500 10px var(--font-mono); color:var(--rd-val); }
+.zsb-slider-track{ position:relative; height:14px; }
+.zsb-slider-rail{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); height:2px; border-radius:1px; background:var(--rd-rail); }
+.zsb-slider-fill{ position:absolute; left:0; top:50%; transform:translateY(-50%); height:2px; border-radius:1px; background:var(--rd-accent); }
+.zsb-slider-knob{ position:absolute; top:50%; transform:translate(-50%,-50%); width:12px; height:12px; border-radius:50%; background:#fff;
+  border:1.5px solid var(--rd-accent); box-shadow:0 1px 2px rgba(16,24,40,.15); pointer-events:none; }
+.zsb-slider-input{ position:absolute; left:-2px; right:-2px; width:calc(100% + 4px); top:0; height:100%; margin:0; opacity:0; cursor:pointer;
+  -webkit-appearance:none; appearance:none; background:transparent; }
+.zsb-slider-input::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; }
+.zsb-slider-input::-moz-range-thumb{ width:16px; height:16px; border:0; background:transparent; }
+
+/* MIN/MAX range */
+.zsb-range{ display:flex; gap:6px; }
+.zsb-range-box{ flex:1; display:flex; align-items:center; gap:6px; height:28px; padding:0 8px; border:1px solid var(--rd-card-bd); border-radius:6px; cursor:text; }
+.zsb-range-pre{ font:600 9.5px var(--font-ui); letter-spacing:.03em; color:var(--rd-muted); flex:none; }
+.zsb-range-in{ flex:1; min-width:0; border:0; background:transparent; font:500 11.5px var(--font-mono); color:var(--rd-val); outline:none; padding:0;
+  -moz-appearance:textfield; appearance:textfield; }
+.zsb-range-in::-webkit-outer-spin-button,.zsb-range-in::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.zsb-range-sfx{ font:400 9.5px var(--font-ui); color:var(--rd-muted); flex:none; }
+
+/* palette swatch list */
+.zsb-pal-list{ display:flex; flex-direction:column; gap:1px; }
+.zsb-pal-row{ display:flex; align-items:center; gap:8px; width:100%; height:27px; padding:0 8px; border:0; background:transparent; border-radius:6px; cursor:pointer; text-align:left; }
+.zsb-pal-row:hover{ background:var(--hover-overlay); }
+.zsb-pal-row[data-active="true"]{ background:var(--rd-accent-soft); }
+.zsb-pal-name{ flex:1; display:flex; align-items:center; gap:5px; font:500 11px var(--font-ui); color:var(--rd-val); }
+.zsb-pal-row[data-active="true"] .zsb-pal-name{ color:var(--rd-accent); font-weight:600; }
+.zsb-pal-cvd{ font:700 8px var(--font-ui); letter-spacing:.3px; color:var(--rd-accent); background:var(--rd-accent-soft); border-radius:3px; padding:1px 3px; flex:none; forced-color-adjust:none; }
+.zsb-pal-dots{ display:flex; gap:2px; flex:none; }
+.zsb-pal-row:not([data-active="true"]) .zsb-pal-dots{ margin-right:20px; }
+.zsb-pal-dot{ width:8px; height:8px; border-radius:50%; }
+.zsb-pal-check{ width:11px; height:11px; flex:none; color:var(--rd-accent); }
+
+/* order list — drag-to-reorder rows with a per-row show/hide eye */
+.zsb-olist{ display:flex; flex-direction:column; gap:2px; }
+.zsb-olist-row{ display:flex; align-items:center; gap:6px; height:${ORDER_ROW_H - 2}px; padding:0 4px 0 2px;
+  border:1px solid transparent; border-radius:7px; background:var(--rd-card-bg,transparent); transition:background .12s,border-color .12s,opacity .12s; }
+.zsb-olist-row:hover{ background:var(--hover-overlay); }
+.zsb-olist-row[data-on="false"]{ opacity:.5; }
+.zsb-olist-row[data-dragging="true"]{ background:var(--rd-accent-soft); border-color:var(--rd-accent); }
+.zsb-olist-row[data-drop="true"]{ border-color:var(--rd-accent); }
+.zsb-olist-grip{ flex:none; width:22px; height:24px; display:grid; place-items:center; border:0; border-radius:5px;
+  background:transparent; color:var(--rd-muted); cursor:grab; padding:0; touch-action:none; }
+.zsb-olist-grip:hover{ color:var(--rd-val); background:var(--hover-overlay); }
+.zsb-olist-row[data-dragging="true"] .zsb-olist-grip{ cursor:grabbing; color:var(--rd-accent); }
+.zsb-olist-name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font:500 11.5px var(--font-ui); color:var(--rd-val); }
+.zsb-olist-row[data-on="false"] .zsb-olist-name{ text-decoration:line-through; color:var(--rd-muted); }
+.zsb-olist-eye{ flex:none; width:24px; height:24px; display:grid; place-items:center; border:0; border-radius:5px;
+  background:transparent; color:var(--rd-muted); cursor:pointer; padding:0; }
+.zsb-olist-eye:hover{ color:var(--rd-val); background:var(--hover-overlay); }
+.zsb-olist-eye[aria-pressed="true"]{ color:var(--rd-accent); }
+
+/* settings search */
+.zsb-search-btn{ flex:none; width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:8px; cursor:pointer;
+  padding:0; background:transparent; color:var(--tb-text); transition:background .14s,color .14s; }
+.zsb-search-btn:hover{ background:var(--tb-pill-hover); color:var(--tb-text-strong); }
+.zsb-search-btn svg{ color:var(--tb-icon); }
+.zsb-search-btn:hover svg,.zsb-search-btn[data-active="true"] svg{ color:var(--tb-text-strong); }
+.zsb-search-btn[data-active="true"]{ background:var(--tb-pill-active); }
+.zsb-search-pop{ padding:0; }
+.zsb-search-head{ display:flex; align-items:center; gap:8px; padding:11px 13px; border-bottom:1px solid var(--border-subtle); }
+.zsb-search-head svg{ color:var(--rd-muted); flex:none; }
+.zsb-search-input{ flex:1; min-width:0; border:0; outline:0; background:transparent; color:var(--rd-val);
+  font:500 13px var(--font-ui); }
+.zsb-search-input::placeholder{ color:var(--rd-muted); }
+/* padding-bottom > padding-top and a matching scroll-padding: at the end of the list the
+   last hit otherwise sits flush against the card's rounded bottom edge and reads as cut
+   off. The max-height is re-clamped to the TILE at open (see openSearch) — 320px alone
+   overflows a short visual exactly the way the category card used to. */
+.zsb-search-results{ max-height:320px; overflow-y:auto; padding:6px 6px ${LIST_END_GUTTER}px;
+  scroll-padding-block:6px ${LIST_END_GUTTER}px; }
+.zsb-search-empty{ padding:14px 12px; color:var(--rd-muted); font:500 12px var(--font-ui); text-align:center; }
+.zsb-search-item{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; width:100%; text-align:left;
+  padding:8px 10px; border:0; border-radius:9px; background:transparent; cursor:pointer; transition:background .12s; }
+.zsb-search-item:hover{ background:var(--tb-pill-hover); }
+/* Same contract as the card notes: the breadcrumb and the lock reason are quiet in the
+   list and legible under the pointer (SP-DIMNOTE). */
+.zsb-search-item-path,.zsb-search-item-lock{ transition:color .14s var(--ease-standard),opacity .14s var(--ease-standard); }
+.zsb-search-item:hover .zsb-search-item-path,.zsb-search-item:focus-visible .zsb-search-item-path{ color:var(--rd-val); }
+.zsb-search-item:hover .zsb-search-item-lock,.zsb-search-item:focus-visible .zsb-search-item-lock{ color:var(--rd-val); opacity:1; }
+.zsb-search-item-main{ min-width:0; }
+.zsb-search-item-label{ font:600 12.5px var(--font-ui); color:var(--rd-val); }
+.zsb-search-item-path{ margin-top:1px; font:500 10.5px var(--font-ui); color:var(--rd-muted); }
+.zsb-search-item-hint{ margin-top:2px; font:500 10.5px var(--font-ui); color:var(--rd-accent); }
+.zsb-search-item-lock{ flex:none; max-width:44%; font:500 10px var(--font-ui); color:var(--rd-muted); text-align:right; opacity:.85; }
+.zsb-search-item[data-gated="true"] .zsb-search-item-label{ opacity:.6; }
+.zsb-field--found{ animation:zsbFound 2s var(--ease-standard); border-radius:10px; }
+@keyframes zsbFound{ 0%,70%{ box-shadow:0 0 0 2px var(--tb-ring),var(--accent-glow); background:var(--tb-pill-hover); } 100%{ box-shadow:none; background:transparent; } }
 `;

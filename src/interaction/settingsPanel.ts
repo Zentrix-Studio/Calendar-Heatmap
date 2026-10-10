@@ -5,6 +5,7 @@ type IVisualHost = powerbi.extensibility.visual.IVisualHost;
 
 import { VisualFormattingSettingsModel } from "../settings";
 import { ZentrixSettingsBar } from "./zentrixSettingsBar";
+import type { SBCfg } from "./zentrixSettingsBar";
 import { SB_CATS, SB_FONTS, SB_PALETTES, SB_PRESETS, SB_EMOJI, makeCfg, applyLocal, readLocal } from "./settingsSchema";
 import type { PersistWrite } from "./settingsSchema";
 
@@ -77,9 +78,21 @@ export class SettingsOverlay {
             // updated the live model, so snapshot it now.
             if (isColorKey(key)) this.persistColors?.();
             this.onChange?.();
-        }, () => this.reset());
+        }, () => this.reset(), () => this.flags);
+        // NG-048 engine extras, same shape as Sankey Pro's overlay: a slider drag paints
+        // live through `preview` (model only — no persist, no pending entry) and commits
+        // once through `set` on release; a card's reset icon reverts just its own keys.
+        const fullCfg: SBCfg = {
+            ...cfg,
+            preview: (key, value) => {
+                if (!this.settings) return;
+                applyLocal(this.settings, key, value);
+                this.onChange?.();
+            },
+            setMany: (values) => { for (const [k, v] of Object.entries(values)) cfg.set(k, v); },
+        };
         this.bar = new ZentrixSettingsBar(root, {
-            cfg, cats: SB_CATS, fonts: SB_FONTS, palettes: SB_PALETTES, presets: SB_PRESETS, emoji: SB_EMOJI,
+            cfg: fullCfg, cats: SB_CATS, fonts: SB_FONTS, palettes: SB_PALETTES, presets: SB_PRESETS, emoji: SB_EMOJI,
             corner: "bl", dark: false, closeOnAway: true,
         });
         // Open/close notification for the view pill (it steps aside while the bar is
@@ -98,6 +111,8 @@ export class SettingsOverlay {
     }
 
     private openListener: ((open: boolean) => void) | null = null;
+    /** Bound-role `@` flags (visual.ts `boundRoleFlags`) — what `dimIf` reads. */
+    private flags: Record<string, unknown> = {};
     /** The corner the gear last resolved to (Auto-placed or author-pinned). */
     private resolved = "bl";
     private visible = true;
@@ -109,7 +124,11 @@ export class SettingsOverlay {
     /** True when the gear is on screen (Toolbar › Show on, not forced hidden). */
     isVisible(): boolean { return this.visible; }
 
-    update(s: Model, dark: boolean, forceHidden = false): void {
+    update(s: Model, dark: boolean, forceHidden = false, flags?: Record<string, unknown>): void {
+        // A field bound / unbound while a card is open must re-evaluate its dimming now;
+        // an ordinary settings echo must NOT rebuild the card (flicker, lost focus).
+        const flagsChanged = !!flags && JSON.stringify(flags) !== JSON.stringify(this.flags);
+        if (flags) this.flags = { ...flags };
         // Reconcile pending optimistic edits against the freshly-populated model.
         // If the host has confirmed an edit (round-tripped through the dataView),
         // drop it; otherwise re-apply it so this repopulate doesn't revert it.
@@ -124,6 +143,11 @@ export class SettingsOverlay {
         this.bar.setCloseOnAway(s.toolbar.closeOnClickAway.value);
         this.pref = (s.toolbar.position.value.value as string) || "auto";
         if (this.pref !== "auto") this.bar.setCorner(this.pref);
+        // `refreshActiveDetail` is private only because the bar never expected an outside
+        // caller — Sankey Pro's overlay reaches it the same way.
+        if (flagsChanged && this.bar.isOpen()) {
+            (this.bar as unknown as { refreshActiveDetail: () => void }).refreshActiveDetail();
+        }
         // Controls update their own DOM optimistically; we deliberately do not
         // rebuild the open popover here (persistProperties fires update() on
         // every change, and a mid-interaction rebuild would flicker / drop focus).
@@ -219,7 +243,7 @@ export class SettingsOverlay {
 
     /** True while the in-visual settings bar is open (issue #7 — suppress hover cards). */
     /** Close the open bar (back from focus mode — zentrix-qa#22). */
-    close(): void { this.bar.close(); }
+    close(): void { this.bar.forceClose(); }
 
     isOpen(): boolean {
         return this.bar.isOpen();
